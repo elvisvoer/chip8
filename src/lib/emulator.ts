@@ -8,7 +8,7 @@ let delayTimer = 0;
 let soundTimer = 0;
 
 const addressStack = new Stack<number>("address-stack");
-const RAM: number[] = [0x00, 0xe3];
+let RAM: Uint8Array;
 
 function fetchNextInstruction() {
   if (PC === RAM.length) {
@@ -209,7 +209,38 @@ function executeInstruction(N: number[]) {
   }
 }
 
-export function init() {
-  const INSTR = fetchNextInstruction();
-  executeInstruction(INSTR);
+async function fetchCode() {
+  const fileName = "test_opcode.ch8";
+
+  try {
+    const response = await fetch(`/${fileName}`);
+    if (!response.ok) {
+      throw new Error(`Invalid response code: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+
+    const buffer: ArrayBuffer = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        resolve(e.target?.result as ArrayBuffer);
+      };
+      reader.onerror = (e) => {
+        reject(e);
+      };
+      reader.readAsArrayBuffer(blob);
+    });
+
+    return new Uint8Array(buffer);
+  } catch (err) {
+    console.log("fetchCode error:", err);
+  }
+}
+
+export async function init() {
+  RAM = (await fetchCode()) as Uint8Array;
+  for (let i = 0; i < 10; i += 1) {
+    const instr = fetchNextInstruction();
+    executeInstruction(instr);
+  }
 }
