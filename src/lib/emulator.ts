@@ -60,7 +60,6 @@ function executeInstruction(op: number[]) {
     (acc, n) => acc + n.toString(16),
     ""
   )}`.toLocaleUpperCase();
-  const addr = (PC - 2).toString(16);
   const NNN = parseInt(hexStr, 16) & 0x0fff;
   const NN = parseInt(hexStr, 16) & 0x00ff;
   const [O, X, Y, N] = op;
@@ -262,7 +261,6 @@ const ctx = canvas.getContext("2d")!;
 
 function print() {
   // ctx.clearRect(0, 0, canvas.width, canvas.height);
-  console.log("print", PC);
 
   for (let i = 0; i < FBCoSize; i++) {
     for (let j = 0; j < FBRowSize; j++) {
@@ -275,11 +273,10 @@ function print() {
   }
 }
 
-setInterval(print, 1000);
+setInterval(print, 5000);
 
 function _run() {
   const instr = fetchNextInstruction();
-  console.log("_run", instr);
   executeInstruction(instr);
 }
 
