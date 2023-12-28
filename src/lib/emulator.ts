@@ -28,22 +28,23 @@ function executeInstruction(N: number[]) {
     (acc, n) => acc + n.toString(16),
     ""
   )}`.toLocaleUpperCase();
+  const addr = (PC - 2).toString(16);
 
   // 0000 - noop
   if (hexStr === "0000") {
-    console.log(hexStr, "0000 - noop");
+    console.log(addr, hexStr, "0000 - noop");
     return;
   }
 
   // 00E0 - clear screen
   if (hexStr === "00E0") {
-    console.log(hexStr, "00E0 - clear screen");
+    console.log(addr, hexStr, "00E0 - clear screen");
     return;
   }
 
   // 00EE - subroutine return
   if (hexStr === "00EE") {
-    console.log(hexStr, "00EE - subroutine return");
+    console.log(addr, hexStr, "00EE - subroutine return");
     const oldPC = addressStack.pop() as number;
     PC = oldPC;
     return;
@@ -53,14 +54,14 @@ function executeInstruction(N: number[]) {
     // 1NNN - jump
     case 1: {
       const NNN = parseInt(hexStr, 16) & 0x0fff;
-      console.log(hexStr, "1NNN - jump");
+      console.log(addr, hexStr, "1NNN - jump");
       PC = NNN;
       break;
     }
     // 2NNN - subroutine call
     case 2: {
       const NNN = parseInt(hexStr, 16) & 0x0fff;
-      console.log(hexStr, "2NNN - subroutine call");
+      console.log(addr, hexStr, "2NNN - subroutine call");
       addressStack.push(PC); // push return address
       PC = NNN;
       break;
@@ -68,7 +69,7 @@ function executeInstruction(N: number[]) {
     // 3XNN - skip if equal
     case 3: {
       const NN = parseInt(hexStr, 16) & 0x00ff;
-      console.log(hexStr, "3XNN - skip if equal");
+      console.log(addr, hexStr, "3XNN - skip if equal");
       if (V[N[1]] === NN) {
         PC += 2;
       }
@@ -77,7 +78,7 @@ function executeInstruction(N: number[]) {
     // 4XNN - skip if not equal
     case 4: {
       const NN = parseInt(hexStr, 16) & 0x00ff;
-      console.log(hexStr, "4XNN - skip if not equal");
+      console.log(addr, hexStr, "4XNN - skip if not equal");
       if (V[N[1]] !== NN) {
         PC += 2;
       }
@@ -85,7 +86,7 @@ function executeInstruction(N: number[]) {
     }
     // 5XY0 - skip if equal
     case 5: {
-      console.log(hexStr, "5XY0 - skip if equal");
+      console.log(addr, hexStr, "5XY0 - skip if equal");
       if (V[N[1]] === V[N[2]]) {
         PC += 2;
       }
@@ -93,7 +94,7 @@ function executeInstruction(N: number[]) {
     }
     // 9XY0 - skip if not equal
     case 9: {
-      console.log(hexStr, "9XY0 - skip if not equal");
+      console.log(addr, hexStr, "9XY0 - skip if not equal");
       if (V[N[1]] !== V[N[2]]) {
         PC += 2;
       }
@@ -102,14 +103,14 @@ function executeInstruction(N: number[]) {
     // 6XNN - set
     case 6: {
       const NN = parseInt(hexStr, 16) & 0x00ff;
-      console.log(hexStr, "6XNN - set");
+      console.log(addr, hexStr, "6XNN - set");
       V[N[1]] = NN;
       break;
     }
     // 7XNN - add
     case 7: {
       const NN = parseInt(hexStr, 16) & 0x00ff;
-      console.log(hexStr, "7XNN - add");
+      console.log(addr, hexStr, "7XNN - add");
       V[N[1]] += NN;
       break;
     }
@@ -117,31 +118,31 @@ function executeInstruction(N: number[]) {
       switch (N[3]) {
         // 8XY0 - set
         case 0: {
-          console.log(hexStr, "8XY0 - set");
+          console.log(addr, hexStr, "8XY0 - set");
           V[N[1]] = V[N[2]];
           break;
         }
         // 8XY1 - binary or
         case 1: {
-          console.log(hexStr, "8XY1 - binary or");
+          console.log(addr, hexStr, "8XY1 - binary or");
           V[N[1]] |= V[N[2]];
           break;
         }
         // 8XY2 - binary and
         case 2: {
-          console.log(hexStr, "8XY2 - binary and");
+          console.log(addr, hexStr, "8XY2 - binary and");
           V[N[1]] &= V[N[2]];
           break;
         }
         // 8XY3 - logical xor
         case 3: {
-          console.log(hexStr, "8XY3 - logical xor");
+          console.log(addr, hexStr, "8XY3 - logical xor");
           V[N[1]] ^= V[N[2]];
           break;
         }
         // 8XY4 - add
         case 4: {
-          console.log(hexStr, "8XY4 - add");
+          console.log(addr, hexStr, "8XY4 - add");
           V[N[1]] += V[N[2]];
           // carry flag
           V[0xf] = V[N[1]] > 255 ? 1 : 0;
@@ -151,7 +152,7 @@ function executeInstruction(N: number[]) {
         case 5: {
           // carry flag (before subtraction)
           V[0xf] = V[N[1]] > V[N[2]] ? 1 : 0;
-          console.log(hexStr, "8XY5 - subtract");
+          console.log(addr, hexStr, "8XY5 - subtract");
           V[N[1]] = V[N[1]] - V[N[2]];
           break;
         }
@@ -159,7 +160,7 @@ function executeInstruction(N: number[]) {
         case 7: {
           // carry flag (before subtraction)
           V[0xf] = V[N[2]] > V[N[1]] ? 1 : 0;
-          console.log(hexStr, "8XY7 - subtract");
+          console.log(addr, hexStr, "8XY7 - subtract");
           V[N[1]] = V[N[2]] - V[N[1]];
           break;
         }
@@ -168,7 +169,7 @@ function executeInstruction(N: number[]) {
           // TODO(@elvis): optional -> set VX = VY
           // carry flag (before shift)
           V[0xf] = (V[N[1]] & 0x01) > 0 ? 1 : 0;
-          console.log(hexStr, "8XY6 - shift");
+          console.log(addr, hexStr, "8XY6 - shift");
           V[N[1]] = V[N[1]] >> 1;
           break;
         }
@@ -177,7 +178,7 @@ function executeInstruction(N: number[]) {
           // TODO(@elvis): optional -> set VX = VY
           // carry flag (before shift)
           V[0xf] = (V[N[1]] & 0x8000) > 0 ? 1 : 0;
-          console.log(hexStr, "8XYE - shift");
+          console.log(addr, hexStr, "8XYE - shift");
           V[N[1]] = V[N[1]] << 1;
           break;
         }
@@ -190,7 +191,7 @@ function executeInstruction(N: number[]) {
     // ANNN - set index
     case 10: {
       const NNN = parseInt(hexStr, 16) & 0x0fff;
-      console.log(hexStr, "ANNN - set index");
+      console.log(addr, hexStr, "ANNN - set index");
       I = NNN;
       break;
     }
@@ -198,7 +199,7 @@ function executeInstruction(N: number[]) {
     case 11: {
       const NNN = parseInt(hexStr, 16) & 0x0fff;
       const offset = V[0];
-      console.log(hexStr, "BNNN - jump with offset");
+      console.log(addr, hexStr, "BNNN - jump with offset");
       PC = NNN + offset;
       break;
     }
@@ -206,7 +207,7 @@ function executeInstruction(N: number[]) {
     case 12: {
       const NN = parseInt(hexStr, 16) & 0x00ff;
       const random = Math.floor(Math.random() * 255);
-      console.log(hexStr, "CXNN - random");
+      console.log(addr, hexStr, "CXNN - random");
       V[N[1]] = random & NN;
       break;
     }
