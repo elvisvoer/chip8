@@ -221,6 +221,13 @@ function executeInstruction(op: number[]) {
     }
     case 0xf: {
       switch (NN) {
+        // FX33 - store
+        case 0x33: {
+          RAM[I] = Math.floor(V[X] / 100) % 10;
+          RAM[I + 1] = Math.floor(V[X] / 10) % 10;
+          RAM[I + 2] = V[X] % 10;
+          break;
+        }
         // FX55 - store
         case 0x55: {
           for (let i = 0; i <= X; i++) {
