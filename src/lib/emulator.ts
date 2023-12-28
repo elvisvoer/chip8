@@ -23,12 +23,15 @@ function fetchNextInstruction() {
   return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f];
 }
 
-function executeInstruction(N: number[]) {
-  const hexStr = `${N.reduce(
+function executeInstruction(op: number[]) {
+  const hexStr = `${op.reduce(
     (acc, n) => acc + n.toString(16),
     ""
   )}`.toLocaleUpperCase();
   const addr = (PC - 2).toString(16);
+  const NNN = parseInt(hexStr, 16) & 0x0fff;
+  const NN = parseInt(hexStr, 16) & 0x00ff;
+  const [O, X, Y, N] = op;
 
   // 0000 - noop
   if (hexStr === "0000") {
@@ -45,22 +48,20 @@ function executeInstruction(N: number[]) {
   // 00EE - subroutine return
   if (hexStr === "00EE") {
     console.log(addr, hexStr, "00EE - subroutine return");
-    const oldPC = addressStack.pop() as number;
-    PC = oldPC;
+    const top = addressStack.pop() as number;
+    PC = top;
     return;
   }
 
-  switch (N[0]) {
+  switch (O) {
     // 1NNN - jump
     case 1: {
-      const NNN = parseInt(hexStr, 16) & 0x0fff;
       console.log(addr, hexStr, "1NNN - jump");
       PC = NNN;
       break;
     }
     // 2NNN - subroutine call
     case 2: {
-      const NNN = parseInt(hexStr, 16) & 0x0fff;
       console.log(addr, hexStr, "2NNN - subroutine call");
       addressStack.push(PC); // push return address
       PC = NNN;
@@ -68,18 +69,16 @@ function executeInstruction(N: number[]) {
     }
     // 3XNN - skip if equal
     case 3: {
-      const NN = parseInt(hexStr, 16) & 0x00ff;
       console.log(addr, hexStr, "3XNN - skip if equal");
-      if (V[N[1]] === NN) {
+      if (V[X] === NN) {
         PC += 2;
       }
       break;
     }
     // 4XNN - skip if not equal
     case 4: {
-      const NN = parseInt(hexStr, 16) & 0x00ff;
       console.log(addr, hexStr, "4XNN - skip if not equal");
-      if (V[N[1]] !== NN) {
+      if (V[X] !== NN) {
         PC += 2;
       }
       break;
@@ -87,7 +86,7 @@ function executeInstruction(N: number[]) {
     // 5XY0 - skip if equal
     case 5: {
       console.log(addr, hexStr, "5XY0 - skip if equal");
-      if (V[N[1]] === V[N[2]]) {
+      if (V[X] === V[Y]) {
         PC += 2;
       }
       break;
@@ -95,91 +94,89 @@ function executeInstruction(N: number[]) {
     // 9XY0 - skip if not equal
     case 9: {
       console.log(addr, hexStr, "9XY0 - skip if not equal");
-      if (V[N[1]] !== V[N[2]]) {
+      if (V[X] !== V[Y]) {
         PC += 2;
       }
       break;
     }
     // 6XNN - set
     case 6: {
-      const NN = parseInt(hexStr, 16) & 0x00ff;
       console.log(addr, hexStr, "6XNN - set");
-      V[N[1]] = NN;
+      V[X] = NN;
       break;
     }
     // 7XNN - add
     case 7: {
-      const NN = parseInt(hexStr, 16) & 0x00ff;
       console.log(addr, hexStr, "7XNN - add");
-      V[N[1]] += NN;
+      V[X] += NN;
       break;
     }
     case 8: {
-      switch (N[3]) {
+      switch (N) {
         // 8XY0 - set
         case 0: {
           console.log(addr, hexStr, "8XY0 - set");
-          V[N[1]] = V[N[2]];
+          V[X] = V[Y];
           break;
         }
         // 8XY1 - binary or
         case 1: {
           console.log(addr, hexStr, "8XY1 - binary or");
-          V[N[1]] |= V[N[2]];
+          V[X] |= V[Y];
           break;
         }
         // 8XY2 - binary and
         case 2: {
           console.log(addr, hexStr, "8XY2 - binary and");
-          V[N[1]] &= V[N[2]];
+          V[X] &= V[Y];
           break;
         }
         // 8XY3 - logical xor
         case 3: {
           console.log(addr, hexStr, "8XY3 - logical xor");
-          V[N[1]] ^= V[N[2]];
+          V[X] ^= V[Y];
           break;
         }
         // 8XY4 - add
         case 4: {
           console.log(addr, hexStr, "8XY4 - add");
-          V[N[1]] += V[N[2]];
+          V[X] += V[Y];
           // carry flag
-          V[0xf] = V[N[1]] > 255 ? 1 : 0;
+          V[0xf] = V[X] > 255 ? 1 : 0;
           break;
         }
         // 8XY5 - subtract
         case 5: {
           // carry flag (before subtraction)
-          V[0xf] = V[N[1]] > V[N[2]] ? 1 : 0;
+          V[0xf] = V[X] > V[Y] ? 1 : 0;
           console.log(addr, hexStr, "8XY5 - subtract");
-          V[N[1]] = V[N[1]] - V[N[2]];
+          V[X] = V[X] - V[Y];
           break;
         }
         // 8XY7 - subtract
         case 7: {
           // carry flag (before subtraction)
-          V[0xf] = V[N[2]] > V[N[1]] ? 1 : 0;
+          V[0xf] = V[Y] > V[X] ? 1 : 0;
           console.log(addr, hexStr, "8XY7 - subtract");
-          V[N[1]] = V[N[2]] - V[N[1]];
+          V[X] = V[Y] - V[X];
           break;
         }
         // 8XY6 - shift
         case 6: {
           // TODO(@elvis): optional -> set VX = VY
           // carry flag (before shift)
-          V[0xf] = (V[N[1]] & 0x01) > 0 ? 1 : 0;
+          V[0xf] = (V[X] & 0x01) > 0 ? 1 : 0;
           console.log(addr, hexStr, "8XY6 - shift");
-          V[N[1]] = V[N[1]] >> 1;
+          V[X] = V[X] >> 1;
           break;
         }
         // 8XYE - shift
-        case 14: {
+        case 0xe: {
           // TODO(@elvis): optional -> set VX = VY
           // carry flag (before shift)
-          V[0xf] = (V[N[1]] & 0x8000) > 0 ? 1 : 0;
+          V[0xf] = (V[X] & 0x8000) > 0 ? 1 : 0;
           console.log(addr, hexStr, "8XYE - shift");
-          V[N[1]] = V[N[1]] << 1;
+          V[X] = V[X] << 1;
           break;
         }
 
@@ -189,26 +186,23 @@ function executeInstruction(N: number[]) {
       break;
     }
     // ANNN - set index
-    case 10: {
-      const NNN = parseInt(hexStr, 16) & 0x0fff;
+    case 0xa: {
       console.log(addr, hexStr, "ANNN - set index");
       I = NNN;
       break;
     }
     // BNNN - jump with offset
-    case 11: {
-      const NNN = parseInt(hexStr, 16) & 0x0fff;
+    case 0xb: {
       const offset = V[0];
       console.log(addr, hexStr, "BNNN - jump with offset");
       PC = NNN + offset;
       break;
     }
     // CXNN - random
-    case 12: {
-      const NN = parseInt(hexStr, 16) & 0x00ff;
+    case 0xc: {
       const random = Math.floor(Math.random() * 255);
       console.log(addr, hexStr, "CXNN - random");
-      V[N[1]] = random & NN;
+      V[X] = random & NN;
       break;
     }
     default:
