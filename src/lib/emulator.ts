@@ -244,6 +244,29 @@ function executeInstruction(op: number[]) {
       drawSprite(V[X], V[Y], N);
       break;
     }
+    case 0xf: {
+      switch (NN) {
+        // FX55 - store
+        case 0x55: {
+          console.debug(addr, hexStr, "FX55 - store");
+          for (let i = 0; i <= X; i++) {
+            RAM[I + i] = V[i];
+          }
+          break;
+        }
+        case 0x65: {
+          console.debug(addr, hexStr, "FX65 - load");
+          for (let i = 0; i <= X; i++) {
+            V[i] = RAM[I + i];
+          }
+          break;
+        }
+
+        default:
+          throw new Error(`Unknown instruction #${hexStr}`);
+      }
+      break;
+    }
     default:
       throw new Error(`Unknown instruction #${hexStr}`);
   }
@@ -277,12 +300,14 @@ function print() {
 
 setInterval(print, 1000);
 
-export function run() {
+function _run() {
+  const instr = fetchNextInstruction();
+  executeInstruction(instr);
+}
+
+export async function run() {
   // start emulator from address 0x200
   PC = 0x200;
 
-  for (let i = 0; i < 1000; i += 1) {
-    const instr = fetchNextInstruction();
-    executeInstruction(instr);
-  }
+  setInterval(_run, 20);
 }
