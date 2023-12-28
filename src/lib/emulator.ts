@@ -252,6 +252,9 @@ export async function init() {
     RAM[0x200 + i] = cardROM[i];
   }
 
+  // start emulator from address 0x200
+  PC = 0x200;
+
   for (let i = 0; i < 1000; i += 1) {
     const instr = fetchNextInstruction();
     executeInstruction(instr);
