@@ -9,6 +9,65 @@ let soundTimer = 0;
 
 const addressStack = new Stack<number>("address-stack");
 let RAM: Uint8Array = new Uint8Array(4 * 1024);
+const FB: number[] = [];
+const FBCoSize = 32;
+const FBRowSize = 64;
+
+function drawSprite(x: number, y: number, len: number) {
+  V[0xf] = 0x0;
+  const rowSize = FBRowSize;
+  const colSize = FBCoSize;
+  let i = I;
+
+  if (len == 0) {
+    // draw a SuperChip 16x16 sprite
+    for (let a = 0; a < 16; a++) {
+      for (let b = 0; b < 16; b++) {
+        const target = ((x + b) % rowSize) + ((y + a) % colSize) * rowSize;
+        const source =
+          ((RAM[i + a * 2 + (b > 7 ? 1 : 0)] >> (7 - (b % 8))) & 0x1) != 0;
+
+        if (!source) {
+          continue;
+        }
+
+        if (FB[target]) {
+          FB[target] = 0;
+          V[0xf] = 0x1;
+        } else {
+          FB[target] = 1;
+        }
+      }
+    }
+    i += 32;
+  } else {
+    // draw a Chip8 8xN sprite
+    for (let a = 0; a < len; a++) {
+      for (let b = 0; b < 8; b++) {
+        const target = ((x + b) % rowSize) + ((y + a) % colSize) * rowSize;
+        const source = ((RAM[i + a] >> (7 - b)) & 0x1) != 0;
+
+        if (!source) {
+          continue;
+        }
+
+        if (FB[target]) {
+          FB[target] = 0;
+          V[0xf] = 0x1;
+        } else {
+          FB[target] = 1;
+        }
+      }
+    }
+    i += len;
+  }
+}
+
+function clearScreen() {
+  for (var z = 0; z < FBCoSize * FBRowSize; z++) {
+    FB[z] = 0;
+  }
+}
 
 function fetchNextInstruction() {
   if (PC === RAM.length) {
@@ -42,6 +101,7 @@ function executeInstruction(op: number[]) {
   // 00E0 - clear screen
   if (hexStr === "00E0") {
     console.debug(addr, hexStr, "00E0 - clear screen");
+    clearScreen();
     return;
   }
 
@@ -205,6 +265,12 @@ function executeInstruction(op: number[]) {
       V[X] = random & NN;
       break;
     }
+    // DXYN - display
+    case 0xd: {
+      console.debug(addr, hexStr, "DXYN - display");
+      drawSprite(V[X], V[Y], N);
+      break;
+    }
     default:
       throw new Error(`Unknown instruction #${hexStr}`);
   }
@@ -215,6 +281,9 @@ export function init(cardROM: Uint8Array) {
   for (let i = 0; i < cardROM.length; i += 1) {
     RAM[0x200 + i] = cardROM[i];
   }
+
+  // init display FrameBuffer (FB)
+  clearScreen();
 }
 
 export function run() {
