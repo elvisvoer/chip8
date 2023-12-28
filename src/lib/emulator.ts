@@ -210,42 +210,14 @@ function executeInstruction(op: number[]) {
   }
 }
 
-async function fetchCode() {
-  const fileName = "test_opcode.ch8";
-
-  try {
-    const response = await fetch(`/${fileName}`);
-    if (!response.ok) {
-      throw new Error(`Invalid response code: ${response.status}`);
-    }
-
-    const blob = await response.blob();
-
-    const buffer: ArrayBuffer = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        resolve(e.target?.result as ArrayBuffer);
-      };
-      reader.onerror = (e) => {
-        reject(e);
-      };
-      reader.readAsArrayBuffer(blob);
-    });
-
-    return new Uint8Array(buffer);
-  } catch (err) {
-    console.log("fetchCode error:", err);
-  }
-}
-
-export async function init() {
-  const cardROM = (await fetchCode()) as Uint8Array;
-
+export function init(cardROM: Uint8Array) {
   // copy card memory into RAM starting at address 0x200
   for (let i = 0; i < cardROM.length; i += 1) {
     RAM[0x200 + i] = cardROM[i];
   }
+}
 
+export function run() {
   // start emulator from address 0x200
   PC = 0x200;
 

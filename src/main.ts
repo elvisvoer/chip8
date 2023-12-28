@@ -1,26 +1,36 @@
 import "./style.css";
-import typescriptLogo from "./typescript.svg";
-import viteLogo from "/vite.svg";
-import { setupCounter } from "./counter.ts";
-import { init } from "./lib/emulator.ts";
+import { init, run } from "./lib/emulator.ts";
 
-document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`;
+async function fetchCode() {
+  const fileName = "test_opcode.ch8";
 
-setupCounter(document.querySelector<HTMLButtonElement>("#counter")!);
-init();
+  try {
+    const response = await fetch(`/${fileName}`);
+    if (!response.ok) {
+      throw new Error(`Invalid response code: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+
+    const buffer: ArrayBuffer = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        resolve(e.target?.result as ArrayBuffer);
+      };
+      reader.onerror = (e) => {
+        reject(e);
+      };
+      reader.readAsArrayBuffer(blob);
+    });
+
+    return new Uint8Array(buffer);
+  } catch (err) {
+    console.log("fetchCode error:", err);
+  }
+}
+
+(async () => {
+  const cardROM = (await fetchCode()) as Uint8Array;
+  init(cardROM);
+  run();
+})();
