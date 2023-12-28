@@ -15,51 +15,24 @@ const FBRowSize = 64;
 
 function drawSprite(x: number, y: number, len: number) {
   V[0xf] = 0x0;
-  const rowSize = FBRowSize;
-  const colSize = FBCoSize;
-  let i = I;
 
-  if (len == 0) {
-    // draw a SuperChip 16x16 sprite
-    for (let a = 0; a < 16; a++) {
-      for (let b = 0; b < 16; b++) {
-        const target = ((x + b) % rowSize) + ((y + a) % colSize) * rowSize;
-        const source =
-          ((RAM[i + a * 2 + (b > 7 ? 1 : 0)] >> (7 - (b % 8))) & 0x1) != 0;
+  // draw a Chip8 8xN sprite
+  for (let a = 0; a < len; a++) {
+    for (let b = 0; b < 8; b++) {
+      const target = ((x + b) % FBRowSize) + ((y + a) % FBCoSize) * FBRowSize;
+      const source = ((RAM[I + a] >> (7 - b)) & 0x1) != 0;
 
-        if (!source) {
-          continue;
-        }
+      if (!source) {
+        continue;
+      }
 
-        if (FB[target]) {
-          FB[target] = 0;
-          V[0xf] = 0x1;
-        } else {
-          FB[target] = 1;
-        }
+      if (FB[target]) {
+        FB[target] = 0;
+        V[0xf] = 0x1;
+      } else {
+        FB[target] = 1;
       }
     }
-    i += 32;
-  } else {
-    // draw a Chip8 8xN sprite
-    for (let a = 0; a < len; a++) {
-      for (let b = 0; b < 8; b++) {
-        const target = ((x + b) % rowSize) + ((y + a) % colSize) * rowSize;
-        const source = ((RAM[i + a] >> (7 - b)) & 0x1) != 0;
-
-        if (!source) {
-          continue;
-        }
-
-        if (FB[target]) {
-          FB[target] = 0;
-          V[0xf] = 0x1;
-        } else {
-          FB[target] = 1;
-        }
-      }
-    }
-    i += len;
   }
 }
 
