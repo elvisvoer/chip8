@@ -253,16 +253,6 @@ function executeInstruction(op: number[]) {
   }
 }
 
-export function init(cardROM: Uint8Array) {
-  // copy card memory into RAM starting at address 0x200
-  for (let i = 0; i < cardROM.length; i += 1) {
-    RAM[0x200 + i] = cardROM[i];
-  }
-
-  // init display FrameBuffer (FB)
-  clearScreen();
-}
-
 const canvas = document.getElementById("display")! as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 
@@ -280,6 +270,32 @@ function print() {
 }
 
 setInterval(print, 500);
+
+function printRom(cardROM: Uint8Array) {
+  let output = "";
+  for (let i = 0; i < cardROM.length; i += 1) {
+    if (i % 16 === 0) {
+      output += "\n";
+    }
+
+    output += `0x${cardROM[i] < 0x10 ? "0" : ""}${cardROM[i]
+      .toString(16)
+      .toUpperCase()} `;
+  }
+
+  document.getElementById("rom")!.textContent = output;
+}
+
+export function init(cardROM: Uint8Array) {
+  printRom(cardROM);
+  // copy card memory into RAM starting at address 0x200
+  for (let i = 0; i < cardROM.length; i += 1) {
+    RAM[0x200 + i] = cardROM[i];
+  }
+
+  // init display FrameBuffer (FB)
+  clearScreen();
+}
 
 function _run() {
   const instr = fetchNextInstruction();
