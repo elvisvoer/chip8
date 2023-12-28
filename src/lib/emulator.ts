@@ -29,6 +29,12 @@ function executeInstruction(N: number[]) {
     ""
   )}`.toLocaleUpperCase();
 
+  // 0000 - noop
+  if (hexStr === "0000") {
+    console.log("0000 - noop");
+    return;
+  }
+
   // 00E0 - clear screen
   if (hexStr === "00E0") {
     console.log("00E0 - clear screen");
@@ -239,7 +245,7 @@ async function fetchCode() {
 
 export async function init() {
   RAM = (await fetchCode()) as Uint8Array;
-  for (let i = 0; i < 10; i += 1) {
+  for (let i = 0; i < 1000; i += 1) {
     const instr = fetchNextInstruction();
     executeInstruction(instr);
   }
