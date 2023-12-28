@@ -267,8 +267,7 @@ const canvas = document.getElementById("display")! as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 
 function print() {
-  // ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  ctx.reset();
   for (let i = 0; i < FBCoSize; i++) {
     for (let j = 0; j < FBRowSize; j++) {
       const z = i * FBRowSize + j;
@@ -280,7 +279,7 @@ function print() {
   }
 }
 
-setInterval(print, 5000);
+setInterval(print, 500);
 
 function _run() {
   const instr = fetchNextInstruction();
