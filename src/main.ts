@@ -2,7 +2,7 @@ import "./style.css";
 import { init, run } from "./lib/emulator.ts";
 
 async function fetchCode() {
-  const fileName = "ibm-logo.ch8";
+  const fileName = "test_opcode.ch8";
 
   try {
     const response = await fetch(`/${fileName}`);

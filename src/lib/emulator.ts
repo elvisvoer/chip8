@@ -269,21 +269,17 @@ function print() {
   }
 }
 
-setInterval(print, 500);
+setInterval(print, 50);
 
 function printRom(cardROM: Uint8Array) {
   let output = "";
   for (let i = 0; i < cardROM.length; i += 1) {
-    if (i % 16 === 0) {
-      output += "\n";
-    }
-
-    output += `0x${cardROM[i] < 0x10 ? "0" : ""}${cardROM[i]
+    output += `<span>0x${cardROM[i] < 0x10 ? "0" : ""}${cardROM[i]
       .toString(16)
-      .toUpperCase()} `;
+      .toUpperCase()}</span>`;
   }
 
-  document.getElementById("rom")!.textContent = output;
+  document.getElementById("rom")!.innerHTML = output;
 }
 
 export function init(cardROM: Uint8Array) {
