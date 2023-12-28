@@ -262,6 +262,7 @@ const ctx = canvas.getContext("2d")!;
 
 function print() {
   // ctx.clearRect(0, 0, canvas.width, canvas.height);
+  console.log("print", PC);
 
   for (let i = 0; i < FBCoSize; i++) {
     for (let j = 0; j < FBRowSize; j++) {
@@ -278,6 +279,7 @@ setInterval(print, 1000);
 
 function _run() {
   const instr = fetchNextInstruction();
+  console.log("_run", instr);
   executeInstruction(instr);
 }
 
