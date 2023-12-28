@@ -259,6 +259,24 @@ export function init(cardROM: Uint8Array) {
   clearScreen();
 }
 
+function print() {
+  const canvas = document.getElementById("display")! as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d")!;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < FBCoSize; i++) {
+    for (let j = 0; j < FBRowSize; j++) {
+      const z = i * FBRowSize + j;
+      if (FB[z]) {
+        ctx.rect(j * 10, i * 10, 10, 10);
+        ctx.fill();
+      }
+    }
+  }
+}
+
+setInterval(print, 1000);
+
 export function run() {
   // start emulator from address 0x200
   PC = 0x200;
