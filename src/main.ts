@@ -81,40 +81,58 @@ function fbToString(fb: number[]) {
   return output;
 }
 
-function refreshDisplay(rom: Uint8Array, pc: number, fb: number[]) {
-  display.clear();
-  display.write(fbToString(fb));
-  display.write(hexWithHighlightedText(rom, pc));
+function createHistory() {
+  const data: any[] = [];
+  let index = data.length;
+
+  return {
+    size: () => data.length,
+    add: (d: any) => {
+      data.push(d);
+      index = data.length;
+    },
+    prev: () => {
+      index = Math.max(0, index - 1);
+      return data[index];
+    },
+    next: () => {
+      index = Math.min(data.length - 1, index + 1);
+      return data[index];
+    },
+  };
 }
 
 (async () => {
   const rom = await fetchROM("ibm-logo.ch8");
 
-  const history: [number, number[]][] = [];
+  const history = createHistory();
 
-  const emulator = new Emulator(
-    (pc: number, fb: number[]) => {
-      refreshDisplay(rom!, pc, fb);
-      history.push([pc, [...fb]]);
-    },
-    () => {
-      let index = history.length;
+  const refreshDisplay = (pc: number, fb: number[]) => {
+    display.clear();
+    display.write(fbToString(fb));
+    display.write(hexWithHighlightedText(rom!, pc));
+  };
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowLeft") {
-          index = Math.max(0, index - 1);
-          const [pc, fb] = history[index];
-          refreshDisplay(rom!, pc, fb);
-        }
-
-        if (e.key === "ArrowRight") {
-          index = Math.min(history.length - 1, index + 1);
-          const [pc, fb] = history[index];
-          refreshDisplay(rom!, pc, fb);
-        }
-      });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") {
+      const [pc, fb] = history.prev();
+      refreshDisplay(pc, fb);
     }
-  );
+
+    if (e.key === "ArrowRight") {
+      const [pc, fb] = history.next();
+      refreshDisplay(pc, fb);
+    }
+  });
+
+  const onTick = ({ pc, fb }: { pc: number; fb: number[] }) => {
+    refreshDisplay(pc, fb);
+    history.add([pc, fb]);
+  };
+
+  const emulator = new Emulator(onTick, () => {
+    /* noop */
+  });
   emulator.load(rom!);
   emulator.run();
 })();

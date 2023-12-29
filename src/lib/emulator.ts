@@ -33,7 +33,8 @@ export class Emulator {
     let last = this.PC;
     // main program loop
     const intervalID = setInterval(() => {
-      this.onTick(this.PC - offset, this.FB);
+      // return registries and a copy of framebuffer
+      this.onTick({ pc: this.PC - offset, fb: [...this.FB] });
       this._exec(this._next());
 
       if (last === this.PC) {
