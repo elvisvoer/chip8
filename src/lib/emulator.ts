@@ -267,7 +267,7 @@ function refreshDisplay() {
   }
 }
 
-setInterval(refreshDisplay, 50);
+setInterval(refreshDisplay, 33);
 
 export function init(cardROM: Uint8Array) {
   // copy card memory into RAM starting at address 0x200
@@ -288,5 +288,5 @@ export async function run() {
   // start emulator from address 0x200
   PC = 0x200;
 
-  setInterval(_run, 20);
+  setInterval(_run, 10);
 }
