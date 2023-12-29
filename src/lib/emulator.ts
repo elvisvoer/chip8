@@ -1,12 +1,15 @@
+// registries
 const V: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 let PC: number = 0;
 let I = 0;
 
+// times
 let delayTimer = 0;
 let soundTimer = 0;
 
-const addressStack: number[] = [];
+const callStack: number[] = [];
 let RAM: Uint8Array = new Uint8Array(4 * 1024);
+// display framebuffer
 const FB: number[] = [];
 const FBCoSize = 32;
 const FBRowSize = 64;
@@ -75,7 +78,7 @@ function executeInstruction(op: number[]) {
 
   // 00EE - subroutine return
   if (hexStr === "00EE") {
-    const top = addressStack.pop() as number;
+    const top = callStack.pop() as number;
     PC = top;
     return;
   }
@@ -88,7 +91,7 @@ function executeInstruction(op: number[]) {
     }
     // 2NNN - subroutine call
     case 2: {
-      addressStack.push(PC); // push return address
+      callStack.push(PC); // push return address
       PC = NNN;
       break;
     }
@@ -251,6 +254,11 @@ function executeInstruction(op: number[]) {
   }
 }
 
+function loop() {
+  const instr = fetchNextInstruction();
+  executeInstruction(instr);
+}
+
 const canvas = document.getElementById("display")! as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 
@@ -267,26 +275,21 @@ function refreshDisplay() {
   }
 }
 
-setInterval(refreshDisplay, 33);
-
-export function init(cardROM: Uint8Array) {
-  // copy card memory into RAM starting at address 0x200
-  for (let i = 0; i < cardROM.length; i += 1) {
-    RAM[0x200 + i] = cardROM[i];
+export function load(data: Uint8Array, offset: number = 0x200) {
+  for (let i = 0; i < data.length; i += 1) {
+    RAM[offset + i] = data[i];
   }
+}
+
+// start emulator from offset address, default: 0x200
+export function run(offset: number = 0x200) {
+  PC = offset;
 
   // init display FrameBuffer (FB)
   clearScreen();
-}
 
-function _run() {
-  const instr = fetchNextInstruction();
-  executeInstruction(instr);
-}
-
-export async function run() {
-  // start emulator from address 0x200
-  PC = 0x200;
-
-  setInterval(_run, 10);
+  // display refresh loop
+  setInterval(refreshDisplay, 33);
+  // main program loop
+  setInterval(loop, 10);
 }

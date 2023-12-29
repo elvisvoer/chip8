@@ -1,7 +1,7 @@
 import "./style.css";
-import { init, run } from "./lib/emulator.ts";
+import * as Emulator from "./lib/emulator.ts";
 
-async function fetchCode(fileName: string) {
+async function fetchROM(fileName: string) {
   try {
     const response = await fetch(fileName);
     if (!response.ok) {
@@ -23,14 +23,14 @@ async function fetchCode(fileName: string) {
 
     return new Uint8Array(buffer);
   } catch (err) {
-    console.log("fetchCode error:", err);
+    console.log("fetchROM error:", err);
   }
 }
 
-function printRom(cardROM: Uint8Array) {
+function printROM(data: Uint8Array) {
   let output = "";
-  for (let i = 0; i < cardROM.length; i += 1) {
-    output += `<span>0x${cardROM[i] < 0x10 ? "0" : ""}${cardROM[i]
+  for (let i = 0; i < data.length; i += 1) {
+    output += `<span>0x${data[i] < 0x10 ? "0" : ""}${data[i]
       .toString(16)
       .toUpperCase()}</span>`;
   }
@@ -39,8 +39,8 @@ function printRom(cardROM: Uint8Array) {
 }
 
 (async () => {
-  const cardROM = (await fetchCode("ibm-logo.ch8")) as Uint8Array;
-  printRom(cardROM);
-  init(cardROM);
-  run();
+  const rom = (await fetchROM("ibm-logo.ch8")) as Uint8Array;
+  printROM(rom);
+  Emulator.load(rom);
+  Emulator.run();
 })();
