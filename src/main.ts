@@ -85,10 +85,11 @@ async function main() {
   const emulator = new Emulator();
   emulator.init(rom!);
   emulator.run();
-  emulator.on("tick", (op: string) => {
+  emulator.on("tick", (op: string, count: number) => {
     display.clear();
     display.write(fbToString(emulator.state.fb));
     // debug info
+    display.write(`Tick: ${count}\n`);
     display.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
     display.write(`Operation: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
     display.write(hexWithHighlightedText(rom!, emulator.state.pc));

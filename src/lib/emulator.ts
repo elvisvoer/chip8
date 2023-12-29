@@ -127,7 +127,7 @@ export class Emulator extends EventEmitter {
 
   public run() {
     // main program loop
-    const intervalID = setInterval(() => this.next(), 80);
+    const intervalID = setInterval(() => this.next(), 1000 / 25);
     this.on("exit", () => clearInterval(intervalID));
   }
 
@@ -197,9 +197,9 @@ export class Emulator extends EventEmitter {
       .reduce((n, d) => n + d.toString(16), "")
       .toUpperCase();
 
-    this.history.push(this.state);
-    this.emit("tick", op);
+    this.emit("tick", op, this.history.length);
 
+    this.history.push(this.state);
     this.PC += 2;
 
     return op;
