@@ -16,7 +16,7 @@ export class Emulator {
   public static readonly FBColSize = 32;
   public static readonly FBRowSize = 64;
 
-  constructor(private onOutput: Function) {
+  constructor(private onTick: Function) {
     // init display
     this._clearFrameBuffer();
   }
@@ -30,9 +30,18 @@ export class Emulator {
   public run(offset: number = 0x200) {
     this.PC = offset;
 
+    let last = -1;
     // main program loop
-    setInterval(() => {
+    const intervalID = setInterval(() => {
       this._exec(this._next());
+      this.onTick(this.PC, this.FB);
+
+      if (last === this.PC) {
+        console.log("Infinite loop detected. Exiting...", last);
+        clearInterval(intervalID);
+      }
+
+      last = this.PC;
     }, 10);
   }
 
@@ -242,8 +251,6 @@ export class Emulator {
       // DXYN - display
       case 0xd: {
         this._drawSprite(this.V[X], this.V[Y], N);
-        // update outside world
-        this.onOutput(this.FB);
         break;
       }
       case 0xf: {

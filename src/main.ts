@@ -41,14 +41,19 @@ class Display {
 
 const display = new Display(document.getElementById("display")!);
 
-function printROM(data: Uint8Array) {
+function printROM(data: Uint8Array, pc: number) {
   for (let i = 0; i < data.length; i += 1) {
     if (i % 12 === 0) {
       display.write("\n");
     }
 
+    const highlights = [pc - 2 - 0x200, pc - 1 - 0x200];
+
     display.write(
-      `0x${data[i] < 0x10 ? "0" : ""}${data[i].toString(16).toUpperCase()} `
+      `<span style="color: ${highlights.includes(i) ? "red" : "inherit"};">0x${(
+        (data[i] >> 4) &
+        0xf
+      ).toString(16)}${(data[i] & 0xf).toString(16)} </span>`
     );
   }
 }
@@ -70,10 +75,10 @@ function printFB(fb: number[]) {
 
 (async () => {
   const rom = (await fetchROM("ibm-logo.ch8")) as Uint8Array;
-  const emulator = new Emulator((fb: number[]) => {
+  const emulator = new Emulator((pc: number, fb: number[]) => {
     display.clear();
     printFB(fb);
-    printROM(rom);
+    printROM(rom, pc);
   });
   emulator.load(rom);
   emulator.run();
