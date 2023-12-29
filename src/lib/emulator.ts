@@ -129,7 +129,10 @@ export class Emulator extends EventEmitter {
 
   public run() {
     // main program loop
-    const intervalID = setInterval(() => !this.paused && this.next(), 1000 / 25);
+    const intervalID = setInterval(
+      () => !this.paused && this.next(),
+      1000 / 25
+    );
     this.on("exit", () => clearInterval(intervalID));
   }
 
@@ -151,10 +154,11 @@ export class Emulator extends EventEmitter {
     this.next();
   }
 
-  private _setState({ v, i, pc }: any) {
+  private _setState({ v, i, pc, fb }: any) {
     this.V = v;
     this.I = i;
     this.PC = pc + this.offset;
+    this.FB = fb;
   }
 
   private _clear() {
