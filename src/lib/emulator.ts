@@ -30,7 +30,7 @@ export class Emulator {
   public run(offset: number = 0x200) {
     this.PC = offset;
 
-    let last = -1;
+    let last = this.PC;
     // main program loop
     const intervalID = setInterval(() => {
       this._exec(this._next());
