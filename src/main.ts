@@ -41,44 +41,51 @@ class Display {
 
 const display = new Display(document.getElementById("display")!);
 
-function printROM(data: Uint8Array, pc: number) {
+function romWithHighlightedPC(data: Uint8Array, pc: number) {
+  let output = "";
+
   for (let i = 0; i < data.length; i += 1) {
     if (i % 12 === 0) {
-      display.write("\n");
+      output += "\n";
     }
 
     const highlights = [pc - 2 - 0x200, pc - 1 - 0x200];
 
-    display.write(
-      `<span style="color: ${highlights.includes(i) ? "red" : "inherit"};">0x${(
-        (data[i] >> 4) &
-        0xf
-      ).toString(16)}${(data[i] & 0xf).toString(16)} </span>`
-    );
+    output += `<span style="color: ${
+      highlights.includes(i) ? "red" : "inherit"
+    };">0x${((data[i] >> 4) & 0xf).toString(16)}${(data[i] & 0xf).toString(
+      16
+    )} </span>`;
   }
+
+  return output;
 }
 
-function printFB(fb: number[]) {
+function fbToString(fb: number[]) {
+  let output = "";
+
   for (let i = 0; i < Emulator.FBColSize; i++) {
     for (let j = 0; j < Emulator.FBRowSize; j++) {
       const z = i * Emulator.FBRowSize + j;
       if (fb[z]) {
-        display.write("&#9619;");
+        output += "&#9619;";
       } else {
-        display.write(" ");
+        output += " ";
       }
     }
 
-    display.write("\n");
+    output += "\n";
   }
+
+  return output;
 }
 
 (async () => {
-  const rom = await fetchROM("ibm-logo.ch8");
+  const rom = await fetchROM("test-opcode.ch8");
   const emulator = new Emulator((pc: number, fb: number[]) => {
     display.clear();
-    printFB(fb);
-    printROM(rom!, pc);
+    display.write(fbToString(fb));
+    display.write(romWithHighlightedPC(rom!, pc));
   });
   emulator.load(rom!);
   emulator.run();
