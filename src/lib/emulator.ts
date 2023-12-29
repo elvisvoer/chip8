@@ -128,10 +128,10 @@ export class Emulator extends EventEmitter {
     }
   }
 
-  public run() {
+  public run(fps: number = 25) {
     this.loopId && clearInterval(this.loopId);
     // main program loop
-    this.loopId = setInterval(() => !this.paused && this.next(), 1000 / 25);
+    this.loopId = setInterval(() => !this.paused && this.next(), 1000 / fps);
   }
 
   public next() {
