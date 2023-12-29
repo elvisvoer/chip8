@@ -80,6 +80,12 @@ function fbToString(fb: number[]) {
   return output;
 }
 
+function refreshDisplay(rom: Uint8Array, pc: number, fb: number[]) {
+  display.clear();
+  display.write(fbToString(fb));
+  display.write(romWithHighlightedPC(rom, pc));
+}
+
 (async () => {
   const rom = await fetchROM("ibm-logo.ch8");
 
@@ -87,9 +93,7 @@ function fbToString(fb: number[]) {
 
   const emulator = new Emulator(
     (pc: number, fb: number[]) => {
-      display.clear();
-      display.write(fbToString(fb));
-      display.write(romWithHighlightedPC(rom!, pc));
+      refreshDisplay(rom!, pc, fb);
       history.push([pc, [...fb]]);
     },
     () => {
@@ -99,17 +103,13 @@ function fbToString(fb: number[]) {
         if (e.key === "ArrowLeft") {
           index = Math.max(0, index - 1);
           const [pc, fb] = history[index];
-          display.clear();
-          display.write(fbToString(fb));
-          display.write(romWithHighlightedPC(rom!, pc));
+          refreshDisplay(rom!, pc, fb);
         }
 
         if (e.key === "ArrowRight") {
           index = Math.min(history.length - 1, index + 1);
           const [pc, fb] = history[index];
-          display.clear();
-          display.write(fbToString(fb));
-          display.write(romWithHighlightedPC(rom!, pc));
+          refreshDisplay(rom!, pc, fb);
         }
       });
     }
