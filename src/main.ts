@@ -1,5 +1,5 @@
 import "./style.css";
-import { Emulator } from "./lib/emulator.ts";
+import { Emulator, getOpInfo } from "./lib/emulator.ts";
 
 async function fetchROM(fileName: string) {
   try {
@@ -41,6 +41,10 @@ class Display {
 
 const display = new Display(document.getElementById("display")!);
 
+function getColoredText(text: string, color: string) {
+  return `<span style="color: ${color};">${text}</span>`;
+}
+
 function hexWithHighlightedText(data: Uint8Array, offset: number, width = 2) {
   let output = "";
   const highlights = Array(width)
@@ -48,15 +52,10 @@ function hexWithHighlightedText(data: Uint8Array, offset: number, width = 2) {
     .map((_, index) => index + offset);
 
   for (let i = 0; i < data.length; i += 1) {
-    if (i % 12 === 0) {
-      output += "\n";
-    }
-
-    output += `<span style="color: ${
+    output += getColoredText(
+      `${((data[i] >> 4) & 0xf).toString(16)}${(data[i] & 0xf).toString(16)} `,
       highlights.includes(i) ? "red" : "inherit"
-    };">0x${((data[i] >> 4) & 0xf).toString(16)}${(data[i] & 0xf).toString(
-      16
-    )} </span>`;
+    );
   }
 
   return output;
@@ -103,7 +102,7 @@ function createHistory() {
 }
 
 (async () => {
-  const rom = await fetchROM("ibm-logo.ch8");
+  const rom = await fetchROM("test-opcode.ch8");
 
   const history = createHistory();
 
@@ -120,7 +119,7 @@ function createHistory() {
     display.write(fbToString(fb));
     // debug info
     display.write(`PC: 0x${pc.toString(16).toUpperCase()}\n`);
-    display.write(`Operation: 0x${op}\n`);
+    display.write(`Operation: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
     display.write(hexWithHighlightedText(rom!, pc));
   };
 

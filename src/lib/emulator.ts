@@ -1,3 +1,82 @@
+export function getOpInfo(op: string) {
+  const NN = parseInt(op, 16) & 0x00ff;
+  const O = (parseInt(op, 16) >> 12) & 0x000f;
+  const N = parseInt(op, 16) & 0x000f;
+
+  const simpleOps: any = {
+    "0000": ["0000", "noop"],
+    "00E0": ["00E0", "clear screen"],
+    "00EE": ["00EE", "subroutine return"],
+  };
+
+  if (Object.keys(simpleOps).includes(op)) {
+    return simpleOps[op];
+  }
+
+  switch (O) {
+    case 1:
+      return ["1NNN", "jump"];
+    case 2:
+      return ["2NNN", "subroutine call"];
+    case 3:
+      return ["3XNN", "skip if equal"];
+    case 4:
+      return ["4XNN", "skip if not equal"];
+    case 5:
+      return ["5XY0", "skip if equal"];
+    case 9:
+      return ["9XY0", "skip if not equal"];
+    case 6:
+      return ["6XNN", "set"];
+    case 7:
+      return ["7XNN", "add"];
+    case 8: {
+      switch (N) {
+        case 0:
+          return ["8XY0", "set"];
+        case 1:
+          return ["8XY1", "binary or"];
+        case 2:
+          return ["8XY2", "binary and"];
+        case 3:
+          return ["8XY3", "logical xor"];
+        case 4:
+          return ["8XY4", "add"];
+        case 5:
+          return ["8XY5", "subtract"];
+        case 7:
+          return ["8XY7", "subtract"];
+        case 6:
+          return ["8XY6", "shift"];
+        case 0xe:
+          return ["8XYE", "shift"];
+      }
+      break;
+    }
+    case 0xa:
+      return ["ANNN", "set index"];
+    case 0xb:
+      return ["BNNN", "jump with offset"];
+    case 0xc:
+      return ["CXNN", "random"];
+    case 0xd:
+      return ["DXYN", "display"];
+    case 0xf: {
+      switch (NN) {
+        case 0x33:
+          return ["FX33", "store"];
+        case 0x55:
+          return ["FX55", "store"];
+        case 0x65:
+          return ["FX65", "load"];
+      }
+      break;
+    }
+  }
+
+  throw new Error(`Unknown instruction #${op}`);
+}
+
 export class Emulator {
   // registries
   private V: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -96,85 +175,6 @@ export class Emulator {
     this.PC += 2;
 
     return op;
-  }
-
-  public getOpInfo(op: string) {
-    const NN = parseInt(op, 16) & 0x00ff;
-    const O = (parseInt(op, 16) >> 12) & 0x000f;
-    const N = parseInt(op, 16) & 0x000f;
-
-    const simpleOps: any = {
-      "0000": ["0000", "noop"],
-      "00E0": ["00E0", "clear screen"],
-      "00EE": ["00EE", "subroutine return"],
-    };
-
-    if (Object.keys(simpleOps).includes(op)) {
-      return simpleOps[op];
-    }
-
-    switch (O) {
-      case 1:
-        return ["1NNN", "jump"];
-      case 2:
-        return ["2NNN", "subroutine call"];
-      case 3:
-        return ["3XNN", "skip if equal"];
-      case 4:
-        return ["4XNN", "skip if not equal"];
-      case 5:
-        return ["5XY0", "skip if equal"];
-      case 9:
-        return ["9XY0", "skip if not equal"];
-      case 6:
-        return ["6XNN", "set"];
-      case 7:
-        return ["7XNN", "add"];
-      case 8: {
-        switch (N) {
-          case 0:
-            return ["8XY0", "set"];
-          case 1:
-            return ["8XY1", "binary or"];
-          case 2:
-            return ["8XY2", "binary and"];
-          case 3:
-            return ["8XY3", "logical xor"];
-          case 4:
-            return ["8XY4", "add"];
-          case 5:
-            return ["8XY5", "subtract"];
-          case 7:
-            return ["8XY7", "subtract"];
-          case 6:
-            return ["8XY6", "shift"];
-          case 0xe:
-            return ["8XYE", "shift"];
-        }
-        break;
-      }
-      case 0xa:
-        return ["ANNN", "set index"];
-      case 0xb:
-        return ["BNNN", "jump with offset"];
-      case 0xc:
-        return ["CXNN", "random"];
-      case 0xd:
-        return ["DXYN", "display"];
-      case 0xf: {
-        switch (NN) {
-          case 0x33:
-            return ["FX33", "store"];
-          case 0x55:
-            return ["FX55", "store"];
-          case 0x65:
-            return ["FX65", "load"];
-        }
-        break;
-      }
-    }
-
-    throw new Error(`Unknown instruction #${op}`);
   }
 
   private _exec(op: string) {
@@ -276,7 +276,7 @@ export class Emulator {
       },
     };
 
-    const [instrType] = this.getOpInfo(op);
+    const [instrType] = getOpInfo(op);
     const instr = instructionSet[instrType];
 
     if (!instr) {
