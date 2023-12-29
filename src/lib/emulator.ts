@@ -19,9 +19,6 @@ export class Emulator {
   constructor(private onOutput: Function) {
     // init display
     this._clearFrameBuffer();
-
-    // display refresh loop
-    setInterval(() => this.onOutput(this.FB), Math.floor(1000 / 60));
   }
 
   public load(data: Uint8Array, offset: number = 0x200) {
@@ -245,6 +242,8 @@ export class Emulator {
       // DXYN - display
       case 0xd: {
         this._drawSprite(this.V[X], this.V[Y], N);
+        // update outside world
+        this.onOutput(this.FB);
         break;
       }
       case 0xf: {
