@@ -102,6 +102,8 @@ export class Emulator extends EventEmitter {
   // execution history
   private history: any[] = [];
 
+  public paused: boolean = false;
+
   constructor(private offset = 0x200) {
     super();
 
@@ -127,7 +129,7 @@ export class Emulator extends EventEmitter {
 
   public run() {
     // main program loop
-    const intervalID = setInterval(() => this.next(), 1000 / 25);
+    const intervalID = setInterval(() => !this.paused && this.next(), 1000 / 25);
     this.on("exit", () => clearInterval(intervalID));
   }
 

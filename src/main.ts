@@ -96,12 +96,20 @@ async function main() {
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft") {
-      emulator.prev();
-    }
-
-    if (e.key === "ArrowRight") {
-      emulator.next();
+    switch (e.keyCode) {
+      case 32: // space
+        emulator.paused = !emulator.paused;
+        break;
+      case 37: // ArrowLeft
+        emulator.paused = true;
+        emulator.prev();
+        break;
+      case 39: // ArrowRight
+        emulator.paused = true;
+        emulator.next();
+        break;
+      default:
+        throw new Error(`Unmapped keycode: ${e.keyCode}`);
     }
   });
 }
