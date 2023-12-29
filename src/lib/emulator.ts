@@ -16,25 +16,26 @@ export class Emulator {
   public static readonly FBColSize = 32;
   public static readonly FBRowSize = 64;
 
-  constructor(private onTick: Function, private onExit: Function) {
+  constructor(
+    private onTick: Function,
+    private onExit: Function,
+    private offset = 0x200
+  ) {
+    this.PC = offset;
     // init display
     this._clearFrameBuffer();
   }
 
-  public load(data: Uint8Array, offset: number = 0x200) {
+  public load(data: Uint8Array) {
     for (let i = 0; i < data.length; i += 1) {
-      this.RAM[offset + i] = data[i];
+      this.RAM[this.offset + i] = data[i];
     }
   }
 
-  public run(offset: number = 0x200) {
-    this.PC = offset;
-
+  public run() {
     let last = this.PC;
     // main program loop
     const intervalID = setInterval(() => {
-      // return registries and a copy of framebuffer
-      this.onTick({ pc: this.PC - offset, fb: [...this.FB] });
       this._exec(this._next());
 
       if (last === this.PC) {
@@ -51,19 +52,6 @@ export class Emulator {
     for (var z = 0; z < Emulator.FBColSize * Emulator.FBRowSize; z++) {
       this.FB[z] = 0;
     }
-  }
-
-  private _next() {
-    if (this.PC === this.RAM.length) {
-      throw new Error("Emulator reached out of memory");
-    }
-
-    const H1 = this.RAM[this.PC];
-    const H2 = this.RAM[this.PC + 1];
-
-    this.PC += 2;
-
-    return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f];
   }
 
   private _drawSprite(x: number, y: number, len: number) {
@@ -91,28 +79,43 @@ export class Emulator {
     }
   }
 
-  private _exec(op: number[]) {
-    const hexStr = `${op.reduce(
-      (acc, n) => acc + n.toString(16),
-      ""
-    )}`.toLocaleUpperCase();
-    const NNN = parseInt(hexStr, 16) & 0x0fff;
-    const NN = parseInt(hexStr, 16) & 0x00ff;
-    const [O, X, Y, N] = op;
+  private _next() {
+    if (this.PC === this.RAM.length) {
+      throw new Error("Emulator reached out of memory");
+    }
+
+    const H1 = this.RAM[this.PC];
+    const H2 = this.RAM[this.PC + 1];
+    const op = [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f]
+      .reduce((n, d) => n + d.toString(16), "")
+      .toUpperCase();
+
+    // return registries and a copy of framebuffer
+    this.onTick({ pc: this.PC - this.offset, fb: [...this.FB], op });
+
+    this.PC += 2;
+
+    return op;
+  }
+
+  private _exec(op: string) {
+    const NNN = parseInt(op, 16) & 0x0fff;
+    const NN = parseInt(op, 16) & 0x00ff;
+    const [O, X, Y, N] = op.split("").map((d) => parseInt(d, 16));
 
     // 0000 - noop
-    if (hexStr === "0000") {
+    if (op === "0000") {
       return;
     }
 
     // 00E0 - clear screen
-    if (hexStr === "00E0") {
+    if (op === "00E0") {
       this._clearFrameBuffer();
       return;
     }
 
     // 00EE - subroutine return
-    if (hexStr === "00EE") {
+    if (op === "00EE") {
       const top = this.callStack.pop() as number;
       this.PC = top;
       return;
@@ -229,7 +232,7 @@ export class Emulator {
           }
 
           default:
-            throw new Error(`Unknown instruction #${hexStr}`);
+            throw new Error(`Unknown instruction #${op}`);
         }
         break;
       }
@@ -280,12 +283,12 @@ export class Emulator {
           }
 
           default:
-            throw new Error(`Unknown instruction #${hexStr}`);
+            throw new Error(`Unknown instruction #${op}`);
         }
         break;
       }
       default:
-        throw new Error(`Unknown instruction #${hexStr}`);
+        throw new Error(`Unknown instruction #${op}`);
     }
   }
 }
