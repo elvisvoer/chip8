@@ -119,7 +119,6 @@ export class Emulator extends EventEmitter {
     };
   }
 
-
   public init(data: Uint8Array) {
     for (let i = 0; i < data.length; i += 1) {
       this.RAM[this.offset + i] = data[i];
@@ -143,16 +142,12 @@ export class Emulator extends EventEmitter {
   }
 
   public prev() {
-    // go back 2 instr and execute it so all callbacks fire
+    // go back 2 instr and execute it so all events are fired
     // or execute first instruction if only one present
-    this._setState(this.history.pop());
-    if (this.history.length) {
-      this._setState(this.history.pop())
-    }
-
+    this.history.length && this._setState(this.history.pop());
+    this.history.length && this._setState(this.history.pop());
     this.next();
   }
-
 
   private _setState({ v, i, pc }: any) {
     this.V = v;
