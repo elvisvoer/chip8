@@ -12,15 +12,16 @@ export class Emulator {
   private RAM: Uint8Array = new Uint8Array(4 * 1024);
   // display framebuffer
   private FB: number[] = [];
-  private FBColSize = 32;
-  private FBRowSize = 64;
 
-  constructor(private display: Element) {
-    // init display FrameBuffer (FB)
-    this._clearScreen();
+  public static readonly FBColSize = 32;
+  public static readonly FBRowSize = 64;
+
+  constructor(private onOutput: Function) {
+    // init display
+    this._clearFrameBuffer();
 
     // display refresh loop
-    setInterval(() => this._refreshDisplay(), 33);
+    setInterval(() => this.onOutput(this.FB), Math.floor(1000 / 60));
   }
 
   public load(data: Uint8Array, offset: number = 0x200) {
@@ -38,28 +39,10 @@ export class Emulator {
     }, 10);
   }
 
-  private _clearScreen() {
-    for (var z = 0; z < this.FBColSize * this.FBRowSize; z++) {
+  private _clearFrameBuffer() {
+    for (var z = 0; z < Emulator.FBColSize * Emulator.FBRowSize; z++) {
       this.FB[z] = 0;
     }
-  }
-
-  private _refreshDisplay() {
-    let output = "";
-    for (let i = 0; i < this.FBColSize; i++) {
-      for (let j = 0; j < this.FBRowSize; j++) {
-        const z = i * this.FBRowSize + j;
-        if (this.FB[z]) {
-          output += "&#9632;";
-        } else {
-          output += " ";
-        }
-      }
-
-      output += "\n";
-    }
-
-    this.display.innerHTML = output;
   }
 
   private _next() {
@@ -82,8 +65,8 @@ export class Emulator {
     for (let a = 0; a < len; a++) {
       for (let b = 0; b < 8; b++) {
         const target =
-          ((x + b) % this.FBRowSize) +
-          ((y + a) % this.FBColSize) * this.FBRowSize;
+          ((x + b) % Emulator.FBRowSize) +
+          ((y + a) % Emulator.FBColSize) * Emulator.FBRowSize;
         const source = ((this.RAM[this.I + a] >> (7 - b)) & 0x1) != 0;
 
         if (!source) {
@@ -116,7 +99,7 @@ export class Emulator {
 
     // 00E0 - clear screen
     if (hexStr === "00E0") {
-      this._clearScreen();
+      this._clearFrameBuffer();
       return;
     }
 

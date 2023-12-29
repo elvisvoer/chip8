@@ -42,7 +42,23 @@ function printROM(data: Uint8Array) {
   const rom = (await fetchROM("ibm-logo.ch8")) as Uint8Array;
   printROM(rom);
 
-  const emulator = new Emulator(document.getElementById("display")!);
+  const emulator = new Emulator((fb: number[]) => {
+    let output = "";
+    for (let i = 0; i < Emulator.FBColSize; i++) {
+      for (let j = 0; j < Emulator.FBRowSize; j++) {
+        const z = i * Emulator.FBRowSize + j;
+        if (fb[z]) {
+          output += "&#9632;";
+        } else {
+          output += " ";
+        }
+      }
+
+      output += "\n";
+    }
+
+    document.getElementById("display")!.innerHTML = output;
+  });
   emulator.load(rom);
   emulator.run();
 })();
