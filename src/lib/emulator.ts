@@ -34,7 +34,6 @@ export class Emulator {
     // main program loop
     const intervalID = setInterval(() => {
       this._exec(this._next());
-      this.onTick(this.PC, this.FB);
 
       if (last === this.PC) {
         console.log("Infinite loop detected. Exiting...", last);
@@ -59,6 +58,8 @@ export class Emulator {
 
     const H1 = this.RAM[this.PC];
     const H2 = this.RAM[this.PC + 1];
+
+    this.onTick(this.PC, this.FB);
 
     this.PC += 2;
 

@@ -49,7 +49,7 @@ function romWithHighlightedPC(data: Uint8Array, pc: number) {
       output += "\n";
     }
 
-    const highlights = [pc - 2 - 0x200, pc - 1 - 0x200];
+    const highlights = [pc - 0x200, pc + 1 - 0x200];
 
     output += `<span style="color: ${
       highlights.includes(i) ? "red" : "inherit"
@@ -81,7 +81,7 @@ function fbToString(fb: number[]) {
 }
 
 (async () => {
-  const rom = await fetchROM("test-opcode.ch8");
+  const rom = await fetchROM("ibm-logo.ch8");
 
   const history: [number, number[]][] = [];
 
