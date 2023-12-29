@@ -58,7 +58,7 @@ function printFB(fb: number[]) {
     for (let j = 0; j < Emulator.FBRowSize; j++) {
       const z = i * Emulator.FBRowSize + j;
       if (fb[z]) {
-        display.write("&#9632;");
+        display.write("&#9619;");
       } else {
         display.write(" ");
       }
@@ -69,7 +69,7 @@ function printFB(fb: number[]) {
 }
 
 (async () => {
-  const rom = (await fetchROM("ibm-logo.ch8")) as Uint8Array;
+  const rom = (await fetchROM("test-opcode.ch8")) as Uint8Array;
   const emulator = new Emulator((fb: number[]) => {
     display.clear();
     printFB(fb);
