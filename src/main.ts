@@ -1,11 +1,9 @@
 import "./style.css";
 import { init, run } from "./lib/emulator.ts";
 
-async function fetchCode() {
-  const fileName = "ibm-logo.ch8";
-
+async function fetchCode(fileName: string) {
   try {
-    const response = await fetch(`/${fileName}`);
+    const response = await fetch(fileName);
     if (!response.ok) {
       throw new Error(`Invalid response code: ${response.status}`);
     }
@@ -41,7 +39,7 @@ function printRom(cardROM: Uint8Array) {
 }
 
 (async () => {
-  const cardROM = (await fetchCode()) as Uint8Array;
+  const cardROM = (await fetchCode("ibm-logo.ch8")) as Uint8Array;
   printRom(cardROM);
   init(cardROM);
   run();
