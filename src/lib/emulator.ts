@@ -1,5 +1,3 @@
-import { Stack } from "./stack";
-
 const V: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 let PC: number = 0;
 let I = 0;
@@ -7,7 +5,7 @@ let I = 0;
 let delayTimer = 0;
 let soundTimer = 0;
 
-const addressStack = new Stack<number>("address-stack");
+const addressStack: number[] = [];
 let RAM: Uint8Array = new Uint8Array(4 * 1024);
 const FB: number[] = [];
 const FBCoSize = 32;
