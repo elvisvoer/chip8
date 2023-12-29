@@ -82,22 +82,17 @@ async function main() {
   const rom = await fetchROM("test-opcode.ch8");
   const display = new Display(document.getElementById("display")!);
 
-  const refreshDisplay = ({
-    fb,
-    pc,
-    op,
-  }: {
-    pc: number;
-    fb: number[];
-    op: string;
-  }) => {
+  const emulator = new Emulator();
+  emulator.init(rom!);
+  emulator.run();
+  emulator.on("tick", (op: string) => {
     display.clear();
-    display.write(fbToString(fb));
+    display.write(fbToString(emulator.state.fb));
     // debug info
-    display.write(`PC: 0x${pc.toString(16).toUpperCase()}\n`);
+    display.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
     display.write(`Operation: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
-    display.write(hexWithHighlightedText(rom!, pc));
-  };
+    display.write(hexWithHighlightedText(rom!, emulator.state.pc));
+  });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") {
@@ -107,13 +102,6 @@ async function main() {
     if (e.key === "ArrowRight") {
       emulator.next();
     }
-  });
-
-  const emulator = new Emulator();
-  emulator.init(rom!);
-  emulator.run();
-  emulator.on("tick", (op: string) => {
-    refreshDisplay({ op, ...emulator.state });
   });
 }
 
