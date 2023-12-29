@@ -1,299 +1,300 @@
-// registries
-const V: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-let PC: number = 0;
-let I = 0;
+export class Emulator {
+  // registries
+  private V: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  private PC: number = 0;
+  private I = 0;
 
-// times
-let delayTimer = 0;
-let soundTimer = 0;
+  // times
+  private delayTimer = 0;
+  private soundTimer = 0;
 
-const callStack: number[] = [];
-let RAM: Uint8Array = new Uint8Array(4 * 1024);
-// display framebuffer
-const FB: number[] = [];
-const FBCoSize = 32;
-const FBRowSize = 64;
+  private callStack: number[] = [];
+  private RAM: Uint8Array = new Uint8Array(4 * 1024);
+  // display framebuffer
+  private FB: number[] = [];
+  private FBColSize = 32;
+  private FBRowSize = 64;
 
-function drawSprite(x: number, y: number, len: number) {
-  V[0xf] = 0x0;
+  constructor(private display: Element) {
+    // init display FrameBuffer (FB)
+    this._clearScreen();
 
-  // draw a Chip8 8xN sprite
-  for (let a = 0; a < len; a++) {
-    for (let b = 0; b < 8; b++) {
-      const target = ((x + b) % FBRowSize) + ((y + a) % FBCoSize) * FBRowSize;
-      const source = ((RAM[I + a] >> (7 - b)) & 0x1) != 0;
+    // display refresh loop
+    setInterval(() => this._refreshDisplay(), 33);
+  }
 
-      if (!source) {
-        continue;
+  public load(data: Uint8Array, offset: number = 0x200) {
+    for (let i = 0; i < data.length; i += 1) {
+      this.RAM[offset + i] = data[i];
+    }
+  }
+
+  public run(offset: number = 0x200) {
+    this.PC = offset;
+
+    // main program loop
+    setInterval(() => {
+      this._exec(this._next());
+    }, 10);
+  }
+
+  private _clearScreen() {
+    for (var z = 0; z < this.FBColSize * this.FBRowSize; z++) {
+      this.FB[z] = 0;
+    }
+  }
+
+  private _refreshDisplay() {
+    let output = "";
+    for (let i = 0; i < this.FBColSize; i++) {
+      for (let j = 0; j < this.FBRowSize; j++) {
+        const z = i * this.FBRowSize + j;
+        if (this.FB[z]) {
+          output += "&#9632;";
+        } else {
+          output += " ";
+        }
       }
 
-      if (FB[target]) {
-        FB[target] = 0;
-        V[0xf] = 0x1;
-      } else {
-        FB[target] = 1;
+      output += "\n";
+    }
+
+    this.display.innerHTML = output;
+  }
+
+  private _next() {
+    if (this.PC === this.RAM.length) {
+      throw new Error("Emulator reached out of memory");
+    }
+
+    const H1 = this.RAM[this.PC];
+    const H2 = this.RAM[this.PC + 1];
+
+    this.PC += 2;
+
+    return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f];
+  }
+
+  private _drawSprite(x: number, y: number, len: number) {
+    this.V[0xf] = 0x0;
+
+    // draw a Chip8 8xN sprite
+    for (let a = 0; a < len; a++) {
+      for (let b = 0; b < 8; b++) {
+        const target =
+          ((x + b) % this.FBRowSize) +
+          ((y + a) % this.FBColSize) * this.FBRowSize;
+        const source = ((this.RAM[this.I + a] >> (7 - b)) & 0x1) != 0;
+
+        if (!source) {
+          continue;
+        }
+
+        if (this.FB[target]) {
+          this.FB[target] = 0;
+          this.V[0xf] = 0x1;
+        } else {
+          this.FB[target] = 1;
+        }
       }
     }
   }
-}
 
-function clearScreen() {
-  for (var z = 0; z < FBCoSize * FBRowSize; z++) {
-    FB[z] = 0;
-  }
-}
+  private _exec(op: number[]) {
+    const hexStr = `${op.reduce(
+      (acc, n) => acc + n.toString(16),
+      ""
+    )}`.toLocaleUpperCase();
+    const NNN = parseInt(hexStr, 16) & 0x0fff;
+    const NN = parseInt(hexStr, 16) & 0x00ff;
+    const [O, X, Y, N] = op;
 
-function fetchNextInstruction() {
-  if (PC === RAM.length) {
-    throw new Error("Emulator reached out of memory");
-  }
-
-  const H1 = RAM[PC];
-  const H2 = RAM[PC + 1];
-
-  PC += 2;
-
-  return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f];
-}
-
-function executeInstruction(op: number[]) {
-  const hexStr = `${op.reduce(
-    (acc, n) => acc + n.toString(16),
-    ""
-  )}`.toLocaleUpperCase();
-  const NNN = parseInt(hexStr, 16) & 0x0fff;
-  const NN = parseInt(hexStr, 16) & 0x00ff;
-  const [O, X, Y, N] = op;
-
-  // 0000 - noop
-  if (hexStr === "0000") {
-    return;
-  }
-
-  // 00E0 - clear screen
-  if (hexStr === "00E0") {
-    clearScreen();
-    return;
-  }
-
-  // 00EE - subroutine return
-  if (hexStr === "00EE") {
-    const top = callStack.pop() as number;
-    PC = top;
-    return;
-  }
-
-  switch (O) {
-    // 1NNN - jump
-    case 1: {
-      PC = NNN;
-      break;
+    // 0000 - noop
+    if (hexStr === "0000") {
+      return;
     }
-    // 2NNN - subroutine call
-    case 2: {
-      callStack.push(PC); // push return address
-      PC = NNN;
-      break;
+
+    // 00E0 - clear screen
+    if (hexStr === "00E0") {
+      this._clearScreen();
+      return;
     }
-    // 3XNN - skip if equal
-    case 3: {
-      if (V[X] === NN) {
-        PC += 2;
+
+    // 00EE - subroutine return
+    if (hexStr === "00EE") {
+      const top = this.callStack.pop() as number;
+      this.PC = top;
+      return;
+    }
+
+    switch (O) {
+      // 1NNN - jump
+      case 1: {
+        this.PC = NNN;
+        break;
       }
-      break;
-    }
-    // 4XNN - skip if not equal
-    case 4: {
-      if (V[X] !== NN) {
-        PC += 2;
+      // 2NNN - subroutine call
+      case 2: {
+        this.callStack.push(this.PC); // push return address
+        this.PC = NNN;
+        break;
       }
-      break;
-    }
-    // 5XY0 - skip if equal
-    case 5: {
-      if (V[X] === V[Y]) {
-        PC += 2;
+      // 3XNN - skip if equal
+      case 3: {
+        if (this.V[X] === NN) {
+          this.PC += 2;
+        }
+        break;
       }
-      break;
-    }
-    // 9XY0 - skip if not equal
-    case 9: {
-      if (V[X] !== V[Y]) {
-        PC += 2;
+      // 4XNN - skip if not equal
+      case 4: {
+        if (this.V[X] !== NN) {
+          this.PC += 2;
+        }
+        break;
       }
-      break;
-    }
-    // 6XNN - set
-    case 6: {
-      V[X] = NN;
-      break;
-    }
-    // 7XNN - add
-    case 7: {
-      V[X] += NN;
-      break;
-    }
-    case 8: {
-      switch (N) {
-        // 8XY0 - set
-        case 0: {
-          V[X] = V[Y];
-          break;
+      // 5XY0 - skip if equal
+      case 5: {
+        if (this.V[X] === this.V[Y]) {
+          this.PC += 2;
         }
-        // 8XY1 - binary or
-        case 1: {
-          V[X] |= V[Y];
-          break;
-        }
-        // 8XY2 - binary and
-        case 2: {
-          V[X] &= V[Y];
-          break;
-        }
-        // 8XY3 - logical xor
-        case 3: {
-          V[X] ^= V[Y];
-          break;
-        }
-        // 8XY4 - add
-        case 4: {
-          V[X] += V[Y];
-          // carry flag
-          V[0xf] = V[X] > 255 ? 1 : 0;
-          break;
-        }
-        // 8XY5 - subtract
-        case 5: {
-          // carry flag (before subtraction)
-          V[0xf] = V[X] > V[Y] ? 1 : 0;
-          V[X] = V[X] - V[Y];
-          break;
-        }
-        // 8XY7 - subtract
-        case 7: {
-          // carry flag (before subtraction)
-          V[0xf] = V[Y] > V[X] ? 1 : 0;
-          V[X] = V[Y] - V[X];
-          break;
-        }
-        // 8XY6 - shift
-        case 6: {
-          // TODO(@elvis): optional -> set VX = VY
-          // carry flag (before shift)
-          V[0xf] = (V[X] & 0x01) > 0 ? 1 : 0;
-          V[X] = V[X] >> 1;
-          break;
-        }
-        // 8XYE - shift
-        case 0xe: {
-          // TODO(@elvis): optional -> set VX = VY
-          // carry flag (before shift)
-          V[0xf] = (V[X] & 0x8000) > 0 ? 1 : 0;
-          V[X] = V[X] << 1;
-          break;
-        }
-
-        default:
-          throw new Error(`Unknown instruction #${hexStr}`);
+        break;
       }
-      break;
-    }
-    // ANNN - set index
-    case 0xa: {
-      I = NNN;
-      break;
-    }
-    // BNNN - jump with offset
-    case 0xb: {
-      const offset = V[0];
-      PC = NNN + offset;
-      break;
-    }
-    // CXNN - random
-    case 0xc: {
-      const random = Math.floor(Math.random() * 255);
-      V[X] = random & NN;
-      break;
-    }
-    // DXYN - display
-    case 0xd: {
-      drawSprite(V[X], V[Y], N);
-      break;
-    }
-    case 0xf: {
-      switch (NN) {
-        // FX33 - store
-        case 0x33: {
-          RAM[I] = Math.floor(V[X] / 100) % 10;
-          RAM[I + 1] = Math.floor(V[X] / 10) % 10;
-          RAM[I + 2] = V[X] % 10;
-          break;
+      // 9XY0 - skip if not equal
+      case 9: {
+        if (this.V[X] !== this.V[Y]) {
+          this.PC += 2;
         }
-        // FX55 - store
-        case 0x55: {
-          for (let i = 0; i <= X; i++) {
-            RAM[I + i] = V[i];
+        break;
+      }
+      // 6XNN - set
+      case 6: {
+        this.V[X] = NN;
+        break;
+      }
+      // 7XNN - add
+      case 7: {
+        this.V[X] += NN;
+        break;
+      }
+      case 8: {
+        switch (N) {
+          // 8XY0 - set
+          case 0: {
+            this.V[X] = this.V[Y];
+            break;
           }
-          break;
-        }
-        // FX65 - load
-        case 0x65: {
-          for (let i = 0; i <= X; i++) {
-            V[i] = RAM[I + i];
+          // 8XY1 - binary or
+          case 1: {
+            this.V[X] |= this.V[Y];
+            break;
           }
-          break;
+          // 8XY2 - binary and
+          case 2: {
+            this.V[X] &= this.V[Y];
+            break;
+          }
+          // 8XY3 - logical xor
+          case 3: {
+            this.V[X] ^= this.V[Y];
+            break;
+          }
+          // 8XY4 - add
+          case 4: {
+            this.V[X] += this.V[Y];
+            // carry flag
+            this.V[0xf] = this.V[X] > 255 ? 1 : 0;
+            break;
+          }
+          // 8XY5 - subtract
+          case 5: {
+            // carry flag (before subtraction)
+            this.V[0xf] = this.V[X] > this.V[Y] ? 1 : 0;
+            this.V[X] = this.V[X] - this.V[Y];
+            break;
+          }
+          // 8XY7 - subtract
+          case 7: {
+            // carry flag (before subtraction)
+            this.V[0xf] = this.V[Y] > this.V[X] ? 1 : 0;
+            this.V[X] = this.V[Y] - this.V[X];
+            break;
+          }
+          // 8XY6 - shift
+          case 6: {
+            // TODO(@elvis): optional -> set VX = VY
+            // carry flag (before shift)
+            this.V[0xf] = (this.V[X] & 0x01) > 0 ? 1 : 0;
+            this.V[X] = this.V[X] >> 1;
+            break;
+          }
+          // 8XYE - shift
+          case 0xe: {
+            // TODO(@elvis): optional -> set VX = VY
+            // carry flag (before shift)
+            this.V[0xf] = (this.V[X] & 0x8000) > 0 ? 1 : 0;
+            this.V[X] = this.V[X] << 1;
+            break;
+          }
+
+          default:
+            throw new Error(`Unknown instruction #${hexStr}`);
         }
-
-        default:
-          throw new Error(`Unknown instruction #${hexStr}`);
+        break;
       }
-      break;
-    }
-    default:
-      throw new Error(`Unknown instruction #${hexStr}`);
-  }
-}
-
-function loop() {
-  const instr = fetchNextInstruction();
-  executeInstruction(instr);
-}
-
-const display = document.getElementById("display")! as HTMLCanvasElement;
-
-function refreshDisplay() {
-  let output = "";
-  for (let i = 0; i < FBCoSize; i++) {
-    for (let j = 0; j < FBRowSize; j++) {
-      const z = i * FBRowSize + j;
-      if (FB[z]) {
-        output += "&#9632;";
-      } else {
-        output += " ";
+      // ANNN - set index
+      case 0xa: {
+        this.I = NNN;
+        break;
       }
+      // BNNN - jump with offset
+      case 0xb: {
+        const offset = this.V[0];
+        this.PC = NNN + offset;
+        break;
+      }
+      // CXNN - random
+      case 0xc: {
+        const random = Math.floor(Math.random() * 255);
+        this.V[X] = random & NN;
+        break;
+      }
+      // DXYN - display
+      case 0xd: {
+        this._drawSprite(this.V[X], this.V[Y], N);
+        break;
+      }
+      case 0xf: {
+        switch (NN) {
+          // FX33 - store
+          case 0x33: {
+            this.RAM[this.I] = Math.floor(this.V[X] / 100) % 10;
+            this.RAM[this.I + 1] = Math.floor(this.V[X] / 10) % 10;
+            this.RAM[this.I + 2] = this.V[X] % 10;
+            break;
+          }
+          // FX55 - store
+          case 0x55: {
+            for (let i = 0; i <= X; i++) {
+              this.RAM[this.I + i] = this.V[i];
+            }
+            break;
+          }
+          // FX65 - load
+          case 0x65: {
+            for (let i = 0; i <= X; i++) {
+              this.V[i] = this.RAM[this.I + i];
+            }
+            break;
+          }
+
+          default:
+            throw new Error(`Unknown instruction #${hexStr}`);
+        }
+        break;
+      }
+      default:
+        throw new Error(`Unknown instruction #${hexStr}`);
     }
-
-    output += "\n";
   }
-
-  display.innerHTML = output;
-}
-
-export function load(data: Uint8Array, offset: number = 0x200) {
-  for (let i = 0; i < data.length; i += 1) {
-    RAM[offset + i] = data[i];
-  }
-}
-
-// start emulator from offset address, default: 0x200
-export function run(offset: number = 0x200) {
-  PC = offset;
-
-  // init display FrameBuffer (FB)
-  clearScreen();
-
-  // display refresh loop
-  setInterval(refreshDisplay, 33);
-  // main program loop
-  setInterval(loop, 10);
 }

@@ -1,5 +1,5 @@
 import "./style.css";
-import * as Emulator from "./lib/emulator.ts";
+import { Emulator } from "./lib/emulator.ts";
 
 async function fetchROM(fileName: string) {
   try {
@@ -41,6 +41,8 @@ function printROM(data: Uint8Array) {
 (async () => {
   const rom = (await fetchROM("ibm-logo.ch8")) as Uint8Array;
   printROM(rom);
-  Emulator.load(rom);
-  Emulator.run();
+
+  const emulator = new Emulator(document.getElementById("display")!);
+  emulator.load(rom);
+  emulator.run();
 })();
