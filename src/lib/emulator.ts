@@ -256,7 +256,7 @@ function executeInstruction(op: number[]) {
 const canvas = document.getElementById("display")! as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 
-function print() {
+function refreshDisplay() {
   ctx.reset();
   for (let i = 0; i < FBCoSize; i++) {
     for (let j = 0; j < FBRowSize; j++) {
@@ -269,7 +269,7 @@ function print() {
   }
 }
 
-setInterval(print, 50);
+setInterval(refreshDisplay, 50);
 
 export function init(cardROM: Uint8Array) {
   // copy card memory into RAM starting at address 0x200
