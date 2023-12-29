@@ -159,8 +159,8 @@ export class Emulator extends EventEmitter {
   }
 
   private _next() {
-    if (this.PC === this.RAM.length) {
-      throw new Error("Emulator reached out of memory");
+    if (this.PC > this.RAM.length) {
+      throw new Error("Emulator reached out of memory.");
     }
 
     const H1 = this.RAM[this.PC];
