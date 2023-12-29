@@ -100,10 +100,9 @@ function createHistory() {
 }
 
 async function main() {
-  const display = new Display(document.getElementById("display")!);
-  const rom = await fetchROM("test-opcode.ch8");
-
   const history = createHistory();
+  const rom = await fetchROM("test-opcode.ch8");
+  const display = new Display(document.getElementById("display")!);
 
   const refreshDisplay = ({
     fb,
@@ -132,16 +131,13 @@ async function main() {
     }
   });
 
-  const onTick = (meta: { pc: number; fb: number[]; op: string }) => {
-    refreshDisplay(meta);
-    history.add(meta);
-  };
-
-  const emulator = new Emulator(onTick, () => {
-    /* noop */
-  });
+  const emulator = new Emulator();
   emulator.load(rom!);
   emulator.run();
+  emulator.on("tick", (meta: { pc: number; fb: number[]; op: string }) => {
+    refreshDisplay(meta);
+    history.add(meta);
+  });
 }
 
 main();

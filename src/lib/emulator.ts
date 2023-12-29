@@ -1,3 +1,5 @@
+import EventEmitter from "./events";
+
 export function getOpInfo(op: string) {
   const NN = parseInt(op, 16) & 0x00ff;
   const O = (parseInt(op, 16) >> 12) & 0x000f;
@@ -77,7 +79,7 @@ export function getOpInfo(op: string) {
   throw new Error(`Unknown instruction #${op}`);
 }
 
-export class Emulator {
+export class Emulator extends EventEmitter {
   // registries
   private V: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   private PC: number = 0;
@@ -95,11 +97,9 @@ export class Emulator {
   public static readonly FBColSize = 32;
   public static readonly FBRowSize = 64;
 
-  constructor(
-    private onTick: Function,
-    private onExit: Function,
-    private offset = 0x200
-  ) {
+  constructor(private offset = 0x200) {
+    super();
+
     this.PC = offset;
     // init display
     this._clearFrameBuffer();
@@ -120,7 +120,7 @@ export class Emulator {
       if (last === this.PC) {
         console.log("Infinite loop detected. Exiting...", last);
         clearInterval(intervalID);
-        this.onExit();
+        this.emit("exit");
       }
 
       last = this.PC;
@@ -170,7 +170,7 @@ export class Emulator {
       .toUpperCase();
 
     // return registries and a copy of framebuffer
-    this.onTick({ pc: this.PC - this.offset, fb: [...this.FB], op });
+    this.emit("tick", { pc: this.PC - this.offset, fb: [...this.FB], op });
 
     this.PC += 2;
 
