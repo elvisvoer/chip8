@@ -27,38 +27,57 @@ async function fetchROM(fileName: string) {
   }
 }
 
+class Display {
+  constructor(private el: HTMLElement) {}
+
+  public clear() {
+    this.el.innerHTML = "";
+  }
+
+  public write(data: string) {
+    this.el.innerHTML += data;
+  }
+}
+
+const display = new Display(document.getElementById("display")!);
+
 function printROM(data: Uint8Array) {
   let output = "";
   for (let i = 0; i < data.length; i += 1) {
-    output += `<span>0x${data[i] < 0x10 ? "0" : ""}${data[i]
+    if (i % 12 === 0) {
+      output += "\n";
+    }
+    output += `0x${data[i] < 0x10 ? "0" : ""}${data[i]
       .toString(16)
-      .toUpperCase()}</span>`;
+      .toUpperCase()} `;
   }
 
-  document.getElementById("rom")!.innerHTML = output;
+  display.write(output);
+}
+
+function printFB(fb: number[]) {
+  display.clear();
+
+  let output = "";
+  for (let i = 0; i < Emulator.FBColSize; i++) {
+    for (let j = 0; j < Emulator.FBRowSize; j++) {
+      const z = i * Emulator.FBRowSize + j;
+      if (fb[z]) {
+        output += "&#9632;";
+      } else {
+        output += " ";
+      }
+    }
+
+    output += "\n";
+  }
+
+  display.write(output);
 }
 
 (async () => {
   const rom = (await fetchROM("ibm-logo.ch8")) as Uint8Array;
-  printROM(rom);
-
-  const emulator = new Emulator((fb: number[]) => {
-    let output = "";
-    for (let i = 0; i < Emulator.FBColSize; i++) {
-      for (let j = 0; j < Emulator.FBRowSize; j++) {
-        const z = i * Emulator.FBRowSize + j;
-        if (fb[z]) {
-          output += "&#9632;";
-        } else {
-          output += " ";
-        }
-      }
-
-      output += "\n";
-    }
-
-    document.getElementById("display")!.innerHTML = output;
-  });
+  const emulator = new Emulator(printFB);
   emulator.load(rom);
   emulator.run();
 })();
