@@ -83,7 +83,7 @@ async function main() {
   const display = new Display(document.getElementById("display")!);
 
   const emulator = new Emulator();
-  emulator.init(rom!);
+  emulator.load(rom!);
   emulator.run();
 
   emulator.on("tick", (op: string, count: number) => {

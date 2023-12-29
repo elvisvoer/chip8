@@ -122,7 +122,7 @@ export class Emulator extends EventEmitter {
     };
   }
 
-  public init(data: Uint8Array) {
+  public load(data: Uint8Array) {
     for (let i = 0; i < data.length; i += 1) {
       this.RAM[this.offset + i] = data[i];
     }
@@ -135,8 +135,9 @@ export class Emulator extends EventEmitter {
   }
 
   public next() {
-    this._exec(this._load());
+    this._exec(this._fetch());
 
+    // pause on infinite loop
     if (this.lastPC === this.PC) {
       this.paused = true;
     }
@@ -190,7 +191,7 @@ export class Emulator extends EventEmitter {
     }
   }
 
-  private _load() {
+  private _fetch() {
     if (this.PC > this.RAM.length) {
       throw new Error("Emulator reached out of memory.");
     }
