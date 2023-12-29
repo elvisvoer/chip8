@@ -97,43 +97,46 @@ export class Emulator extends EventEmitter {
   public static readonly FBColSize = 32;
   public static readonly FBRowSize = 64;
 
+  // for loop detection
+  private lastPC: number = 0;
+
   constructor(private offset = 0x200) {
     super();
 
-    this.PC = offset;
+    this.lastPC = this.PC = offset;
     // init display
-    this._clearFrameBuffer();
+    this._clear();
   }
 
-  public load(data: Uint8Array) {
+  public init(data: Uint8Array) {
     for (let i = 0; i < data.length; i += 1) {
       this.RAM[this.offset + i] = data[i];
     }
   }
 
   public run() {
-    let last = this.PC;
     // main program loop
-    const intervalID = setInterval(() => {
-      this._exec(this._next());
-
-      if (last === this.PC) {
-        console.log("Infinite loop detected. Exiting...", last);
-        clearInterval(intervalID);
-        this.emit("exit");
-      }
-
-      last = this.PC;
-    }, 80);
+    const intervalID = setInterval(() => this.next(), 80);
+    this.on("exit", () => clearInterval(intervalID));
   }
 
-  private _clearFrameBuffer() {
+  public next() {
+    this._exec(this._load());
+
+    if (this.lastPC === this.PC) {
+      this.emit("exit");
+    }
+
+    this.lastPC = this.PC;
+  }
+
+  private _clear() {
     for (var z = 0; z < Emulator.FBColSize * Emulator.FBRowSize; z++) {
       this.FB[z] = 0;
     }
   }
 
-  private _drawSprite(x: number, y: number, len: number) {
+  private _draw(x: number, y: number, len: number) {
     this.V[0xf] = 0x0;
 
     // draw a Chip8 8xN sprite
@@ -158,7 +161,7 @@ export class Emulator extends EventEmitter {
     }
   }
 
-  private _next() {
+  private _load() {
     if (this.PC > this.RAM.length) {
       throw new Error("Emulator reached out of memory.");
     }
@@ -186,7 +189,7 @@ export class Emulator extends EventEmitter {
       "0000": () => {
         /* noop*/
       },
-      "00E0": () => this._clearFrameBuffer(),
+      "00E0": () => this._clear(),
       "00EE": () => {
         const top = this.callStack.pop() as number;
         this.PC = top;
@@ -258,7 +261,7 @@ export class Emulator extends EventEmitter {
         const random = Math.floor(Math.random() * 255);
         this.V[X] = random & NN;
       },
-      DXYN: () => this._drawSprite(this.V[X], this.V[Y], N),
+      DXYN: () => this._draw(this.V[X], this.V[Y], N),
       FX33: () => {
         this.RAM[this.I] = Math.floor(this.V[X] / 100) % 10;
         this.RAM[this.I + 1] = Math.floor(this.V[X] / 10) % 10;

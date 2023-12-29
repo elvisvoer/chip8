@@ -132,7 +132,7 @@ async function main() {
   });
 
   const emulator = new Emulator();
-  emulator.load(rom!);
+  emulator.init(rom!);
   emulator.run();
   emulator.on("tick", (meta: { pc: number; fb: number[]; op: string }) => {
     refreshDisplay(meta);
