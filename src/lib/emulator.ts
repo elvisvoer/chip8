@@ -259,20 +259,24 @@ function loop() {
   executeInstruction(instr);
 }
 
-const canvas = document.getElementById("display")! as HTMLCanvasElement;
-const ctx = canvas.getContext("2d")!;
+const display = document.getElementById("display")! as HTMLCanvasElement;
 
 function refreshDisplay() {
-  ctx.reset();
+  let output = "";
   for (let i = 0; i < FBCoSize; i++) {
     for (let j = 0; j < FBRowSize; j++) {
       const z = i * FBRowSize + j;
       if (FB[z]) {
-        ctx.rect(j * 10, i * 10, 10, 10);
-        ctx.fill();
+        output += "&#9632;";
+      } else {
+        output += " ";
       }
     }
+
+    output += "\n";
   }
+
+  display.innerHTML = output;
 }
 
 export function load(data: Uint8Array, offset: number = 0x200) {
