@@ -45,11 +45,11 @@ function getColoredText(text: string, color: string) {
   return `<span style="color: ${color};">${text}</span>`;
 }
 
-function hexWithHighlightedText(data: Uint8Array, offset: number, width = 2) {
+function hexWithHighlightedText(data: Uint8Array, pos: number, len = 2) {
   let output = "";
-  const highlights = Array(width)
+  const highlights = Array(len)
     .fill(0)
-    .map((_, index) => index + offset);
+    .map((_, index) => index + pos);
 
   for (let i = 0; i < data.length; i += 1) {
     output += getColoredText(
