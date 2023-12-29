@@ -107,27 +107,36 @@ function createHistory() {
 
   const history = createHistory();
 
-  const refreshDisplay = (pc: number, fb: number[]) => {
+  const refreshDisplay = ({
+    fb,
+    pc,
+    op,
+  }: {
+    pc: number;
+    fb: number[];
+    op: string;
+  }) => {
     display.clear();
     display.write(fbToString(fb));
+    // debug info
+    display.write(`PC: 0x${pc.toString(16).toUpperCase()}\n`);
+    display.write(`Operation: 0x${op}\n`);
     display.write(hexWithHighlightedText(rom!, pc));
   };
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") {
-      const [pc, fb] = history.prev();
-      refreshDisplay(pc, fb);
+      refreshDisplay(history.prev());
     }
 
     if (e.key === "ArrowRight") {
-      const [pc, fb] = history.next();
-      refreshDisplay(pc, fb);
+      refreshDisplay(history.next());
     }
   });
 
-  const onTick = ({ pc, fb }: { pc: number; fb: number[] }) => {
-    refreshDisplay(pc, fb);
-    history.add([pc, fb]);
+  const onTick = (meta: { pc: number; fb: number[]; op: string }) => {
+    refreshDisplay(meta);
+    history.add(meta);
   };
 
   const emulator = new Emulator(onTick, () => {

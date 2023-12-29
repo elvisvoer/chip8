@@ -98,197 +98,191 @@ export class Emulator {
     return op;
   }
 
-  private _exec(op: string) {
-    const NNN = parseInt(op, 16) & 0x0fff;
+  public getOpInfo(op: string) {
     const NN = parseInt(op, 16) & 0x00ff;
-    const [O, X, Y, N] = op.split("").map((d) => parseInt(d, 16));
+    const O = (parseInt(op, 16) >> 12) & 0x000f;
+    const N = parseInt(op, 16) & 0x000f;
 
-    // 0000 - noop
-    if (op === "0000") {
-      return;
-    }
+    const simpleOps: any = {
+      "0000": ["0000", "noop"],
+      "00E0": ["00E0", "clear screen"],
+      "00EE": ["00EE", "subroutine return"],
+    };
 
-    // 00E0 - clear screen
-    if (op === "00E0") {
-      this._clearFrameBuffer();
-      return;
-    }
-
-    // 00EE - subroutine return
-    if (op === "00EE") {
-      const top = this.callStack.pop() as number;
-      this.PC = top;
-      return;
+    if (Object.keys(simpleOps).includes(op)) {
+      return simpleOps[op];
     }
 
     switch (O) {
-      // 1NNN - jump
-      case 1: {
-        this.PC = NNN;
+      case 1:
+        return ["1NNN", "jump"];
+      case 2:
+        return ["2NNN", "subroutine call"];
+      case 3:
+        return ["3XNN", "skip if equal"];
+      case 4:
+        return ["4XNN", "skip if not equal"];
+      case 5:
+        return ["5XY0", "skip if equal"];
+      case 9:
+        return ["9XY0", "skip if not equal"];
+      case 6:
+        return ["6XNN", "set"];
+      case 7:
+        return ["7XNN", "add"];
+      case 8: {
+        switch (N) {
+          case 0:
+            return ["8XY0", "set"];
+          case 1:
+            return ["8XY1", "binary or"];
+          case 2:
+            return ["8XY2", "binary and"];
+          case 3:
+            return ["8XY3", "logical xor"];
+          case 4:
+            return ["8XY4", "add"];
+          case 5:
+            return ["8XY5", "subtract"];
+          case 7:
+            return ["8XY7", "subtract"];
+          case 6:
+            return ["8XY6", "shift"];
+          case 0xe:
+            return ["8XYE", "shift"];
+        }
         break;
       }
-      // 2NNN - subroutine call
-      case 2: {
+      case 0xa:
+        return ["ANNN", "set index"];
+      case 0xb:
+        return ["BNNN", "jump with offset"];
+      case 0xc:
+        return ["CXNN", "random"];
+      case 0xd:
+        return ["DXYN", "display"];
+      case 0xf: {
+        switch (NN) {
+          case 0x33:
+            return ["FX33", "store"];
+          case 0x55:
+            return ["FX55", "store"];
+          case 0x65:
+            return ["FX65", "load"];
+        }
+        break;
+      }
+    }
+
+    throw new Error(`Unknown instruction #${op}`);
+  }
+
+  private _exec(op: string) {
+    const NNN = parseInt(op, 16) & 0x0fff;
+    const NN = parseInt(op, 16) & 0x00ff;
+    const [_, X, Y, N] = op.split("").map((d) => parseInt(d, 16));
+
+    const instructionSet: any = {
+      "0000": () => {
+        /* noop*/
+      },
+      "00E0": () => this._clearFrameBuffer(),
+      "00EE": () => {
+        const top = this.callStack.pop() as number;
+        this.PC = top;
+      },
+      "1NNN": () => (this.PC = NNN),
+      "2NNN": () => {
         this.callStack.push(this.PC); // push return address
         this.PC = NNN;
-        break;
-      }
-      // 3XNN - skip if equal
-      case 3: {
+      },
+      "3XNN": () => {
         if (this.V[X] === NN) {
           this.PC += 2;
         }
-        break;
-      }
-      // 4XNN - skip if not equal
-      case 4: {
+      },
+      "4XNN": () => {
         if (this.V[X] !== NN) {
           this.PC += 2;
         }
-        break;
-      }
-      // 5XY0 - skip if equal
-      case 5: {
+      },
+      "5XY0": () => {
         if (this.V[X] === this.V[Y]) {
           this.PC += 2;
         }
-        break;
-      }
-      // 9XY0 - skip if not equal
-      case 9: {
+      },
+      "9XY0": () => {
         if (this.V[X] !== this.V[Y]) {
           this.PC += 2;
         }
-        break;
-      }
-      // 6XNN - set
-      case 6: {
-        this.V[X] = NN;
-        break;
-      }
-      // 7XNN - add
-      case 7: {
-        this.V[X] += NN;
-        break;
-      }
-      case 8: {
-        switch (N) {
-          // 8XY0 - set
-          case 0: {
-            this.V[X] = this.V[Y];
-            break;
-          }
-          // 8XY1 - binary or
-          case 1: {
-            this.V[X] |= this.V[Y];
-            break;
-          }
-          // 8XY2 - binary and
-          case 2: {
-            this.V[X] &= this.V[Y];
-            break;
-          }
-          // 8XY3 - logical xor
-          case 3: {
-            this.V[X] ^= this.V[Y];
-            break;
-          }
-          // 8XY4 - add
-          case 4: {
-            this.V[X] += this.V[Y];
-            // carry flag
-            this.V[0xf] = this.V[X] > 255 ? 1 : 0;
-            break;
-          }
-          // 8XY5 - subtract
-          case 5: {
-            // carry flag (before subtraction)
-            this.V[0xf] = this.V[X] > this.V[Y] ? 1 : 0;
-            this.V[X] = this.V[X] - this.V[Y];
-            break;
-          }
-          // 8XY7 - subtract
-          case 7: {
-            // carry flag (before subtraction)
-            this.V[0xf] = this.V[Y] > this.V[X] ? 1 : 0;
-            this.V[X] = this.V[Y] - this.V[X];
-            break;
-          }
-          // 8XY6 - shift
-          case 6: {
-            // TODO(@elvis): optional -> set VX = VY
-            // carry flag (before shift)
-            this.V[0xf] = (this.V[X] & 0x01) > 0 ? 1 : 0;
-            this.V[X] = this.V[X] >> 1;
-            break;
-          }
-          // 8XYE - shift
-          case 0xe: {
-            // TODO(@elvis): optional -> set VX = VY
-            // carry flag (before shift)
-            this.V[0xf] = (this.V[X] & 0x8000) > 0 ? 1 : 0;
-            this.V[X] = this.V[X] << 1;
-            break;
-          }
-
-          default:
-            throw new Error(`Unknown instruction #${op}`);
-        }
-        break;
-      }
-      // ANNN - set index
-      case 0xa: {
-        this.I = NNN;
-        break;
-      }
-      // BNNN - jump with offset
-      case 0xb: {
+      },
+      "6XNN": () => (this.V[X] = NN),
+      "7XNN": () => (this.V[X] += NN),
+      "8XY0": () => (this.V[X] = this.V[Y]),
+      "8XY1": () => (this.V[X] |= this.V[Y]),
+      "8XY2": () => (this.V[X] &= this.V[Y]),
+      "8XY3": () => (this.V[X] ^= this.V[Y]),
+      "8XY4": () => {
+        this.V[X] += this.V[Y];
+        // carry flag
+        this.V[0xf] = this.V[X] > 255 ? 1 : 0;
+      },
+      "8XY5": () => {
+        // carry flag (before subtraction)
+        this.V[0xf] = this.V[X] > this.V[Y] ? 1 : 0;
+        this.V[X] = this.V[X] - this.V[Y];
+      },
+      "8XY7": () => {
+        // carry flag (before subtraction)
+        this.V[0xf] = this.V[Y] > this.V[X] ? 1 : 0;
+        this.V[X] = this.V[Y] - this.V[X];
+      },
+      "8XY6": () => {
+        // TODO(@elvis): optional -> set VX = VY
+        // carry flag (before shift)
+        this.V[0xf] = (this.V[X] & 0x01) > 0 ? 1 : 0;
+        this.V[X] = this.V[X] >> 1;
+      },
+      "8XYE": () => {
+        // TODO(@elvis): optional -> set VX = VY
+        // carry flag (before shift)
+        this.V[0xf] = (this.V[X] & 0x8000) > 0 ? 1 : 0;
+        this.V[X] = this.V[X] << 1;
+      },
+      ANNN: () => (this.I = NNN),
+      BNNN: () => {
         const offset = this.V[0];
         this.PC = NNN + offset;
-        break;
-      }
-      // CXNN - random
-      case 0xc: {
+      },
+      CXNN: () => {
         const random = Math.floor(Math.random() * 255);
         this.V[X] = random & NN;
-        break;
-      }
-      // DXYN - display
-      case 0xd: {
-        this._drawSprite(this.V[X], this.V[Y], N);
-        break;
-      }
-      case 0xf: {
-        switch (NN) {
-          // FX33 - store
-          case 0x33: {
-            this.RAM[this.I] = Math.floor(this.V[X] / 100) % 10;
-            this.RAM[this.I + 1] = Math.floor(this.V[X] / 10) % 10;
-            this.RAM[this.I + 2] = this.V[X] % 10;
-            break;
-          }
-          // FX55 - store
-          case 0x55: {
-            for (let i = 0; i <= X; i++) {
-              this.RAM[this.I + i] = this.V[i];
-            }
-            break;
-          }
-          // FX65 - load
-          case 0x65: {
-            for (let i = 0; i <= X; i++) {
-              this.V[i] = this.RAM[this.I + i];
-            }
-            break;
-          }
-
-          default:
-            throw new Error(`Unknown instruction #${op}`);
+      },
+      DXYN: () => this._drawSprite(this.V[X], this.V[Y], N),
+      FX33: () => {
+        this.RAM[this.I] = Math.floor(this.V[X] / 100) % 10;
+        this.RAM[this.I + 1] = Math.floor(this.V[X] / 10) % 10;
+        this.RAM[this.I + 2] = this.V[X] % 10;
+      },
+      FX55: () => {
+        for (let i = 0; i <= X; i++) {
+          this.RAM[this.I + i] = this.V[i];
         }
-        break;
-      }
-      default:
-        throw new Error(`Unknown instruction #${op}`);
+      },
+      FX65: () => {
+        for (let i = 0; i <= X; i++) {
+          this.V[i] = this.RAM[this.I + i];
+        }
+      },
+    };
+
+    const [instrType] = this.getOpInfo(op);
+    const instr = instructionSet[instrType];
+
+    if (!instr) {
+      throw new Error(`No handle found for instruction ${op}`);
     }
+
+    instr();
   }
 }
