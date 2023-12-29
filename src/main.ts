@@ -69,7 +69,7 @@ function printFB(fb: number[]) {
 }
 
 (async () => {
-  const rom = (await fetchROM("test-opcode.ch8")) as Uint8Array;
+  const rom = (await fetchROM("ibm-logo.ch8")) as Uint8Array;
   const emulator = new Emulator((fb: number[]) => {
     display.clear();
     printFB(fb);
