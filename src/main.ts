@@ -78,29 +78,7 @@ function fbToString(fb: number[]) {
   return output;
 }
 
-function createHistory() {
-  const data: any[] = [];
-  let index = data.length;
-
-  return {
-    size: () => data.length,
-    add: (d: any) => {
-      data.push(d);
-      index = data.length;
-    },
-    prev: () => {
-      index = Math.max(0, index - 1);
-      return data[index];
-    },
-    next: () => {
-      index = Math.min(data.length - 1, index + 1);
-      return data[index];
-    },
-  };
-}
-
 async function main() {
-  const history = createHistory();
   const rom = await fetchROM("test-opcode.ch8");
   const display = new Display(document.getElementById("display")!);
 
@@ -123,20 +101,19 @@ async function main() {
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") {
-      refreshDisplay(history.prev());
+      emulator.prev();
     }
 
     if (e.key === "ArrowRight") {
-      refreshDisplay(history.next());
+      emulator.next();
     }
   });
 
   const emulator = new Emulator();
   emulator.init(rom!);
   emulator.run();
-  emulator.on("tick", (meta: { pc: number; fb: number[]; op: string }) => {
-    refreshDisplay(meta);
-    history.add(meta);
+  emulator.on("tick", (op: string) => {
+    refreshDisplay({ op, ...emulator.state });
   });
 }
 

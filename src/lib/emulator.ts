@@ -99,6 +99,8 @@ export class Emulator extends EventEmitter {
 
   // for loop detection
   private lastPC: number = 0;
+  // execution history
+  private history: any[] = [];
 
   constructor(private offset = 0x200) {
     super();
@@ -107,6 +109,16 @@ export class Emulator extends EventEmitter {
     // init display
     this._clear();
   }
+
+  get state() {
+    return {
+      v: [...this.V],
+      i: this.I,
+      pc: this.PC - this.offset,
+      fb: [...this.FB],
+    };
+  }
+
 
   public init(data: Uint8Array) {
     for (let i = 0; i < data.length; i += 1) {
@@ -128,6 +140,24 @@ export class Emulator extends EventEmitter {
     }
 
     this.lastPC = this.PC;
+  }
+
+  public prev() {
+    // go back 2 instr and execute it so all callbacks fire
+    // or execute first instruction if only one present
+    this._setState(this.history.pop());
+    if (this.history.length) {
+      this._setState(this.history.pop())
+    }
+
+    this.next();
+  }
+
+
+  private _setState({ v, i, pc }: any) {
+    this.V = v;
+    this.I = i;
+    this.PC = pc + this.offset;
   }
 
   private _clear() {
@@ -172,8 +202,8 @@ export class Emulator extends EventEmitter {
       .reduce((n, d) => n + d.toString(16), "")
       .toUpperCase();
 
-    // return registries and a copy of framebuffer
-    this.emit("tick", { pc: this.PC - this.offset, fb: [...this.FB], op });
+    this.history.push(this.state);
+    this.emit("tick", op);
 
     this.PC += 2;
 
