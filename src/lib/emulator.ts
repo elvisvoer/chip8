@@ -202,7 +202,7 @@ export class Emulator extends EventEmitter {
       .reduce((n, d) => n + d.toString(16), "")
       .toUpperCase();
 
-    this.emit("tick", op, this.history.length);
+    this.emit("tick", this.history.length, op);
 
     this.history.push(this.state);
     this.PC += 2;

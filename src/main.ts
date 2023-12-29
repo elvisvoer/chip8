@@ -86,7 +86,7 @@ async function main() {
   emulator.load(rom!);
   emulator.run();
 
-  emulator.on("tick", (op: string, count: number) => {
+  emulator.on("tick", (count: number, op: string) => {
     display.clear();
     display.write(fbToString(emulator.state.fb));
     // debug info
