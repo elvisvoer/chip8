@@ -41,15 +41,16 @@ class Display {
 
 const display = new Display(document.getElementById("display")!);
 
-function romWithHighlightedPC(data: Uint8Array, pc: number) {
+function hexWithHighlightedText(data: Uint8Array, offset: number, width = 2) {
   let output = "";
+  const highlights = Array(width)
+    .fill(0)
+    .map((_, index) => index + offset);
 
   for (let i = 0; i < data.length; i += 1) {
     if (i % 12 === 0) {
       output += "\n";
     }
-
-    const highlights = [pc - 0x200, pc + 1 - 0x200];
 
     output += `<span style="color: ${
       highlights.includes(i) ? "red" : "inherit"
@@ -83,7 +84,7 @@ function fbToString(fb: number[]) {
 function refreshDisplay(rom: Uint8Array, pc: number, fb: number[]) {
   display.clear();
   display.write(fbToString(fb));
-  display.write(romWithHighlightedPC(rom, pc));
+  display.write(hexWithHighlightedText(rom, pc));
 }
 
 (async () => {

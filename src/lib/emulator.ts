@@ -33,6 +33,7 @@ export class Emulator {
     let last = this.PC;
     // main program loop
     const intervalID = setInterval(() => {
+      this.onTick(this.PC - offset, this.FB);
       this._exec(this._next());
 
       if (last === this.PC) {
@@ -58,8 +59,6 @@ export class Emulator {
 
     const H1 = this.RAM[this.PC];
     const H2 = this.RAM[this.PC + 1];
-
-    this.onTick(this.PC, this.FB);
 
     this.PC += 2;
 
