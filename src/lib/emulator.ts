@@ -42,7 +42,7 @@ export class Emulator {
       }
 
       last = this.PC;
-    }, 10);
+    }, 80);
   }
 
   private _clearFrameBuffer() {
