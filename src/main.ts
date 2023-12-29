@@ -39,8 +39,6 @@ class Display {
   }
 }
 
-const display = new Display(document.getElementById("display")!);
-
 function getColoredText(text: string, color: string) {
   return `<span style="color: ${color};">${text}</span>`;
 }
@@ -101,7 +99,8 @@ function createHistory() {
   };
 }
 
-(async () => {
+async function main() {
+  const display = new Display(document.getElementById("display")!);
   const rom = await fetchROM("test-opcode.ch8");
 
   const history = createHistory();
@@ -143,4 +142,6 @@ function createHistory() {
   });
   emulator.load(rom!);
   emulator.run();
-})();
+}
+
+main();
