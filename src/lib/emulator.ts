@@ -271,19 +271,7 @@ function print() {
 
 setInterval(print, 50);
 
-function printRom(cardROM: Uint8Array) {
-  let output = "";
-  for (let i = 0; i < cardROM.length; i += 1) {
-    output += `<span>0x${cardROM[i] < 0x10 ? "0" : ""}${cardROM[i]
-      .toString(16)
-      .toUpperCase()}</span>`;
-  }
-
-  document.getElementById("rom")!.innerHTML = output;
-}
-
 export function init(cardROM: Uint8Array) {
-  printRom(cardROM);
   // copy card memory into RAM starting at address 0x200
   for (let i = 0; i < cardROM.length; i += 1) {
     RAM[0x200 + i] = cardROM[i];
