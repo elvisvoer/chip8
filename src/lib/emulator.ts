@@ -97,6 +97,7 @@ export class Emulator extends EventEmitter {
   public static readonly FBColSize = 32;
   public static readonly FBRowSize = 64;
 
+  private loopId: any = null;
   // for loop detection
   private lastPC: number = 0;
   // execution history
@@ -128,19 +129,16 @@ export class Emulator extends EventEmitter {
   }
 
   public run() {
+    this.loopId && clearInterval(this.loopId);
     // main program loop
-    const intervalID = setInterval(
-      () => !this.paused && this.next(),
-      1000 / 25
-    );
-    this.on("exit", () => clearInterval(intervalID));
+    this.loopId = setInterval(() => !this.paused && this.next(), 1000 / 25);
   }
 
   public next() {
     this._exec(this._load());
 
     if (this.lastPC === this.PC) {
-      this.emit("exit");
+      this.paused = true;
     }
 
     this.lastPC = this.PC;
