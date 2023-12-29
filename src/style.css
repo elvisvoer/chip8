@@ -23,8 +23,12 @@ body {
   min-height: 100vh;
 }
 
-.read-the-docs {
-  color: #888;
+#display {
+  font-family: monospace;
+  line-height: 1rem;
+  font-size: 1rem;
+  white-space: pre;
+  color: green;
 }
 
 @media (prefers-color-scheme: light) {

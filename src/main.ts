@@ -42,42 +42,39 @@ class Display {
 const display = new Display(document.getElementById("display")!);
 
 function printROM(data: Uint8Array) {
-  let output = "";
   for (let i = 0; i < data.length; i += 1) {
     if (i % 12 === 0) {
-      output += "\n";
+      display.write("\n");
     }
-    output += `0x${data[i] < 0x10 ? "0" : ""}${data[i]
-      .toString(16)
-      .toUpperCase()} `;
-  }
 
-  display.write(output);
+    display.write(
+      `0x${data[i] < 0x10 ? "0" : ""}${data[i].toString(16).toUpperCase()} `
+    );
+  }
 }
 
 function printFB(fb: number[]) {
-  display.clear();
-
-  let output = "";
   for (let i = 0; i < Emulator.FBColSize; i++) {
     for (let j = 0; j < Emulator.FBRowSize; j++) {
       const z = i * Emulator.FBRowSize + j;
       if (fb[z]) {
-        output += "&#9632;";
+        display.write("&#9632;");
       } else {
-        output += " ";
+        display.write(" ");
       }
     }
 
-    output += "\n";
+    display.write("\n");
   }
-
-  display.write(output);
 }
 
 (async () => {
   const rom = (await fetchROM("ibm-logo.ch8")) as Uint8Array;
-  const emulator = new Emulator(printFB);
+  const emulator = new Emulator((fb: number[]) => {
+    display.clear();
+    printFB(fb);
+    printROM(rom);
+  });
   emulator.load(rom);
   emulator.run();
 })();
