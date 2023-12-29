@@ -16,7 +16,7 @@ export class Emulator {
   public static readonly FBColSize = 32;
   public static readonly FBRowSize = 64;
 
-  constructor(private onTick: Function) {
+  constructor(private onTick: Function, private onExit: Function) {
     // init display
     this._clearFrameBuffer();
   }
@@ -39,6 +39,7 @@ export class Emulator {
       if (last === this.PC) {
         console.log("Infinite loop detected. Exiting...", last);
         clearInterval(intervalID);
+        this.onExit();
       }
 
       last = this.PC;

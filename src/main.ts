@@ -82,11 +82,38 @@ function fbToString(fb: number[]) {
 
 (async () => {
   const rom = await fetchROM("test-opcode.ch8");
-  const emulator = new Emulator((pc: number, fb: number[]) => {
-    display.clear();
-    display.write(fbToString(fb));
-    display.write(romWithHighlightedPC(rom!, pc));
-  });
+
+  const history: [number, number[]][] = [];
+
+  const emulator = new Emulator(
+    (pc: number, fb: number[]) => {
+      display.clear();
+      display.write(fbToString(fb));
+      display.write(romWithHighlightedPC(rom!, pc));
+      history.push([pc, [...fb]]);
+    },
+    () => {
+      let index = history.length;
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") {
+          index = Math.max(0, index - 1);
+          const [pc, fb] = history[index];
+          display.clear();
+          display.write(fbToString(fb));
+          display.write(romWithHighlightedPC(rom!, pc));
+        }
+
+        if (e.key === "ArrowRight") {
+          index = Math.min(history.length - 1, index + 1);
+          const [pc, fb] = history[index];
+          display.clear();
+          display.write(fbToString(fb));
+          display.write(romWithHighlightedPC(rom!, pc));
+        }
+      });
+    }
+  );
   emulator.load(rom!);
   emulator.run();
 })();
