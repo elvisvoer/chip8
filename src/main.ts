@@ -47,6 +47,29 @@ async function uploadFile() {
   });
 }
 
+function getCircularList(list: any[]) {
+  let current = -1;
+
+  return {
+    add: (rom: any) => {
+      list.push(rom);
+      current = list.length - 1;
+      return rom;
+    },
+    peek: () => list[current],
+    next: () => {
+      current += 1;
+      current = current < list.length ? current : 0; // rotate to first
+      return list[current];
+    },
+    prev: () => {
+      current -= 1;
+      current = current < 0 ? list.length - 1 : current; // rotate to last
+      return list[current];
+    },
+  };
+}
+
 class Display {
   constructor(private el: HTMLElement) {}
 
@@ -58,6 +81,15 @@ class Display {
     this.el.innerHTML += data;
   }
 }
+
+const display = new Display(document.getElementById("display")!);
+const debug = new Display(document.getElementById("debug")!);
+
+const emulator = new Emulator();
+const romList = getCircularList([
+  { name: "ibm-logo.ch8", data: await fetchROM("ibm-logo.ch8") },
+  { name: "test-opcode.ch8", data: await fetchROM("test-opcode.ch8") },
+]);
 
 function getColoredText(text: string, color: string) {
   return `<span style="color: ${color};">${text}</span>`;
@@ -82,9 +114,9 @@ function hexWithHighlightedText(data: Uint8Array, pos: number, len = 2) {
 function fbToString(fb: number[]) {
   let output = "";
 
-  for (let i = 0; i < Emulator.FBColSize; i++) {
-    for (let j = 0; j < Emulator.FBRowSize; j++) {
-      const z = i * Emulator.FBRowSize + j;
+  for (let i = 0; i < emulator.FBColSize; i++) {
+    for (let j = 0; j < emulator.FBRowSize; j++) {
+      const z = i * emulator.FBRowSize + j;
       if (fb[z]) {
         output += "&#9619;";
       } else {
@@ -97,37 +129,6 @@ function fbToString(fb: number[]) {
 
   return output;
 }
-
-function getCircularList(list: any[]) {
-  let current = -1;
-
-  return {
-    add: (rom: any) => {
-      list.push(rom);
-      return rom;
-    },
-    peek: () => list[current],
-    next: () => {
-      current += 1;
-      current = current < list.length ? current : 0; // rotate to first
-      return list[current];
-    },
-    prev: () => {
-      current -= 1;
-      current = current < 0 ? list.length - 1 : current; // rotate to last
-      return list[current];
-    },
-  };
-}
-
-const display = new Display(document.getElementById("display")!);
-const debug = new Display(document.getElementById("debug")!);
-
-const emulator = new Emulator();
-const romList = getCircularList([
-  { name: "ibm-logo.ch8", data: await fetchROM("ibm-logo.ch8") },
-  { name: "test-opcode.ch8", data: await fetchROM("test-opcode.ch8") },
-]);
 
 async function loadAndRun(rom: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
@@ -175,8 +176,8 @@ document.addEventListener("keydown", async (e) => {
       loadAndRun(romList.prev());
       break;
     case 82: // R
-      loadAndRun(romList.peek());
       emulator.paused = false;
+      loadAndRun(romList.peek());
       break;
     case 85: // U
       const file = await uploadFile();

@@ -9,6 +9,7 @@ export function getOpInfo(op: string) {
     "0000": ["0000", "noop"],
     "00E0": ["00E0", "clear screen"],
     "00EE": ["00EE", "subroutine return"],
+    "00FF": ["00FF", "high resolution"],
   };
 
   if (Object.keys(simpleOps).includes(op)) {
@@ -65,6 +66,8 @@ export function getOpInfo(op: string) {
       return ["DXYN", "display"];
     case 0xf: {
       switch (NN) {
+        case 0x1e:
+          return ["FX1E", "add to index"];
         case 0x33:
           return ["FX33", "store"];
         case 0x55:
@@ -93,9 +96,7 @@ export class Emulator extends EventEmitter {
   private RAM: Uint8Array = new Uint8Array(4 * 1024);
   // display framebuffer
   private FB: number[] = [];
-
-  public static readonly FBColSize = 32;
-  public static readonly FBRowSize = 64;
+  private hires = false;
 
   private loopId: any = null;
   // for loop detection
@@ -118,6 +119,14 @@ export class Emulator extends EventEmitter {
     };
   }
 
+  get FBColSize() {
+    return this.hires ? 64 : 32;
+  }
+
+  get FBRowSize() {
+    return this.hires ? 126 : 64;
+  }
+
   public load(data: Uint8Array) {
     this.lastPC = this.PC = this.offset;
     this.history = [];
@@ -130,10 +139,10 @@ export class Emulator extends EventEmitter {
     }
   }
 
-  public run(fps: number = 25) {
+  public run(_: number = 25) {
     this.loopId && clearInterval(this.loopId);
     // main program loop
-    this.loopId = setInterval(() => !this.paused && this.next(), 1000 / fps);
+    this.loopId = setInterval(() => !this.paused && this.next(), 0);
   }
 
   public next() {
@@ -163,7 +172,7 @@ export class Emulator extends EventEmitter {
   }
 
   private _clear() {
-    for (var z = 0; z < Emulator.FBColSize * Emulator.FBRowSize; z++) {
+    for (var z = 0; z < this.FBColSize * this.FBRowSize; z++) {
       this.FB[z] = 0;
     }
   }
@@ -175,8 +184,8 @@ export class Emulator extends EventEmitter {
     for (let a = 0; a < len; a++) {
       for (let b = 0; b < 8; b++) {
         const target =
-          ((x + b) % Emulator.FBRowSize) +
-          ((y + a) % Emulator.FBColSize) * Emulator.FBRowSize;
+          ((x + b) % this.FBRowSize) +
+          ((y + a) % this.FBColSize) * this.FBRowSize;
         const source = ((this.RAM[this.I + a] >> (7 - b)) & 0x1) != 0;
 
         if (!source) {
@@ -225,6 +234,10 @@ export class Emulator extends EventEmitter {
       "00EE": () => {
         const top = this.callStack.pop() as number;
         this.PC = top;
+      },
+      "00FF": () => {
+        this.hires = true;
+        this._clear();
       },
       "1NNN": () => (this.PC = NNN),
       "2NNN": () => {
@@ -291,6 +304,9 @@ export class Emulator extends EventEmitter {
         this.V[X] = (Math.random() * 256) & NN;
       },
       DXYN: () => this._draw(this.V[X], this.V[Y], N),
+      FX1E: () => {
+        this.I = (this.I + this.V[X]) & 0xffff;
+      },
       FX33: () => {
         this.RAM[this.I] = Math.floor(this.V[X] / 100) % 10;
         this.RAM[this.I + 1] = Math.floor(this.V[X] / 10) % 10;
