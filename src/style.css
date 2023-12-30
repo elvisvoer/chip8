@@ -23,13 +23,17 @@ body {
   min-height: 100vh;
 }
 
-#display {
+div {
   font-family: monospace;
   line-height: 1rem;
   font-size: 1rem;
   padding: 2rem;
   white-space: pre-wrap;
   color: green;
+}
+
+#display {
+  line-height: 0.8rem;
 }
 
 @media (prefers-color-scheme: light) {

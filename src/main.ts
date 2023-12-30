@@ -109,6 +109,8 @@ function getCircularList(list: any[]) {
 }
 
 const display = new Display(document.getElementById("display")!);
+const debug = new Display(document.getElementById("debug")!);
+
 const emulator = new Emulator();
 const romList = getCircularList([
   { name: "ibm-logo.ch8", data: await fetchROM("ibm-logo.ch8") },
@@ -124,11 +126,12 @@ async function loadAndRun(rom: { name: string; data: Uint8Array }) {
     display.clear();
     display.write(fbToString(emulator.state.fb));
     // debug info
-    display.write(`ROM: ${rom.name}\n`);
-    display.write(`Tick: ${count}\n`);
-    display.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
-    display.write(`Operation: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
-    display.write(hexWithHighlightedText(rom.data, emulator.state.pc));
+    debug.clear();
+    debug.write(`ROM: ${rom.name}\n`);
+    debug.write(`Tick: ${count}\n`);
+    debug.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
+    debug.write(`Operation: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
+    debug.write(hexWithHighlightedText(rom.data, emulator.state.pc));
   };
 
   // draw initial display
