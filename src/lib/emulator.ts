@@ -120,6 +120,7 @@ export class Emulator extends EventEmitter {
 
   public load(data: Uint8Array) {
     this.lastPC = this.PC = this.offset;
+    this.history = [];
 
     // init display
     this._clear();
