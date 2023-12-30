@@ -125,7 +125,9 @@ const drawDisplay = ({
   info.write(`ROM: ${romName}\n`);
   info.write(`Tick: ${count}\n`);
   info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
-  info.write(`OP: 0x${op} (${emulator.getOpInfo(op).join(" - ")})\n\n`);
+
+  const [opCode, opName] = emulator.getOpInfo(op);
+  info.write(`OP: 0x${op} (${opCode} - ${opName})\n\n`);
 
   debug.clear();
   if (showHexDebugger) {
