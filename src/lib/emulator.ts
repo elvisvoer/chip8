@@ -312,6 +312,18 @@ export default class Emulator extends EventEmitter {
         return ["DXYN", "display", () => this._draw(this.V[X], this.V[Y], N)];
       case 0xf: {
         switch (NN) {
+          case 0x0a:
+            return [
+              "FX0A",
+              "get key",
+              async () => {
+                const key = await new Promise<number>((resolve) =>
+                  this.emit("pendingInput", resolve)
+                );
+
+                this.V[X] = key & 0xff;
+              },
+            ];
           case 0x1e:
             return [
               "FX1E",
@@ -384,15 +396,16 @@ export default class Emulator extends EventEmitter {
     }
   }
 
-  public run(_: number = 25) {
-    this.loopId && clearInterval(this.loopId);
+  public async run(_: number = 25) {
+    this.loopId && clearTimeout(this.loopId);
     // main program loop
-    this.loopId = setInterval(() => !this.paused && this.next(), 0);
+    !this.paused && (await this.next());
+    this.loopId = setTimeout(() => this.run(), 0);
   }
 
-  public next() {
+  public async next() {
     try {
-      this._exec(this._fetch());
+      await this._exec(this._fetch());
     } catch (err) {
       this.paused = true;
       throw err;
@@ -475,13 +488,13 @@ export default class Emulator extends EventEmitter {
     return op;
   }
 
-  private _exec(op: string) {
+  private async _exec(op: string) {
     const instr = this.getOpInfo(op)[2];
 
     if (!instr) {
       throw new Error(`No handle found for instruction ${op}`);
     }
 
-    instr();
+    await instr();
   }
 }

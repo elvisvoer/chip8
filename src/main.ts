@@ -146,6 +146,19 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.on("tick", (count: number, op: string) =>
     drawDisplay({ count, op, romName: name, data })
   );
+
+  emulator.on("pendingInput", (resolve: Function) => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const input = e.key;
+      const hex = parseInt(input, 16);
+      if (!isNaN(hex) && (hex & 0xff) === hex) {
+        resolve(hex);
+        document.removeEventListener("keydown", onKeyDown);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+  });
 }
 
 document.addEventListener("keydown", async (e) => {
@@ -179,7 +192,6 @@ document.addEventListener("keydown", async (e) => {
       emulator.forceTick();
       break;
     default:
-      throw new Error(`Unmapped keycode: ${e.keyCode}`);
   }
 });
 
