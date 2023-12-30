@@ -23,12 +23,13 @@ export class BitMapDisplay {
 
   public write(data: number[], width: number, height: number) {
     this.ctx.reset();
+    const size = this.canvas.width / width;
     for (let z = 0; z < width * height; z++) {
       const x = Math.floor(z / width);
       const y = z % width;
       if (data[z]) {
         this.ctx.fillStyle = "green";
-        this.ctx.fillRect(y * 10, x * 10, 10, 10);
+        this.ctx.fillRect(y * size, x * size, size, size);
       }
     }
   }
