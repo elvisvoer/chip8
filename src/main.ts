@@ -136,7 +136,7 @@ async function loadAndRun(rom: { name: string; data: Uint8Array }) {
     debug.write(`ROM: ${rom.name}\n`);
     debug.write(`Tick: ${count}\n`);
     debug.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
-    debug.write(`Operation: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
+    debug.write(`OP: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
     debug.write(hexWithHighlightedText(rom.data, emulator.state.pc));
   };
 
