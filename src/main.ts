@@ -102,10 +102,21 @@ function getCircularList(list: any[]) {
   let current = -1;
 
   return {
-    add: (rom: any) => (list.push(rom), rom),
+    add: (rom: any) => {
+      list.push(rom);
+      return rom;
+    },
     peek: () => list[current],
-    next: () => list[(current = ++current < list.length ? current : 0)],
-    prev: () => list[(current = --current < 0 ? list.length - 1 : current)],
+    next: () => {
+      current += 1;
+      current = current < list.length ? current : 0; // rotate to first
+      return list[current];
+    },
+    prev: () => {
+      current -= 1;
+      current = current < 0 ? list.length - 1 : current; // rotate to last
+      return list[current];
+    },
   };
 }
 
@@ -130,7 +141,7 @@ async function loadAndRun(rom: { name: string; data: Uint8Array }) {
     debug.clear();
 
     debug.write(
-      `[Space] Pause | [R] Rerun | [A] Prev OP | [D] Next OP | [B] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
+      `[Space] Pause | [R] Rerun | [H] Prev OP | [L] Next OP | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
     );
 
     debug.write(`ROM: ${rom.name}\n`);
@@ -151,16 +162,16 @@ document.addEventListener("keydown", async (e) => {
     case 32: // space
       emulator.paused = !emulator.paused;
       break;
-    case 65: // A
+    case 72: // H
       emulator.prev();
       break;
-    case 68: // D
+    case 76: // L
       emulator.next();
       break;
     case 78: // N
       loadAndRun(romList.next());
       break;
-    case 66: // B
+    case 80: // P
       loadAndRun(romList.prev());
       break;
     case 82: // R
