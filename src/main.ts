@@ -128,6 +128,11 @@ async function loadAndRun(rom: { name: string; data: Uint8Array }) {
     display.write(fbToString(emulator.state.fb));
     // debug info
     debug.clear();
+
+    debug.write(
+      `[Space] Pause | [R] Rerun | [A] Prev OP | [D] Next OP | [B] Prev ROM | [N] Next ROM | [U] Add ROM \n\n`
+    );
+
     debug.write(`ROM: ${rom.name}\n`);
     debug.write(`Tick: ${count}\n`);
     debug.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
@@ -146,16 +151,16 @@ document.addEventListener("keydown", async (e) => {
     case 32: // space
       emulator.paused = !emulator.paused;
       break;
-    case 37: // ArrowLeft
+    case 65: // A
       emulator.prev();
       break;
-    case 39: // ArrowRight
+    case 68: // D
       emulator.next();
       break;
     case 78: // N
       loadAndRun(romList.next());
       break;
-    case 80: // P
+    case 66: // B
       loadAndRun(romList.prev());
       break;
     case 82: // R
