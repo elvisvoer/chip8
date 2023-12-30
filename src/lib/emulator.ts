@@ -42,7 +42,7 @@ export default class Emulator extends EventEmitter {
   }
 
   get FBRowSize() {
-    return this.hires ? 126 : 64;
+    return this.hires ? 128 : 64;
   }
 
   public static getOpInfo(op: string) {
