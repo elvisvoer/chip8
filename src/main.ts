@@ -176,4 +176,5 @@ document.addEventListener("keydown", async (e) => {
   }
 });
 
-loadAndRun(romList.prev());
+// start with first element
+loadAndRun(romList.next());
