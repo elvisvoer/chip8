@@ -187,7 +187,7 @@ document.addEventListener("keydown", async (e) => {
       const file = await uploadFile();
       loadAndRun(romList.add(file));
       break;
-    case 90: // Z
+    case 86: // V
       showHexDebugger = !showHexDebugger;
       break;
     default:
