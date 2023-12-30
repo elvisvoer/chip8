@@ -1,5 +1,6 @@
 import "./style.css";
 import Emulator from "./lib/emulator.ts";
+import { BitMapDisplay, TextDisplay } from "./lib/display.ts";
 
 async function fetchROM(fileName: string) {
   try {
@@ -70,21 +71,11 @@ function getCircularList(list: any[]) {
   };
 }
 
-class Display {
-  constructor(private el: HTMLElement) {}
-
-  public clear() {
-    this.el.innerHTML = "";
-  }
-
-  public write(data: string) {
-    this.el.innerHTML += data;
-  }
-}
-
-const display = new Display(document.getElementById("display")!);
-const info = new Display(document.getElementById("info")!);
-const debug = new Display(document.getElementById("debug")!);
+const display = new BitMapDisplay(
+  document.getElementById("display")! as HTMLCanvasElement
+);
+const info = new TextDisplay(document.getElementById("info")!);
+const debug = new TextDisplay(document.getElementById("debug")!);
 let showHexDebugger = false;
 
 const emulator = new Emulator();
@@ -147,7 +138,7 @@ const drawDisplay = ({
   info.clear();
   debug.clear();
 
-  display.write(fbToString(emulator.state.fb));
+  display.write(emulator.state.fb, emulator.FBRowSize, emulator.FBColSize);
 
   info.write(
     `[Space] Pause | [R] Rerun | [H] Prev OP | [L] Next OP | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
