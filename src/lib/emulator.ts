@@ -135,6 +135,7 @@ export default class Emulator extends EventEmitter {
   public load(data: Uint8Array) {
     this.lastPC = this.PC = this.offset;
     this.history = [];
+    this.hires = false;
 
     // init display
     this._clear();
