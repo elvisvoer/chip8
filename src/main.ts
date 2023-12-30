@@ -104,25 +104,6 @@ function hexWithHighlightedText(data: Uint8Array, pos: number, len = 2) {
   return output;
 }
 
-function fbToString(fb: number[]) {
-  let output = "";
-
-  for (let i = 0; i < emulator.FBColSize; i++) {
-    for (let j = 0; j < emulator.FBRowSize; j++) {
-      const z = i * emulator.FBRowSize + j;
-      if (fb[z]) {
-        output += "&#9619;";
-      } else {
-        output += " ";
-      }
-    }
-
-    output += "\n";
-  }
-
-  return output;
-}
-
 const drawDisplay = ({
   count,
   op,
