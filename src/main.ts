@@ -130,7 +130,7 @@ async function loadAndRun(rom: { name: string; data: Uint8Array }) {
     debug.clear();
 
     debug.write(
-      `[Space] Pause | [R] Rerun | [A] Prev OP | [D] Next OP | [B] Prev ROM | [N] Next ROM | [U] Add ROM \n\n`
+      `[Space] Pause | [R] Rerun | [A] Prev OP | [D] Next OP | [B] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
     );
 
     debug.write(`ROM: ${rom.name}\n`);
@@ -176,4 +176,4 @@ document.addEventListener("keydown", async (e) => {
   }
 });
 
-loadAndRun(romList.next());
+loadAndRun(romList.prev());
