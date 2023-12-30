@@ -1,5 +1,5 @@
 import "./style.css";
-import { Emulator, getOpInfo } from "./lib/emulator.ts";
+import Emulator from "./lib/emulator.ts";
 
 async function fetchROM(fileName: string) {
   try {
@@ -156,7 +156,7 @@ const drawDisplay = ({
   info.write(`ROM: ${name}\n`);
   info.write(`Tick: ${count}\n`);
   info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
-  info.write(`OP: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
+  info.write(`OP: 0x${op} (${Emulator.getOpInfo(op).join(" - ")})\n\n`);
 
   if (showHexDebugger) {
     debug.write(hexWithHighlightedText(data, emulator.state.pc));
