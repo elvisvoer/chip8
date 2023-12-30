@@ -107,12 +107,12 @@ function hexWithHighlightedText(data: Uint8Array, pos: number, len = 2) {
 const drawDisplay = ({
   count,
   op,
-  name,
+  romName,
   data,
 }: {
   count: number;
   op: string;
-  name: string;
+  romName: string;
   data: Uint8Array;
 }) => {
   display.clear();
@@ -122,7 +122,7 @@ const drawDisplay = ({
   info.write(
     `[Space] Pause | [R] Rerun | [H] Prev OP | [L] Next OP | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
   );
-  info.write(`ROM: ${name}\n`);
+  info.write(`ROM: ${romName}\n`);
   info.write(`Tick: ${count}\n`);
   info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
   info.write(`OP: 0x${op} (${Emulator.getOpInfo(op).join(" - ")})\n\n`);
@@ -139,10 +139,10 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.run();
 
   // draw initial display
-  drawDisplay({ count: 0, op: "0000", name, data });
+  drawDisplay({ count: 0, op: "0000", romName: name, data });
 
   emulator.on("tick", (count: number, op: string) =>
-    drawDisplay({ count, op, name, data })
+    drawDisplay({ count, op, romName: name, data })
   );
 }
 
