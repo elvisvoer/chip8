@@ -121,11 +121,9 @@ document.addEventListener("keydown", (e) => {
       emulator.paused = !emulator.paused;
       break;
     case 37: // ArrowLeft
-      emulator.paused = true;
       emulator.prev();
       break;
     case 39: // ArrowRight
-      emulator.paused = true;
       emulator.next();
       break;
     case 78: // N
