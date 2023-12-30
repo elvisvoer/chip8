@@ -83,6 +83,7 @@ class Display {
 }
 
 const display = new Display(document.getElementById("display")!);
+const info = new Display(document.getElementById("info")!);
 const debug = new Display(document.getElementById("debug")!);
 let showHexDebugger = false;
 
@@ -131,35 +132,48 @@ function fbToString(fb: number[]) {
   return output;
 }
 
-async function loadAndRun(rom: { name: string; data: Uint8Array }) {
+const drawDisplay = ({
+  count,
+  op,
+  name,
+  data,
+}: {
+  count: number;
+  op: string;
+  name: string;
+  data: Uint8Array;
+}) => {
+  display.clear();
+  info.clear();
+  debug.clear();
+
+  display.write(fbToString(emulator.state.fb));
+
+  info.write(
+    `[Space] Pause | [R] Rerun | [H] Prev OP | [L] Next OP | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
+  );
+
+  info.write(`ROM: ${name}\n`);
+  info.write(`Tick: ${count}\n`);
+  info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
+  info.write(`OP: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
+
+  if (showHexDebugger) {
+    debug.write(hexWithHighlightedText(data, emulator.state.pc));
+  }
+};
+
+async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
-  emulator.load(rom.data);
+  emulator.load(data);
   emulator.run();
 
-  const drawDisplay = (count: number, op: string) => {
-    display.clear();
-    display.write(fbToString(emulator.state.fb));
-    // debug info
-    debug.clear();
-
-    debug.write(
-      `[Space] Pause | [R] Rerun | [H] Prev OP | [L] Next OP | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
-    );
-
-    debug.write(`ROM: ${rom.name}\n`);
-    debug.write(`Tick: ${count}\n`);
-    debug.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
-    debug.write(`OP: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
-
-    if (showHexDebugger) {
-      debug.write(hexWithHighlightedText(rom.data, emulator.state.pc));
-    }
-  };
-
   // draw initial display
-  drawDisplay(0, "0000");
+  drawDisplay({ count: 0, op: "0000", name, data });
 
-  emulator.on("tick", drawDisplay);
+  emulator.on("tick", (count: number, op: string) =>
+    drawDisplay({ count, op, name, data })
+  );
 }
 
 document.addEventListener("keydown", async (e) => {
@@ -189,6 +203,8 @@ document.addEventListener("keydown", async (e) => {
       break;
     case 86: // V
       showHexDebugger = !showHexDebugger;
+      // force next tick
+      emulator.forceTick();
       break;
     default:
       throw new Error(`Unmapped keycode: ${e.keyCode}`);

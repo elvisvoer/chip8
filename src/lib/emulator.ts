@@ -127,6 +127,11 @@ export class Emulator extends EventEmitter {
     return this.hires ? 126 : 64;
   }
 
+  public forceTick() {
+    const op = this._getOp();
+    this.emit("tick", this.history.length, op);
+  }
+
   public load(data: Uint8Array) {
     this.lastPC = this.PC = this.offset;
     this.history = [];
@@ -202,16 +207,20 @@ export class Emulator extends EventEmitter {
     }
   }
 
+  private _getOp() {
+    const H1 = this.RAM[this.PC];
+    const H2 = this.RAM[this.PC + 1];
+    return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f]
+      .reduce((n, d) => n + d.toString(16), "")
+      .toUpperCase();
+  }
+
   private _fetch() {
     if (this.PC > this.RAM.length) {
       throw new Error("Emulator reached out of memory.");
     }
 
-    const H1 = this.RAM[this.PC];
-    const H2 = this.RAM[this.PC + 1];
-    const op = [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f]
-      .reduce((n, d) => n + d.toString(16), "")
-      .toUpperCase();
+    const op = this._getOp();
 
     this.emit("tick", this.history.length, op);
 

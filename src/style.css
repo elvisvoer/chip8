@@ -21,13 +21,14 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  padding: 1rem;
 }
 
 div {
+  max-width: 640px;
   font-family: monospace;
   line-height: 1rem;
   font-size: 1rem;
-  padding: 2rem;
   white-space: pre-wrap;
   color: green;
 }
