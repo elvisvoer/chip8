@@ -252,37 +252,35 @@ export class Emulator extends EventEmitter {
         }
       },
       "6XNN": () => (this.V[X] = NN),
-      "7XNN": () => (this.V[X] += NN),
+      "7XNN": () => (this.V[X] = (this.V[X] + NN) & 0xff),
       "8XY0": () => (this.V[X] = this.V[Y]),
       "8XY1": () => (this.V[X] |= this.V[Y]),
       "8XY2": () => (this.V[X] &= this.V[Y]),
       "8XY3": () => (this.V[X] ^= this.V[Y]),
       "8XY4": () => {
-        this.V[X] += this.V[Y];
-        // carry flag
-        this.V[0xf] = this.V[X] > 255 ? 1 : 0;
+        const t = this.V[X] + this.V[Y];
+        this.V[X] = t & 0xff;
+        this.V[0xf] = t > 0xff ? 1 : 0;
       },
       "8XY5": () => {
-        // carry flag (before subtraction)
-        this.V[0xf] = this.V[X] > this.V[Y] ? 1 : 0;
-        this.V[X] = this.V[X] - this.V[Y];
+        const t = this.V[X] - this.V[Y];
+        this.V[X] = t & 0xff;
+        this.V[0xf] = this.V[X] >= this.V[Y] ? 1 : 0;
       },
       "8XY7": () => {
-        // carry flag (before subtraction)
-        this.V[0xf] = this.V[Y] > this.V[X] ? 1 : 0;
-        this.V[X] = this.V[Y] - this.V[X];
+        const t = this.V[Y] - this.V[X];
+        this.V[X] = t & 0xff;
+        this.V[0xf] = this.V[Y] >= this.V[X] ? 1 : 0;
       },
       "8XY6": () => {
-        // TODO(@elvis): optional -> set VX = VY
-        // carry flag (before shift)
-        this.V[0xf] = (this.V[X] & 0x01) > 0 ? 1 : 0;
-        this.V[X] = this.V[X] >> 1;
+        const t = this.V[X] >> 1;
+        this.V[X] = t & 0xff;
+        this.V[0xf] = this.V[X] & 0x1 ? 1 : 0;
       },
       "8XYE": () => {
-        // TODO(@elvis): optional -> set VX = VY
-        // carry flag (before shift)
-        this.V[0xf] = (this.V[X] & 0x8000) > 0 ? 1 : 0;
-        this.V[X] = this.V[X] << 1;
+        const t = this.V[X] << 1;
+        this.V[X] = t & 0xff;
+        this.V[0xf] = (this.V[X] >> 7) & 0x1 ? 1 : 0;
       },
       ANNN: () => (this.I = NNN),
       BNNN: () => {
@@ -290,8 +288,7 @@ export class Emulator extends EventEmitter {
         this.PC = NNN + offset;
       },
       CXNN: () => {
-        const random = Math.floor(Math.random() * 255);
-        this.V[X] = random & NN;
+        this.V[X] = (Math.random() * 256) & NN;
       },
       DXYN: () => this._draw(this.V[X], this.V[Y], N),
       FX33: () => {
