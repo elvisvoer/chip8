@@ -135,20 +135,18 @@ const drawDisplay = ({
   data: Uint8Array;
 }) => {
   display.clear();
-  info.clear();
-  debug.clear();
-
   display.write(emulator.state.fb, emulator.FBRowSize, emulator.FBColSize);
 
+  info.clear();
   info.write(
     `[Space] Pause | [R] Rerun | [H] Prev OP | [L] Next OP | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
   );
-
   info.write(`ROM: ${name}\n`);
   info.write(`Tick: ${count}\n`);
   info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
   info.write(`OP: 0x${op} (${Emulator.getOpInfo(op).join(" - ")})\n\n`);
 
+  debug.clear();
   if (showHexDebugger) {
     debug.write(hexWithHighlightedText(data, emulator.state.pc));
   }
