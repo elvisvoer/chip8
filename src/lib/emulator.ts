@@ -107,10 +107,6 @@ export class Emulator extends EventEmitter {
 
   constructor(private offset = 0x200) {
     super();
-
-    this.lastPC = this.PC = offset;
-    // init display
-    this._clear();
   }
 
   get state() {
@@ -123,6 +119,11 @@ export class Emulator extends EventEmitter {
   }
 
   public load(data: Uint8Array) {
+    this.lastPC = this.PC = this.offset;
+
+    // init display
+    this._clear();
+
     for (let i = 0; i < data.length; i += 1) {
       this.RAM[this.offset + i] = data[i];
     }

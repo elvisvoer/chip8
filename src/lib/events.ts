@@ -1,6 +1,10 @@
 export default class EventEmitter {
   private events = new Map<string, Function[]>();
 
+  public clearListeners() {
+    this.events = new Map<string, Function[]>();
+  }
+
   public on(eventName: string, eventListener: Function) {
     const listeners = this.events.get(eventName) || [];
     listeners.push(eventListener);

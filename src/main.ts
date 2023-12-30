@@ -78,41 +78,65 @@ function fbToString(fb: number[]) {
   return output;
 }
 
-async function main() {
-  const rom = await fetchROM("test-opcode.ch8");
-  const display = new Display(document.getElementById("display")!);
+function getCircularList(list: any[]) {
+  let current = -1;
 
-  const emulator = new Emulator();
+  return {
+    add: (rom: string) => list.push(rom),
+    next: () => list[(current = ++current < list.length ? current : 0)],
+    prev: () => list[(current = --current < 0 ? list.length - 1 : current)],
+  };
+}
+
+const display = new Display(document.getElementById("display")!);
+const emulator = new Emulator();
+const romList = getCircularList(["ibm-logo.ch8", "test-opcode.ch8"]);
+
+async function loadAndRun(fileName: string) {
+  const rom = await fetchROM(fileName);
+  emulator.clearListeners();
   emulator.load(rom!);
   emulator.run();
 
-  emulator.on("tick", (count: number, op: string) => {
+  const drawDisplay = (count: number, op: string) => {
     display.clear();
     display.write(fbToString(emulator.state.fb));
     // debug info
+    display.write(`ROM: ${fileName}\n`);
     display.write(`Tick: ${count}\n`);
     display.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
     display.write(`Operation: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
     display.write(hexWithHighlightedText(rom!, emulator.state.pc));
-  });
+  };
 
-  document.addEventListener("keydown", (e) => {
-    switch (e.keyCode) {
-      case 32: // space
-        emulator.paused = !emulator.paused;
-        break;
-      case 37: // ArrowLeft
-        emulator.paused = true;
-        emulator.prev();
-        break;
-      case 39: // ArrowRight
-        emulator.paused = true;
-        emulator.next();
-        break;
-      default:
-        throw new Error(`Unmapped keycode: ${e.keyCode}`);
-    }
-  });
+  // draw initial display
+  drawDisplay(0, "0000");
+
+  emulator.on("tick", drawDisplay);
 }
 
-main();
+document.addEventListener("keydown", (e) => {
+  switch (e.keyCode) {
+    case 32: // space
+      emulator.paused = !emulator.paused;
+      break;
+    case 37: // ArrowLeft
+      emulator.paused = true;
+      emulator.prev();
+      break;
+    case 39: // ArrowRight
+      emulator.paused = true;
+      emulator.next();
+      break;
+    case 78: // N
+      loadAndRun(romList.next());
+      break;
+    case 80: // P
+      loadAndRun(romList.prev());
+      break;
+    default:
+      throw new Error(`Unmapped keycode: ${e.keyCode}`);
+  }
+});
+
+loadAndRun(romList.next());
