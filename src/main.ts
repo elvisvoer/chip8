@@ -27,6 +27,26 @@ async function fetchROM(fileName: string) {
   }
 }
 
+async function uploadFile() {
+  return new Promise<{ name: string; data: Uint8Array }>((resolve, reject) => {
+    let input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".ch8";
+    input.onchange = async (_) => {
+      const file = Array.from(input.files!)[0];
+      if (file) {
+        resolve({
+          name: file.name,
+          data: new Uint8Array(await file.arrayBuffer()),
+        });
+      } else {
+        reject("No file uploaded");
+      }
+    };
+    input.click();
+  });
+}
+
 class Display {
   constructor(private el: HTMLElement) {}
 
@@ -82,7 +102,7 @@ function getCircularList(list: any[]) {
   let current = -1;
 
   return {
-    add: (rom: string) => list.push(rom),
+    add: (rom: any) => (list.push(rom), rom),
     next: () => list[(current = ++current < list.length ? current : 0)],
     prev: () => list[(current = --current < 0 ? list.length - 1 : current)],
   };
@@ -90,23 +110,25 @@ function getCircularList(list: any[]) {
 
 const display = new Display(document.getElementById("display")!);
 const emulator = new Emulator();
-const romList = getCircularList(["ibm-logo.ch8", "test-opcode.ch8"]);
+const romList = getCircularList([
+  { name: "ibm-logo.ch8", data: await fetchROM("ibm-logo.ch8") },
+  { name: "test-opcode.ch8", data: await fetchROM("test-opcode.ch8") },
+]);
 
-async function loadAndRun(fileName: string) {
-  const rom = await fetchROM(fileName);
+async function loadAndRun(rom: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
-  emulator.load(rom!);
+  emulator.load(rom.data);
   emulator.run();
 
   const drawDisplay = (count: number, op: string) => {
     display.clear();
     display.write(fbToString(emulator.state.fb));
     // debug info
-    display.write(`ROM: ${fileName}\n`);
+    display.write(`ROM: ${rom.name}\n`);
     display.write(`Tick: ${count}\n`);
     display.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
     display.write(`Operation: 0x${op} (${getOpInfo(op).join(" - ")})\n\n`);
-    display.write(hexWithHighlightedText(rom!, emulator.state.pc));
+    display.write(hexWithHighlightedText(rom.data, emulator.state.pc));
   };
 
   // draw initial display
@@ -115,7 +137,7 @@ async function loadAndRun(fileName: string) {
   emulator.on("tick", drawDisplay);
 }
 
-document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", async (e) => {
   switch (e.keyCode) {
     case 32: // space
       emulator.paused = !emulator.paused;
@@ -131,6 +153,10 @@ document.addEventListener("keydown", (e) => {
       break;
     case 80: // P
       loadAndRun(romList.prev());
+      break;
+    case 85: // U
+      const file = await uploadFile();
+      loadAndRun(romList.add(file));
       break;
     default:
       throw new Error(`Unmapped keycode: ${e.keyCode}`);
