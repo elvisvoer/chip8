@@ -151,7 +151,12 @@ export default class Emulator extends EventEmitter {
   }
 
   public next() {
-    this._exec(this._fetch());
+    try {
+      this._exec(this._fetch());
+    } catch (err) {
+      this.paused = true;
+      throw err;
+    }
 
     // pause on infinite loop
     if (this.lastPC === this.PC) {
