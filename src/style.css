@@ -20,7 +20,6 @@ body {
   gap: 4rem;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
   padding: 1rem;
 }
 
