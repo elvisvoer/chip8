@@ -103,6 +103,7 @@ function getCircularList(list: any[]) {
 
   return {
     add: (rom: any) => (list.push(rom), rom),
+    peek: () => list[current],
     next: () => list[(current = ++current < list.length ? current : 0)],
     prev: () => list[(current = --current < 0 ? list.length - 1 : current)],
   };
@@ -156,6 +157,10 @@ document.addEventListener("keydown", async (e) => {
       break;
     case 80: // P
       loadAndRun(romList.prev());
+      break;
+    case 82: // R
+      loadAndRun(romList.peek());
+      emulator.paused = false;
       break;
     case 85: // U
       const file = await uploadFile();
