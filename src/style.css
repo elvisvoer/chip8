@@ -32,10 +32,6 @@ div {
   color: green;
 }
 
-#display {
-  line-height: 0.8rem;
-}
-
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
