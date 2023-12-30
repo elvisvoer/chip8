@@ -1,5 +1,89 @@
 import EventEmitter from "./events";
 
+// octo font
+const octo = [
+  0xf0,
+  0x90,
+  0x90,
+  0x90,
+  0xf0, // 0
+  0x20,
+  0x60,
+  0x20,
+  0x20,
+  0x70, // 1
+  0xf0,
+  0x10,
+  0xf0,
+  0x80,
+  0xf0, // 2
+  0xf0,
+  0x10,
+  0xf0,
+  0x10,
+  0xf0, // 3
+  0x90,
+  0x90,
+  0xf0,
+  0x10,
+  0x10, // 4
+  0xf0,
+  0x80,
+  0xf0,
+  0x10,
+  0xf0, // 5
+  0xf0,
+  0x80,
+  0xf0,
+  0x90,
+  0xf0, // 6
+  0xf0,
+  0x10,
+  0x20,
+  0x40,
+  0x40, // 7
+  0xf0,
+  0x90,
+  0xf0,
+  0x90,
+  0xf0, // 8
+  0xf0,
+  0x90,
+  0xf0,
+  0x10,
+  0xf0, // 9
+  0xf0,
+  0x90,
+  0xf0,
+  0x90,
+  0x90, // A
+  0xe0,
+  0x90,
+  0xe0,
+  0x90,
+  0xe0, // B
+  0xf0,
+  0x80,
+  0x80,
+  0x80,
+  0xf0, // C
+  0xe0,
+  0x90,
+  0x90,
+  0x90,
+  0xe0, // D
+  0xf0,
+  0x80,
+  0xf0,
+  0x80,
+  0xf0, // E
+  0xf0,
+  0x80,
+  0xf0,
+  0x80,
+  0x80, // F
+];
+
 export default class Emulator extends EventEmitter {
   // registries
   private V: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -26,6 +110,11 @@ export default class Emulator extends EventEmitter {
 
   constructor(private offset = 0x200) {
     super();
+
+    // init font (@elvis: maybe should be done on every load)
+    for (let z = 0; z < octo.length; z++) {
+      this.RAM[z] = octo[z];
+    }
   }
 
   get state() {
@@ -113,6 +202,8 @@ export default class Emulator extends EventEmitter {
         switch (NN) {
           case 0x1e:
             return ["FX1E", "add to index"];
+          case 0x29:
+            return ["FX29", "Font character"];
           case 0x33:
             return ["FX33", "store"];
           case 0x55:
@@ -321,6 +412,9 @@ export default class Emulator extends EventEmitter {
       DXYN: () => this._draw(this.V[X], this.V[Y], N),
       FX1E: () => {
         this.I = (this.I + this.V[X]) & 0xffff;
+      },
+      FX29: () => {
+        this.I = (this.V[X] & 0xf) * 5;
       },
       FX33: () => {
         this.RAM[this.I] = Math.floor(this.V[X] / 100) % 10;
