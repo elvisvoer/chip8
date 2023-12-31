@@ -43,16 +43,17 @@ function getColoredText(text: string, color: string) {
   return `<span style="color: ${color};">${text}</span>`;
 }
 
-function getRomHexStr(data: Uint8Array, pos: number, len = 2) {
+function getRomHexStr(data: Uint8Array, pos: number) {
   let output = "";
-  const highlights = Array(len)
-    .fill(0)
-    .map((_, index) => index + pos);
 
-  for (let i = 0; i < data.length; i += 1) {
+  for (let i = 0; i < data.length; i += 2) {
     output += getColoredText(
-      `${((data[i] >> 4) & 0xf).toString(16)}${(data[i] & 0xf).toString(16)} `,
-      highlights.includes(i) ? "red" : "inherit"
+      `${decimalToHexStr((data[i] >> 4) & 0xf)}${decimalToHexStr(
+        data[i] & 0xf
+      )}${decimalToHexStr((data[i + 1] >> 4) & 0xf)}${decimalToHexStr(
+        data[i + 1] & 0xf
+      )} `,
+      [i, i + 1].includes(pos) ? "red" : "inherit"
     );
   }
 
