@@ -106,6 +106,8 @@ export default class Emulator extends EventEmitter {
   // execution history
   private history: any[] = [];
 
+  private flags: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
   public paused: boolean = false;
 
   constructor(private offset = 0x200) {
@@ -368,6 +370,29 @@ export default class Emulator extends EventEmitter {
                 for (let i = 0; i <= X; i++) {
                   this.V[i] = this.RAM[this.I + i];
                 }
+              },
+            ];
+          case 0x75:
+            return [
+              "FX75",
+              "push",
+              () => {
+                for (var z = 0; z <= X; z++) {
+                  this.flags[z] = this.V[z];
+                }
+                // console.log("push regs", JSON.stringify({ X, V: this.V }));
+              },
+            ];
+          case 0x85:
+            return [
+              "FX85",
+              "pop",
+              () => {
+                // console.log("before pop regs", JSON.stringify({ X, V: this.V }));
+                for (var z = 0; z <= X; z++) {
+                  this.V[z] = 0xff & this.flags[z];
+                }
+                // console.log("after pop regs", JSON.stringify({ X, V: this.V }));
               },
             ];
         }
