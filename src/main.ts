@@ -104,37 +104,6 @@ function hexWithHighlightedText(data: Uint8Array, pos: number, len = 2) {
   return output;
 }
 
-const drawDisplay = ({
-  count,
-  op,
-  romName,
-  data,
-}: {
-  count: number;
-  op: string;
-  romName: string;
-  data: Uint8Array;
-}) => {
-  display.clear();
-  display.write(emulator.state.fb, emulator.FBRowSize, emulator.FBColSize);
-
-  info.clear();
-  info.write(
-    `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
-  );
-  info.write(`ROM: ${romName}\n`);
-  info.write(`Tick: ${count}\n`);
-  info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
-
-  const [opCode, opName] = emulator.getOpInfo(op);
-  info.write(`OP: 0x${op} (${opCode} - ${opName})\n\n`);
-
-  debug.clear();
-  if (showHexDebugger) {
-    debug.write(hexWithHighlightedText(data, emulator.state.pc));
-  }
-};
-
 const qKeyboardMapping: any = {
   "1": 0x1,
   "2": 0x2,
@@ -159,12 +128,39 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.load(data);
   emulator.run();
 
-  // draw initial display
-  drawDisplay({ count: 0, op: "0000", romName: name, data });
+  const drawDisplay = ({
+    op,
+    romName,
+    data,
+  }: {
+    op: string;
+    romName: string;
+    data: Uint8Array;
+  }) => {
+    display.clear();
+    display.write(emulator.state.fb, emulator.FBRowSize, emulator.FBColSize);
 
-  emulator.on("tick", (count: number, op: string) =>
-    drawDisplay({ count, op, romName: name, data })
-  );
+    info.clear();
+    info.write(
+      `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
+    );
+    info.write(`ROM: ${romName}\n`);
+    info.write(`Tick: ${emulator.tick}\n`);
+    info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
+
+    const [opCode, opName] = emulator.getOpInfo(op);
+    info.write(`OP: 0x${op} (${opCode} - ${opName})\n\n`);
+
+    debug.clear();
+    if (showHexDebugger) {
+      debug.write(hexWithHighlightedText(data, emulator.state.pc));
+    }
+  };
+
+  // draw initial display
+  drawDisplay({ op: "0000", romName: name, data });
+
+  emulator.on("tick", (op: string) => drawDisplay({ op, romName: name, data }));
 
   emulator.on("pendingInput", (resolve: Function) => {
     const onKeyDown = (e: KeyboardEvent) => {

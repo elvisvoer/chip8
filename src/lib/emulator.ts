@@ -156,6 +156,10 @@ export default class Emulator extends EventEmitter {
     };
   }
 
+  get tick() {
+    return this.history.length;
+  }
+
   get FBColSize() {
     return this.hires ? 64 : 32;
   }
@@ -479,7 +483,7 @@ export default class Emulator extends EventEmitter {
 
   public forceTick() {
     const op = this._getOp();
-    this.emit("tick", this.history.length, op);
+    this.emit("tick", op);
   }
 
   public load(data: Uint8Array) {
@@ -575,7 +579,7 @@ export default class Emulator extends EventEmitter {
 
     const op = this._getOp();
 
-    this.emit("tick", this.history.length, op);
+    this.emit("tick", op);
 
     this.history.push(this.state);
     this.ecu.pc += 2;
