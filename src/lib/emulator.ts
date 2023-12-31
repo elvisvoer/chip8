@@ -84,7 +84,7 @@ const font = [
   0x80, // F
 ];
 
-type ECU = {
+export type ECU = {
   // standard registries
   v: number[];
   pc: number;
@@ -140,7 +140,7 @@ export default class Emulator extends EventEmitter {
         ...this.ecu,
         v: [...this.ecu.v],
         r: [...this.ecu.r],
-        f: [this.ecu.f],
+        f: [...this.ecu.f],
       },
       framebuffer: [...this.framebuffer],
       hires: this.hires,

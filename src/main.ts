@@ -1,14 +1,18 @@
 import "./style.css";
-import Emulator from "./lib/emulator.ts";
+import Emulator, { ECU } from "./lib/emulator.ts";
 import { BitMapDisplay, TextDisplay } from "./lib/display.ts";
-import { circularArray, fetchRom, uploadRom } from "./utils.ts";
+import {
+  circularArray,
+  decimalToHexStr,
+  fetchRom,
+  uploadRom,
+} from "./utils.ts";
 
 const display = new BitMapDisplay(
   document.getElementById("display")! as HTMLCanvasElement
 );
 const info = new TextDisplay(document.getElementById("info")!);
-const debug = new TextDisplay(document.getElementById("debug")!);
-let showHexDebugger = false;
+let verbosity = 0;
 
 const emulator = new Emulator();
 const romList = circularArray([
@@ -39,7 +43,7 @@ function getColoredText(text: string, color: string) {
   return `<span style="color: ${color};">${text}</span>`;
 }
 
-function getHexDebuggerText(data: Uint8Array, pos: number, len = 2) {
+function getRomHexStr(data: Uint8Array, pos: number, len = 2) {
   let output = "";
   const highlights = Array(len)
     .fill(0)
@@ -55,6 +59,19 @@ function getHexDebuggerText(data: Uint8Array, pos: number, len = 2) {
   return output;
 }
 
+function getEmulatorDebugStateStr(ecu: ECU) {
+  let output = "";
+  output += `PC: ${decimalToHexStr(ecu.pc, 4)}\n`;
+  output += `I: ${decimalToHexStr(ecu.i, 4)}\n`;
+  output += `V: [${ecu.v.map((v) => `${decimalToHexStr(v, 4)}`).join(", ")}]\n`;
+  output += `F: [${ecu.f.map((f) => `${decimalToHexStr(f, 4)}`).join(", ")}]\n`;
+  output += `R: [${ecu.r.map((r) => `${decimalToHexStr(r, 4)}`).join(", ")}]\n`;
+  output += `DT: ${decimalToHexStr(ecu.dt, 4)}\n`;
+  output += `ST: ${decimalToHexStr(ecu.st, 4)}\n`;
+
+  return output;
+}
+
 function drawDisplay(emulator: Emulator, name: string, data: Uint8Array) {
   display.clear();
   display.write(
@@ -64,18 +81,22 @@ function drawDisplay(emulator: Emulator, name: string, data: Uint8Array) {
   );
 
   info.clear();
+  const [opCode, opName, op] = emulator.getCurrentOpInfo();
   info.write(
     `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
   );
   info.write(`ROM: ${name}\n`);
-  info.write(`PC: 0x${emulator.state.ecu.pc.toString(16).toUpperCase()}\n`);
+  info.write(`OP: ${op} (${opCode} - ${opName})\n`);
+  info.write("\n");
 
-  const [opCode, opName, op] = emulator.getCurrentOpInfo();
-  info.write(`OP: 0x${op} (${opCode} - ${opName})\n\n`);
+  // show more info depending on verbosity level
+  if (verbosity > 0) {
+    info.write(getEmulatorDebugStateStr(emulator.state.ecu));
+    info.write("\n");
+  }
 
-  debug.clear();
-  if (showHexDebugger) {
-    debug.write(getHexDebuggerText(data, emulator.state.ecu.pc));
+  if (verbosity > 1) {
+    info.write(getRomHexStr(data, emulator.state.ecu.pc));
   }
 }
 
@@ -119,7 +140,8 @@ document.addEventListener("keydown", async (e) => {
       loadAndRun(romList.add(rom));
       break;
     case 66: // B
-      showHexDebugger = !showHexDebugger;
+      verbosity = ++verbosity % 3;
+      console.log({ verbosity });
       // force next tick
       emulator.forceTick();
       break;

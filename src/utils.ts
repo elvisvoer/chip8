@@ -66,3 +66,15 @@ export function circularArray(list: any[]) {
     },
   };
 }
+
+export function decimalToHexStr(val: number, strWidth = 0) {
+  let str = val.toString(16).toUpperCase();
+  if (str.length < strWidth) {
+    str =
+      Array(strWidth - str.length)
+        .fill("0")
+        .join("") + str;
+  }
+
+  return str;
+}
