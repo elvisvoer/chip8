@@ -148,11 +148,16 @@ export default class Emulator extends EventEmitter {
   }
 
   get state() {
+    // make copy for arrays
     return {
-      v: [...this.ecu.v],
-      i: this.ecu.i,
-      pc: this.ecu.pc - this.offset,
-      fb: [...this.framebuffer],
+      ecu: {
+        ...this.ecu,
+        v: [...this.ecu.v],
+        r: [...this.ecu.r],
+        f: [this.ecu.f],
+      },
+      framebuffer: [...this.framebuffer],
+      hires: this.hires,
     };
   }
 
@@ -526,11 +531,10 @@ export default class Emulator extends EventEmitter {
     this.next();
   }
 
-  private _setState({ v, i, pc, fb }: any) {
-    this.ecu.v = v;
-    this.ecu.i = i;
-    this.ecu.pc = pc + this.offset;
-    this.framebuffer = fb;
+  private _setState({ ecu, framebuffer, hires }: any) {
+    this.ecu = ecu;
+    this.framebuffer = framebuffer;
+    this.hires = hires;
   }
 
   private clearFramebuffer() {

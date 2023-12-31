@@ -130,7 +130,7 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
 
   const drawDisplay = ({ op }: { op: string }) => {
     display.clear();
-    display.write(emulator.state.fb, emulator.FBRowSize, emulator.FBColSize);
+    display.write(emulator.state.framebuffer, emulator.FBRowSize, emulator.FBColSize);
 
     info.clear();
     info.write(
@@ -138,14 +138,14 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
     );
     info.write(`ROM: ${name}\n`);
     info.write(`Tick: ${emulator.tick}\n`);
-    info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
+    info.write(`PC: 0x${emulator.state.ecu.pc.toString(16).toUpperCase()}\n`);
 
     const [opCode, opName] = emulator.getOpInfo(op);
     info.write(`OP: 0x${op} (${opCode} - ${opName})\n\n`);
 
     debug.clear();
     if (showHexDebugger) {
-      debug.write(hexWithHighlightedText(data, emulator.state.pc));
+      debug.write(hexWithHighlightedText(data, emulator.state.ecu.pc));
     }
   };
 
