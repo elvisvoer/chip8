@@ -1,7 +1,7 @@
 import EventEmitter from "./events";
 
 // octo font
-const octo = [
+const font = [
   0xf0,
   0x90,
   0x90,
@@ -109,42 +109,25 @@ export default class Emulator extends EventEmitter {
   private framebuffer: number[] = [];
   private hires = false; // high resolution
 
-  private history: any[] = [];
-  public paused: boolean = false;
-
   // for loop detection
   private lastPC: number = 0;
 
+  private history: any[] = [];
+  public paused: boolean = false;
   private loopId: any = null;
+  private currentOp!: string;
 
   constructor(private offset = 0x200) {
     super();
-    this._init();
+    this.init();
   }
 
-  private _init() {
-    // init ECU
-    this.ecu = {
-      v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      pc: 0,
-      i: 0,
-      dt: 0,
-      st: 0,
-      r: [],
-      f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    };
-    this.ecu.pc = this.lastPC = this.offset;
-    // init ram
-    this.ram = new Uint8Array(4 * 1024);
-    // init display
-    this.clearFramebuffer();
-    this.hires = false;
-    // init font
-    for (let z = 0; z < octo.length; z++) {
-      this.ram[z] = octo[z];
-    }
-    // reset history
-    this.history = [];
+  get FBColSize() {
+    return this.hires ? 64 : 32;
+  }
+
+  get FBRowSize() {
+    return this.hires ? 128 : 64;
   }
 
   get state() {
@@ -165,15 +148,121 @@ export default class Emulator extends EventEmitter {
     return this.history.length;
   }
 
-  get FBColSize() {
-    return this.hires ? 64 : 32;
+  public forceTick() {
+    this.emit("tick");
   }
 
-  get FBRowSize() {
-    return this.hires ? 128 : 64;
+  public getCurrentOpInfo() {
+    const [opCode, opName] = this.getOpMeta(this.currentOp);
+    return [opCode, opName, this.currentOp];
   }
 
-  public getOpInfo(op: string) {
+  public load(data: Uint8Array) {
+    this.init();
+
+    // load data into ram at offset
+    for (let i = 0; i < data.length; i += 1) {
+      this.ram[this.offset + i] = data[i];
+    }
+  }
+
+  public async run(_: number = 25) {
+    this.loopId && clearTimeout(this.loopId);
+    // main program loop
+    !this.paused && (await this.next());
+    this.loopId = setTimeout(() => this.run(), 0);
+  }
+
+  public async next() {
+    try {
+      this.fetch();
+      await this.exec();
+    } catch (err) {
+      this.paused = true;
+      throw err;
+    }
+
+    // pause on infinite loop
+    if (this.lastPC === this.ecu.pc) {
+      this.paused = true;
+    }
+
+    this.lastPC = this.ecu.pc;
+  }
+
+  public prev() {
+    // go back 2 instr and execute it so all events are fired
+    // or execute first instruction if only one present
+    this.history.length && this.setState(this.history.pop());
+    this.history.length && this.setState(this.history.pop());
+    this.next();
+  }
+
+  /* Private Methods */
+
+  private clearFramebuffer() {
+    for (var z = 0; z < this.FBColSize * this.FBRowSize; z++) {
+      this.framebuffer[z] = 0;
+    }
+  }
+
+  private draw(x: number, y: number, len: number) {
+    this.ecu.v[0xf] = 0x0;
+
+    // draw a Chip8 8xN sprite
+    for (let a = 0; a < len; a++) {
+      for (let b = 0; b < 8; b++) {
+        const target =
+          ((x + b) % this.FBRowSize) +
+          ((y + a) % this.FBColSize) * this.FBRowSize;
+        const source = ((this.ram[this.ecu.i + a] >> (7 - b)) & 0x1) != 0;
+
+        if (!source) {
+          continue;
+        }
+
+        if (this.framebuffer[target]) {
+          this.framebuffer[target] = 0;
+          this.ecu.v[0xf] = 0x1;
+        } else {
+          this.framebuffer[target] = 1;
+        }
+      }
+    }
+  }
+
+  private async exec() {
+    const [, , handler] = this.getOpMeta(this.currentOp);
+
+    if (!handler) {
+      throw new Error(`No handler found for instruction ${this.currentOp}`);
+    }
+
+    await handler();
+  }
+
+  private fetch() {
+    this.currentOp = this.getCurrentOp();
+    this.history.push(this.state);
+    this.emit("tick");
+
+    // increment already
+    this.ecu.pc += 2;
+  }
+
+  private getCurrentOp() {
+    if (this.ecu.pc > this.ram.length) {
+      throw new Error(`Attempt to read outside RAM bounds.`);
+    }
+
+    const H1 = this.ram[this.ecu.pc];
+    const H2 = this.ram[this.ecu.pc + 1];
+    return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f]
+      .reduce((n, d) => n + d.toString(16), "")
+      .toUpperCase();
+  }
+
+  private getOpMeta(op: string) {
     const NNN = parseInt(op, 16) & 0x0fff;
     const NN = parseInt(op, 16) & 0x00ff;
     const [O, X, Y, N] = op.split("").map((d) => parseInt(d, 16));
@@ -369,7 +458,7 @@ export default class Emulator extends EventEmitter {
         return [
           "DXYN",
           "display",
-          () => this._draw(this.ecu.v[X], this.ecu.v[Y], N),
+          () => this.draw(this.ecu.v[X], this.ecu.v[Y], N),
         ];
       case 0xf: {
         switch (NN) {
@@ -486,118 +575,34 @@ export default class Emulator extends EventEmitter {
     throw new Error(`Unknown instruction #${op}`);
   }
 
-  public forceTick() {
-    const op = this._getOp();
-    this.emit("tick", op);
-  }
-
-  public load(data: Uint8Array) {
-    this._init();
-
-    // load data into ram at offset
-    for (let i = 0; i < data.length; i += 1) {
-      this.ram[this.offset + i] = data[i];
+  private init() {
+    // init ECU
+    this.ecu = {
+      v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      pc: 0,
+      i: 0,
+      dt: 0,
+      st: 0,
+      r: [],
+      f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    this.ecu.pc = this.lastPC = this.offset;
+    // init ram
+    this.ram = new Uint8Array(4 * 1024);
+    // init display
+    this.clearFramebuffer();
+    this.hires = false;
+    // init font
+    for (let z = 0; z < font.length; z++) {
+      this.ram[z] = font[z];
     }
+    // reset history
+    this.history = [];
   }
 
-  public async run(_: number = 25) {
-    this.loopId && clearTimeout(this.loopId);
-    // main program loop
-    !this.paused && (await this.next());
-    this.loopId = setTimeout(() => this.run(), 0);
-  }
-
-  public async next() {
-    try {
-      await this._exec(this._fetch());
-    } catch (err) {
-      this.paused = true;
-      throw err;
-    }
-
-    // pause on infinite loop
-    if (this.lastPC === this.ecu.pc) {
-      this.paused = true;
-    }
-
-    this.lastPC = this.ecu.pc;
-  }
-
-  public prev() {
-    // go back 2 instr and execute it so all events are fired
-    // or execute first instruction if only one present
-    this.history.length && this._setState(this.history.pop());
-    this.history.length && this._setState(this.history.pop());
-    this.next();
-  }
-
-  private _setState({ ecu, framebuffer, hires }: any) {
+  private setState({ ecu, framebuffer, hires }: any) {
     this.ecu = ecu;
     this.framebuffer = framebuffer;
     this.hires = hires;
-  }
-
-  private clearFramebuffer() {
-    for (var z = 0; z < this.FBColSize * this.FBRowSize; z++) {
-      this.framebuffer[z] = 0;
-    }
-  }
-
-  private _draw(x: number, y: number, len: number) {
-    this.ecu.v[0xf] = 0x0;
-
-    // draw a Chip8 8xN sprite
-    for (let a = 0; a < len; a++) {
-      for (let b = 0; b < 8; b++) {
-        const target =
-          ((x + b) % this.FBRowSize) +
-          ((y + a) % this.FBColSize) * this.FBRowSize;
-        const source = ((this.ram[this.ecu.i + a] >> (7 - b)) & 0x1) != 0;
-
-        if (!source) {
-          continue;
-        }
-
-        if (this.framebuffer[target]) {
-          this.framebuffer[target] = 0;
-          this.ecu.v[0xf] = 0x1;
-        } else {
-          this.framebuffer[target] = 1;
-        }
-      }
-    }
-  }
-
-  private _getOp() {
-    const H1 = this.ram[this.ecu.pc];
-    const H2 = this.ram[this.ecu.pc + 1];
-    return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f]
-      .reduce((n, d) => n + d.toString(16), "")
-      .toUpperCase();
-  }
-
-  private _fetch() {
-    if (this.ecu.pc > this.ram.length) {
-      throw new Error(`Attempt to read outside RAM bounds.`);
-    }
-
-    const op = this._getOp();
-
-    this.emit("tick", op);
-
-    this.history.push(this.state);
-    this.ecu.pc += 2;
-
-    return op;
-  }
-
-  private async _exec(op: string) {
-    const instr = this.getOpInfo(op)[2];
-
-    if (!instr) {
-      throw new Error(`No handle found for instruction ${op}`);
-    }
-
-    await instr();
   }
 }

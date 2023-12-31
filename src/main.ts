@@ -128,9 +128,13 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.load(data);
   emulator.run();
 
-  const drawDisplay = ({ op }: { op: string }) => {
+  const drawDisplay = () => {
     display.clear();
-    display.write(emulator.state.framebuffer, emulator.FBRowSize, emulator.FBColSize);
+    display.write(
+      emulator.state.framebuffer,
+      emulator.FBRowSize,
+      emulator.FBColSize
+    );
 
     info.clear();
     info.write(
@@ -140,7 +144,7 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
     info.write(`Tick: ${emulator.tick}\n`);
     info.write(`PC: 0x${emulator.state.ecu.pc.toString(16).toUpperCase()}\n`);
 
-    const [opCode, opName] = emulator.getOpInfo(op);
+    const [opCode, opName, op] = emulator.getCurrentOpInfo();
     info.write(`OP: 0x${op} (${opCode} - ${opName})\n\n`);
 
     debug.clear();
@@ -150,9 +154,9 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   };
 
   // draw initial display
-  drawDisplay({ op: "0000" });
+  drawDisplay();
 
-  emulator.on("tick", (op: string) => drawDisplay({ op }));
+  emulator.on("tick", () => drawDisplay());
 
   emulator.on("pendingInput", (resolve: Function) => {
     const onKeyDown = (e: KeyboardEvent) => {
