@@ -141,7 +141,6 @@ document.addEventListener("keydown", async (e) => {
       break;
     case 66: // B
       verbosity = ++verbosity % 3;
-      console.log({ verbosity });
       // force next tick
       emulator.forceTick();
       break;
