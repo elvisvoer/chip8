@@ -128,15 +128,7 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.load(data);
   emulator.run();
 
-  const drawDisplay = ({
-    op,
-    romName,
-    data,
-  }: {
-    op: string;
-    romName: string;
-    data: Uint8Array;
-  }) => {
+  const drawDisplay = ({ op }: { op: string }) => {
     display.clear();
     display.write(emulator.state.fb, emulator.FBRowSize, emulator.FBColSize);
 
@@ -144,7 +136,7 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
     info.write(
       `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
     );
-    info.write(`ROM: ${romName}\n`);
+    info.write(`ROM: ${name}\n`);
     info.write(`Tick: ${emulator.tick}\n`);
     info.write(`PC: 0x${emulator.state.pc.toString(16).toUpperCase()}\n`);
 
@@ -158,9 +150,9 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   };
 
   // draw initial display
-  drawDisplay({ op: "0000", romName: name, data });
+  drawDisplay({ op: "0000" });
 
-  emulator.on("tick", (op: string) => drawDisplay({ op, romName: name, data }));
+  emulator.on("tick", (op: string) => drawDisplay({ op }));
 
   emulator.on("pendingInput", (resolve: Function) => {
     const onKeyDown = (e: KeyboardEvent) => {
