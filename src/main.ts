@@ -55,7 +55,7 @@ function getHexDebuggerText(data: Uint8Array, pos: number, len = 2) {
   return output;
 }
 
-async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
+function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
   emulator.load(data);
   emulator.run();
@@ -88,21 +88,14 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   drawDisplay();
 
   emulator.on("tick", () => drawDisplay());
-
-  emulator.on("pendingInput", (resolve: Function) => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const hex = qKeyboardMapping[e.key];
-      if (hex) {
-        resolve(hex);
-        document.removeEventListener("keydown", onKeyDown);
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-  });
 }
 
 document.addEventListener("keydown", async (e) => {
+  const hex = qKeyboardMapping[e.key];
+  if (hex) {
+    emulator.setInput(hex);
+  }
+
   switch (e.keyCode) {
     case 13: // Enter
       emulator.paused = false;

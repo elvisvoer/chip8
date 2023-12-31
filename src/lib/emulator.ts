@@ -117,6 +117,9 @@ export default class Emulator extends EventEmitter {
   private loopId: any = null;
   private currentOp!: string;
 
+  private waitingInput = false;
+  private waitReg = -1;
+
   constructor(private offset = 0x200) {
     super();
     this.init();
@@ -162,17 +165,21 @@ export default class Emulator extends EventEmitter {
     }
   }
 
-  public async run(_: number = 25) {
+  public run(_: number = 25) {
     this.loopId && clearTimeout(this.loopId);
     // main program loop
-    !this.paused && (await this.next());
+    !this.paused && this.next();
     this.loopId = setTimeout(() => this.run(), 0);
   }
 
-  public async next() {
+  public next() {
+    if (this.waitingInput) {
+      return;
+    }
+
     try {
       this.fetch();
-      await this.exec();
+      this.exec();
     } catch (err) {
       this.paused = true;
       throw err;
@@ -187,11 +194,21 @@ export default class Emulator extends EventEmitter {
   }
 
   public prev() {
+    if (this.waitingInput) {
+      return;
+    }
     // go back 2 instr and execute it so all events are fired
     // or execute first instruction if only one present
     this.history.length && this.setState(this.history.pop());
     this.history.length && this.setState(this.history.pop());
     this.next();
+  }
+
+  public setInput(key: number) {
+    if (this.waitingInput) {
+      this.ecu.v[this.waitReg] = key & 0xff;
+      this.waitingInput = false;
+    }
   }
 
   /* Private Methods */
@@ -227,14 +244,14 @@ export default class Emulator extends EventEmitter {
     }
   }
 
-  private async exec() {
+  private exec() {
     const [, , handler] = this.getOpMeta(this.currentOp);
 
     if (!handler) {
       throw new Error(`No handler found for instruction ${this.currentOp}`);
     }
 
-    await handler();
+    handler();
   }
 
   private fetch() {
@@ -489,12 +506,9 @@ export default class Emulator extends EventEmitter {
             return [
               "FX0A",
               "get key",
-              async () => {
-                const key = await new Promise<number>((resolve) =>
-                  this.emit("pendingInput", resolve)
-                );
-
-                this.ecu.v[X] = key & 0xff;
+              () => {
+                this.waitReg = X;
+                this.waitingInput = true;
               },
             ];
           case 0x1e:
@@ -592,8 +606,9 @@ export default class Emulator extends EventEmitter {
     for (let z = 0; z < font.length; z++) {
       this.ram[z] = font[z];
     }
-    // reset history
+    // reset
     this.history = [];
+    this.waitingInput = false;
   }
 
   private setState({ ecu, framebuffer, hires }: any) {
