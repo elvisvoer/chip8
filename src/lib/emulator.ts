@@ -84,7 +84,7 @@ const font = [
   0x80, // F
 ];
 
-export type ECU = {
+type ECU = {
   // standard registries
   v: number[];
   pc: number;
@@ -120,7 +120,7 @@ export default class Emulator extends EventEmitter {
   public paused: boolean = false;
   private loopId: any = null;
 
-  constructor(private offset = 0x200) {
+  constructor(private _offset = 0x200) {
     super();
     this.init();
   }
@@ -131,6 +131,10 @@ export default class Emulator extends EventEmitter {
 
   get FBRowSize() {
     return this.hires ? 128 : 64;
+  }
+
+  get offset() {
+    return this._offset;
   }
 
   get state() {
@@ -161,7 +165,7 @@ export default class Emulator extends EventEmitter {
 
     // load data into ram at offset
     for (let i = 0; i < data.length; i += 1) {
-      this.ram[this.offset + i] = data[i];
+      this.ram[this._offset + i] = data[i];
     }
   }
 
@@ -455,8 +459,7 @@ export default class Emulator extends EventEmitter {
           "BNNN",
           "jump with offset",
           () => {
-            const offset = this.ecu.v[0];
-            this.ecu.pc = NNN + offset;
+            this.ecu.pc = NNN + this.ecu.v[0];
           },
         ];
       case 0xc:
@@ -596,7 +599,7 @@ export default class Emulator extends EventEmitter {
       r: [],
       f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     };
-    this.ecu.pc = this.lastPC = this.offset;
+    this.ecu.pc = this.lastPC = this._offset;
     // init ram
     this.ram = new Uint8Array(4 * 1024);
     // init display

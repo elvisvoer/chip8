@@ -1,5 +1,5 @@
 import "./style.css";
-import Emulator, { ECU } from "./lib/emulator.ts";
+import Emulator from "./lib/emulator.ts";
 import { BitMapDisplay, TextDisplay } from "./lib/display.ts";
 import {
   circularArray,
@@ -59,20 +59,26 @@ function getRomHexStr(data: Uint8Array, pos: number, len = 2) {
   return output;
 }
 
-function getEmulatorDebugStateStr(ecu: ECU) {
+function getEmulatorDebugStateStr(emulator: Emulator) {
   let output = "";
-  output += `PC: ${decimalToHexStr(ecu.pc, 4)}\n`;
-  output += `I: ${decimalToHexStr(ecu.i, 4)}\n`;
-  output += `V: [${ecu.v.map((v) => `${decimalToHexStr(v, 4)}`).join(", ")}]\n`;
-  output += `F: [${ecu.f.map((f) => `${decimalToHexStr(f, 4)}`).join(", ")}]\n`;
-  output += `R: [${ecu.r.map((r) => `${decimalToHexStr(r, 4)}`).join(", ")}]\n`;
-  output += `DT: ${decimalToHexStr(ecu.dt, 4)}\n`;
-  output += `ST: ${decimalToHexStr(ecu.st, 4)}\n`;
+  output += `PC: ${decimalToHexStr(emulator.state.ecu.pc, 4)}\n`;
+  output += `I: ${decimalToHexStr(emulator.state.ecu.i, 4)}\n`;
+  output += `V: [${emulator.state.ecu.v
+    .map((v) => `${decimalToHexStr(v, 4)}`)
+    .join(", ")}]\n`;
+  output += `F: [${emulator.state.ecu.f
+    .map((f) => `${decimalToHexStr(f, 4)}`)
+    .join(", ")}]\n`;
+  output += `R: [${emulator.state.ecu.r
+    .map((r) => `${decimalToHexStr(r, 4)}`)
+    .join(", ")}]\n`;
+  output += `DT: ${decimalToHexStr(emulator.state.ecu.dt, 4)}\n`;
+  output += `ST: ${decimalToHexStr(emulator.state.ecu.st, 4)}\n`;
 
   return output;
 }
 
-function drawDisplay(emulator: Emulator, name: string, data: Uint8Array) {
+function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
   display.clear();
   display.write(
     emulator.state.framebuffer,
@@ -85,18 +91,19 @@ function drawDisplay(emulator: Emulator, name: string, data: Uint8Array) {
   info.write(
     `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
   );
-  info.write(`ROM: ${name}\n`);
+  info.write(`ROM: ${romName}\n`);
   info.write(`OP: ${op} (${opCode} - ${opName})\n`);
   info.write("\n");
 
   // show more info depending on verbosity level
   if (verbosity > 0) {
-    info.write(getEmulatorDebugStateStr(emulator.state.ecu));
+    info.write(getEmulatorDebugStateStr(emulator));
     info.write("\n");
   }
 
   if (verbosity > 1) {
-    info.write(getRomHexStr(data, emulator.state.ecu.pc));
+    // rom offset = pc - offset
+    info.write(getRomHexStr(romData, emulator.state.ecu.pc - emulator.offset));
   }
 }
 
