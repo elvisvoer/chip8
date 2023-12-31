@@ -55,39 +55,37 @@ function getHexDebuggerText(data: Uint8Array, pos: number, len = 2) {
   return output;
 }
 
+function drawDisplay(emulator: Emulator, name: string, data: Uint8Array) {
+  display.clear();
+  display.write(
+    emulator.state.framebuffer,
+    emulator.FBRowSize,
+    emulator.FBColSize
+  );
+
+  info.clear();
+  info.write(
+    `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
+  );
+  info.write(`ROM: ${name}\n`);
+  info.write(`PC: 0x${emulator.state.ecu.pc.toString(16).toUpperCase()}\n`);
+
+  const [opCode, opName, op] = emulator.getCurrentOpInfo();
+  info.write(`OP: 0x${op} (${opCode} - ${opName})\n\n`);
+
+  debug.clear();
+  if (showHexDebugger) {
+    debug.write(getHexDebuggerText(data, emulator.state.ecu.pc));
+  }
+}
+
 function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
   emulator.load(data);
   emulator.run();
-
-  const drawDisplay = () => {
-    display.clear();
-    display.write(
-      emulator.state.framebuffer,
-      emulator.FBRowSize,
-      emulator.FBColSize
-    );
-
-    info.clear();
-    info.write(
-      `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
-    );
-    info.write(`ROM: ${name}\n`);
-    info.write(`PC: 0x${emulator.state.ecu.pc.toString(16).toUpperCase()}\n`);
-
-    const [opCode, opName, op] = emulator.getCurrentOpInfo();
-    info.write(`OP: 0x${op} (${opCode} - ${opName})\n\n`);
-
-    debug.clear();
-    if (showHexDebugger) {
-      debug.write(getHexDebuggerText(data, emulator.state.ecu.pc));
-    }
-  };
-
   // draw initial display
-  drawDisplay();
-
-  emulator.on("tick", () => drawDisplay());
+  drawDisplay(emulator, name, data);
+  emulator.on("tick", () => drawDisplay(emulator, name, data));
 }
 
 document.addEventListener("keydown", async (e) => {
