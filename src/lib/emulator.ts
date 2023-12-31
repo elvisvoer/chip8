@@ -125,11 +125,11 @@ export default class Emulator extends EventEmitter {
     this.init();
   }
 
-  get FBColSize() {
+  get framebufferHeight() {
     return this.hires ? 64 : 32;
   }
 
-  get FBRowSize() {
+  get framebufferWidth() {
     return this.hires ? 128 : 64;
   }
 
@@ -218,7 +218,7 @@ export default class Emulator extends EventEmitter {
   /* Private Methods */
 
   private clearFramebuffer() {
-    for (var z = 0; z < this.FBColSize * this.FBRowSize; z++) {
+    for (var z = 0; z < this.framebufferHeight * this.framebufferWidth; z++) {
       this.framebuffer[z] = 0;
     }
   }
@@ -230,8 +230,8 @@ export default class Emulator extends EventEmitter {
     for (let a = 0; a < len; a++) {
       for (let b = 0; b < 8; b++) {
         const target =
-          ((x + b) % this.FBRowSize) +
-          ((y + a) % this.FBColSize) * this.FBRowSize;
+          ((x + b) % this.framebufferWidth) +
+          ((y + a) % this.framebufferHeight) * this.framebufferWidth;
         const source = ((this.ram[this.ecu.i + a] >> (7 - b)) & 0x1) != 0;
 
         if (!source) {

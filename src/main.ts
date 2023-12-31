@@ -83,8 +83,8 @@ function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
   display.clear();
   display.write(
     emulator.state.framebuffer,
-    emulator.FBRowSize,
-    emulator.FBColSize
+    emulator.framebufferWidth,
+    emulator.framebufferHeight
   );
 
   info.clear();
