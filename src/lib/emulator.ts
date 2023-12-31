@@ -570,7 +570,7 @@ export default class Emulator extends EventEmitter {
 
   private _fetch() {
     if (this.ecu.pc > this.ram.length) {
-      throw new Error("Emulator reached out of memory.");
+      throw new Error(`Attempt to read outside RAM bounds.`);
     }
 
     const op = this._getOp();
