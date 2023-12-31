@@ -314,6 +314,33 @@ export default class Emulator extends EventEmitter {
         return ["DXYN", "display", () => this._draw(this.V[X], this.V[Y], N)];
       case 0xf: {
         switch (NN) {
+          // timers
+          case 0x07:
+            return [
+              "0x07",
+              "load delay timer",
+              () => {
+                // TODO(@elvis): properly implement timers, decrementing does the job for now
+                this.V[X] = --this.delayTimer;
+              },
+            ];
+          case 0x15:
+            return [
+              "0x15",
+              "set delay timer",
+              () => {
+                this.delayTimer = this.V[X];
+              },
+            ];
+          case 0x18:
+            return [
+              "0x18",
+              "set sound timer",
+              () => {
+                this.soundTimer = this.V[X];
+              },
+            ];
+          // rest
           case 0x0a:
             return [
               "FX0A",
