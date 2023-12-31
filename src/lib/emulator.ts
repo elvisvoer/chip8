@@ -380,7 +380,6 @@ export default class Emulator extends EventEmitter {
                 for (var z = 0; z <= X; z++) {
                   this.flags[z] = this.V[z];
                 }
-                // console.log("push regs", JSON.stringify({ X, V: this.V }));
               },
             ];
           case 0x85:
@@ -388,11 +387,9 @@ export default class Emulator extends EventEmitter {
               "FX85",
               "pop",
               () => {
-                // console.log("before pop regs", JSON.stringify({ X, V: this.V }));
                 for (var z = 0; z <= X; z++) {
                   this.V[z] = 0xff & this.flags[z];
                 }
-                // console.log("after pop regs", JSON.stringify({ X, V: this.V }));
               },
             ];
         }

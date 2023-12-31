@@ -135,6 +135,25 @@ const drawDisplay = ({
   }
 };
 
+const qKeyboardMapping: any = {
+  "1": 0x1,
+  "2": 0x2,
+  "3": 0x3,
+  "4": 0xc, //?
+  q: 0x4,
+  w: 0x5,
+  e: 0x6,
+  r: 0xd,
+  a: 0x7,
+  s: 0x8,
+  d: 0x9,
+  f: 0xe,
+  z: 0xa,
+  x: 0x0,
+  c: 0xb,
+  v: 0xf,
+};
+
 async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
   emulator.load(data);
@@ -149,9 +168,8 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
 
   emulator.on("pendingInput", (resolve: Function) => {
     const onKeyDown = (e: KeyboardEvent) => {
-      const input = e.key;
-      const hex = parseInt(input, 16);
-      if (!isNaN(hex) && (hex & 0xff) === hex) {
+      const hex = qKeyboardMapping[e.key];
+      if (hex) {
         resolve(hex);
         document.removeEventListener("keydown", onKeyDown);
       }
