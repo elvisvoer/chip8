@@ -120,7 +120,7 @@ const drawDisplay = ({
 
   info.clear();
   info.write(
-    `[Space] Pause | [R] Rerun | [H] Prev OP | [L] Next OP | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
+    `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
   );
   info.write(`ROM: ${romName}\n`);
   info.write(`Tick: ${count}\n`);
@@ -181,30 +181,30 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
 
 document.addEventListener("keydown", async (e) => {
   switch (e.keyCode) {
+    case 13: // Enter
+      emulator.paused = false;
+      loadAndRun(romList.peek());
+      break;
     case 32: // space
       emulator.paused = !emulator.paused;
       break;
     case 72: // H
       emulator.prev();
       break;
-    case 76: // L
-      emulator.next();
-      break;
-    case 78: // N
+    case 74: // J
       loadAndRun(romList.next());
       break;
-    case 80: // P
+    case 75: // K
       loadAndRun(romList.prev());
       break;
-    case 82: // R
-      emulator.paused = false;
-      loadAndRun(romList.peek());
+    case 76: // L
+      emulator.next();
       break;
     case 85: // U
       const file = await uploadFile();
       loadAndRun(romList.add(file));
       break;
-    case 86: // V
+    case 66: // B
       showHexDebugger = !showHexDebugger;
       // force next tick
       emulator.forceTick();
