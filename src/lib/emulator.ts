@@ -144,10 +144,6 @@ export default class Emulator extends EventEmitter {
     };
   }
 
-  get tick() {
-    return this.history.length;
-  }
-
   public forceTick() {
     this.emit("tick");
   }
@@ -243,11 +239,8 @@ export default class Emulator extends EventEmitter {
 
   private fetch() {
     this.currentOp = this.getCurrentOp();
-
-    // emit before updating history to make sure `tick` getter
-    // has correct value
-    this.emit("tick");
     this.history.push(this.state);
+    this.emit("tick");
 
     // increment already
     this.ecu.pc += 2;

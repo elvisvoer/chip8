@@ -141,7 +141,6 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
       `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
     );
     info.write(`ROM: ${name}\n`);
-    info.write(`Tick: ${emulator.tick}\n`);
     info.write(`PC: 0x${emulator.state.ecu.pc.toString(16).toUpperCase()}\n`);
 
     const [opCode, opName, op] = emulator.getCurrentOpInfo();
