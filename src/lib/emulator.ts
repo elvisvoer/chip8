@@ -243,8 +243,11 @@ export default class Emulator extends EventEmitter {
 
   private fetch() {
     this.currentOp = this.getCurrentOp();
-    this.history.push(this.state);
+
+    // emit before updating history to make sure `tick` getter
+    // has correct value
     this.emit("tick");
+    this.history.push(this.state);
 
     // increment already
     this.ecu.pc += 2;
