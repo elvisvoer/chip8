@@ -39,7 +39,7 @@ function getColoredText(text: string, color: string) {
   return `<span style="color: ${color};">${text}</span>`;
 }
 
-function hexWithHighlightedText(data: Uint8Array, pos: number, len = 2) {
+function getHexDebuggerText(data: Uint8Array, pos: number, len = 2) {
   let output = "";
   const highlights = Array(len)
     .fill(0)
@@ -80,7 +80,7 @@ async function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
 
     debug.clear();
     if (showHexDebugger) {
-      debug.write(hexWithHighlightedText(data, emulator.state.ecu.pc));
+      debug.write(getHexDebuggerText(data, emulator.state.ecu.pc));
     }
   };
 
