@@ -60,7 +60,7 @@ function getRomHexStr(data: Uint8Array, pos: number) {
   return output;
 }
 
-function getEmulatorDebugStateStr(emulator: Emulator) {
+function getEmulatorECUStr(emulator: Emulator) {
   let output = "";
   output += `PC: ${decimalToHexStr(emulator.state.ecu.pc, 4)}\n`;
   output += `I: ${decimalToHexStr(emulator.state.ecu.i, 4)}\n`;
@@ -98,7 +98,7 @@ function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
 
   // show more info depending on verbosity level
   if (verbosity > 0) {
-    info.write(getEmulatorDebugStateStr(emulator));
+    info.write(getEmulatorECUStr(emulator));
     info.write("\n");
   }
 
