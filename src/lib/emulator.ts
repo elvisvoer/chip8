@@ -103,8 +103,7 @@ type ECU = {
 };
 
 export default class Emulator extends EventEmitter {
-  // Emulator Control Unit
-  private ecu!: ECU;
+  private ecu!: ECU; // Emulator Control Unit state
   private ram: Uint8Array = new Uint8Array(4 * 1024);
   private framebuffer: number[] = [];
   private hires = false; // high resolution
@@ -112,13 +111,14 @@ export default class Emulator extends EventEmitter {
   // for loop detection
   private lastPC: number = 0;
 
+  // input handling
+  private waitingInput = false;
+  private waitReg = -1;
+
+  private currentOp!: string;
   private history: any[] = [];
   public paused: boolean = false;
   private loopId: any = null;
-  private currentOp!: string;
-
-  private waitingInput = false;
-  private waitReg = -1;
 
   constructor(private offset = 0x200) {
     super();
