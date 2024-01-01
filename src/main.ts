@@ -84,12 +84,10 @@ function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
   );
 
   info.clear();
-  const [opCode, opName, op] = emulator.getCurrentOpInfo();
   info.write(
     `[Space] Pause | [Enter] Run | [T] Next Tick | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
   );
   info.write(`ROM: ${romName}\n`);
-  info.write(`OP: ${op} (${opCode} - ${opName})\n`);
   info.write("\n");
 
   // show more info depending on verbosity level

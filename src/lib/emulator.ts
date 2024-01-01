@@ -112,8 +112,6 @@ export default class Emulator extends EventEmitter {
   private waitingInput = false;
   private waitReg = -1;
 
-  private currentOp!: string;
-
   public paused: boolean = false;
 
   private loopId: any = null;
@@ -153,11 +151,6 @@ export default class Emulator extends EventEmitter {
     this.emit("tick");
   }
 
-  public getCurrentOpInfo() {
-    const [opCode, opName] = this.getOpMeta(this.currentOp);
-    return [opCode, opName, this.currentOp];
-  }
-
   public load(data: Uint8Array) {
     this.init();
 
@@ -180,14 +173,14 @@ export default class Emulator extends EventEmitter {
     }
 
     try {
-      this.currentOp = this.getCurrentOp();
+      const op = this.fetchOp(this.ecu.pc);
       this.emit("tick");
       // increment already
       this.ecu.pc += 2;
 
-      const [, , handler] = this.getOpMeta(this.currentOp);
+      const [, , handler] = this.getOpMeta(op);
       if (!handler) {
-        throw new Error(`No handler found for instruction ${this.currentOp}`);
+        throw new Error(`No handler found for instruction ${op}`);
       }
       handler();
     } catch (err) {
@@ -236,13 +229,13 @@ export default class Emulator extends EventEmitter {
     }
   }
 
-  private getCurrentOp() {
-    if (this.ecu.pc > this.ram.length) {
+  private fetchOp(pc: number) {
+    if (pc > this.ram.length) {
       throw new Error(`Attempt to read outside RAM bounds.`);
     }
 
-    const H1 = this.ram[this.ecu.pc];
-    const H2 = this.ram[this.ecu.pc + 1];
+    const H1 = this.ram[pc];
+    const H2 = this.ram[pc + 1];
     return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f]
       .reduce((n, d) => n + d.toString(16), "")
       .toUpperCase();
