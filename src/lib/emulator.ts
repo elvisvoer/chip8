@@ -147,10 +147,6 @@ export default class Emulator extends EventEmitter {
     };
   }
 
-  public forceTick() {
-    this.emit("tick");
-  }
-
   public load(data: Uint8Array) {
     this.init();
 
