@@ -108,7 +108,7 @@ type RomDisk = {
 export default class Emulator {
   private ecu!: ECU; // Emulator Control Unit state
   private ram: Uint8Array = new Uint8Array(4 * 1024);
-  private framebuffer: number[] = [];
+  private fb: number[] = [];
   private hires = false; // high resolution
 
   // input handling
@@ -119,6 +119,10 @@ export default class Emulator {
 
   constructor(private _offset = 0x200) {
     this.init();
+  }
+
+  get framebuffer() {
+    return this.fb;
   }
 
   get framebufferHeight() {
@@ -135,20 +139,6 @@ export default class Emulator {
 
   get romDisk() {
     return this._romDisk;
-  }
-
-  get state() {
-    // make copy for arrays
-    return {
-      ecu: {
-        ...this.ecu,
-        v: [...this.ecu.v],
-        r: [...this.ecu.r],
-        f: [...this.ecu.f],
-      },
-      framebuffer: [...this.framebuffer],
-      hires: this.hires,
-    };
   }
 
   public load(romDisk: RomDisk) {
@@ -189,7 +179,7 @@ export default class Emulator {
 
   private clearFramebuffer() {
     for (var z = 0; z < this.framebufferHeight * this.framebufferWidth; z++) {
-      this.framebuffer[z] = 0;
+      this.fb[z] = 0;
     }
   }
 
@@ -208,11 +198,11 @@ export default class Emulator {
           continue;
         }
 
-        if (this.framebuffer[target]) {
-          this.framebuffer[target] = 0;
+        if (this.fb[target]) {
+          this.fb[target] = 0;
           this.ecu.v[0xf] = 0x1;
         } else {
-          this.framebuffer[target] = 1;
+          this.fb[target] = 1;
         }
       }
     }

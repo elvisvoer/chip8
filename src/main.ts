@@ -36,7 +36,7 @@ const qKeyboardMapping: any = {
 function drawDisplay(emulator: Emulator) {
   display.clear();
   display.write(
-    emulator.state.framebuffer,
+    emulator.framebuffer,
     emulator.framebufferWidth,
     emulator.framebufferHeight
   );
