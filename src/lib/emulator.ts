@@ -108,16 +108,15 @@ export default class Emulator extends EventEmitter {
   private framebuffer: number[] = [];
   private hires = false; // high resolution
 
-  // for loop detection
-  private lastPC: number = 0;
-
   // input handling
   private waitingInput = false;
   private waitReg = -1;
 
   private currentOp!: string;
   private history: any[] = [];
+
   public paused: boolean = false;
+
   private loopId: any = null;
 
   constructor(private _offset = 0x200) {
@@ -188,13 +187,6 @@ export default class Emulator extends EventEmitter {
       this.paused = true;
       throw err;
     }
-
-    // pause on infinite loop
-    if (this.lastPC === this.ecu.pc) {
-      this.paused = true;
-    }
-
-    this.lastPC = this.ecu.pc;
   }
 
   public prev() {
@@ -601,7 +593,7 @@ export default class Emulator extends EventEmitter {
       r: [],
       f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     };
-    this.ecu.pc = this.lastPC = this._offset;
+    this.ecu.pc = this._offset;
     // init ram
     this.ram = new Uint8Array(4 * 1024);
     // init display
