@@ -118,7 +118,7 @@ export default class Emulator {
   private _romDisk!: RomDisk;
 
   constructor(private _offset = 0x200) {
-    this.init();
+    this.reset();
   }
 
   get framebuffer() {
@@ -142,9 +142,8 @@ export default class Emulator {
   }
 
   public load(romDisk: RomDisk) {
-    this.init();
-
     this._romDisk = romDisk;
+    this.reset();
 
     // load data into ram at offset
     for (let i = 0; i < romDisk.data.length; i += 1) {
@@ -406,7 +405,7 @@ export default class Emulator {
     throw new Error(`Unknown instruction #${op}`);
   }
 
-  private init() {
+  private reset() {
     // init ECU
     this.ecu = {
       v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
