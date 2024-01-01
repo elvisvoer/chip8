@@ -280,9 +280,9 @@ export default class Emulator extends EventEmitter {
   }
 
   private getOpMeta(op: string) {
-    const NNN = parseInt(op, 16) & 0x0fff;
-    const NN = parseInt(op, 16) & 0x00ff;
-    const [O, X, Y, N] = op.split("").map((d) => parseInt(d, 16));
+    const nnn = parseInt(op, 16) & 0x0fff;
+    const nn = parseInt(op, 16) & 0x00ff;
+    const [o, x, y, n] = op.split("").map((d) => parseInt(d, 16));
 
     const simpleOps: any = {
       "0000": [
@@ -316,9 +316,9 @@ export default class Emulator extends EventEmitter {
       return simpleOps[op];
     }
 
-    switch (O) {
+    switch (o) {
       case 1:
-        return ["1NNN", "jump", () => (this.ecu.pc = NNN)];
+        return ["1NNN", "jump", () => (this.ecu.pc = nnn)];
       case 2:
         return [
           "2NNN",
@@ -326,7 +326,7 @@ export default class Emulator extends EventEmitter {
           () => {
             // push return address to return stack
             this.ecu.r.push(this.ecu.pc);
-            this.ecu.pc = NNN;
+            this.ecu.pc = nnn;
           },
         ];
       case 3:
@@ -334,7 +334,7 @@ export default class Emulator extends EventEmitter {
           "3XNN",
           "skip if equal",
           () => {
-            if (this.ecu.v[X] === NN) {
+            if (this.ecu.v[x] === nn) {
               this.ecu.pc += 2;
             }
           },
@@ -344,7 +344,7 @@ export default class Emulator extends EventEmitter {
           "4XNN",
           "skip if not equal",
           () => {
-            if (this.ecu.v[X] !== NN) {
+            if (this.ecu.v[x] !== nn) {
               this.ecu.pc += 2;
             }
           },
@@ -354,7 +354,7 @@ export default class Emulator extends EventEmitter {
           "5XY0",
           "skip if equal",
           () => {
-            if (this.ecu.v[X] === this.ecu.v[Y]) {
+            if (this.ecu.v[x] === this.ecu.v[y]) {
               this.ecu.pc += 2;
             }
           },
@@ -364,48 +364,48 @@ export default class Emulator extends EventEmitter {
           "9XY0",
           "skip if not equal",
           () => {
-            if (this.ecu.v[X] !== this.ecu.v[Y]) {
+            if (this.ecu.v[x] !== this.ecu.v[y]) {
               this.ecu.pc += 2;
             }
           },
         ];
       case 6:
-        return ["6XNN", "set", () => (this.ecu.v[X] = NN)];
+        return ["6XNN", "set", () => (this.ecu.v[x] = nn)];
       case 7:
         return [
           "7XNN",
           "add",
-          () => (this.ecu.v[X] = (this.ecu.v[X] + NN) & 0xff),
+          () => (this.ecu.v[x] = (this.ecu.v[x] + nn) & 0xff),
         ];
       case 8: {
-        switch (N) {
+        switch (n) {
           case 0:
-            return ["8XY0", "set", () => (this.ecu.v[X] = this.ecu.v[Y])];
+            return ["8XY0", "set", () => (this.ecu.v[x] = this.ecu.v[y])];
           case 1:
             return [
               "8XY1",
               "binary or",
-              () => (this.ecu.v[X] |= this.ecu.v[Y]),
+              () => (this.ecu.v[x] |= this.ecu.v[y]),
             ];
           case 2:
             return [
               "8XY2",
               "binary and",
-              () => (this.ecu.v[X] &= this.ecu.v[Y]),
+              () => (this.ecu.v[x] &= this.ecu.v[y]),
             ];
           case 3:
             return [
               "8XY3",
               "logical xor",
-              () => (this.ecu.v[X] ^= this.ecu.v[Y]),
+              () => (this.ecu.v[x] ^= this.ecu.v[y]),
             ];
           case 4:
             return [
               "8XY4",
               "add",
               () => {
-                const t = this.ecu.v[X] + this.ecu.v[Y];
-                this.ecu.v[X] = t & 0xff;
+                const t = this.ecu.v[x] + this.ecu.v[y];
+                this.ecu.v[x] = t & 0xff;
                 this.ecu.v[0xf] = t > 0xff ? 1 : 0;
               },
             ];
@@ -414,9 +414,9 @@ export default class Emulator extends EventEmitter {
               "8XY5",
               "subtract",
               () => {
-                const t = this.ecu.v[X] - this.ecu.v[Y];
-                this.ecu.v[X] = t & 0xff;
-                this.ecu.v[0xf] = this.ecu.v[X] >= this.ecu.v[Y] ? 1 : 0;
+                const t = this.ecu.v[x] - this.ecu.v[y];
+                this.ecu.v[x] = t & 0xff;
+                this.ecu.v[0xf] = this.ecu.v[x] >= this.ecu.v[y] ? 1 : 0;
               },
             ];
           case 7:
@@ -424,9 +424,9 @@ export default class Emulator extends EventEmitter {
               "8XY7",
               "subtract",
               () => {
-                const t = this.ecu.v[Y] - this.ecu.v[X];
-                this.ecu.v[X] = t & 0xff;
-                this.ecu.v[0xf] = this.ecu.v[Y] >= this.ecu.v[X] ? 1 : 0;
+                const t = this.ecu.v[y] - this.ecu.v[x];
+                this.ecu.v[x] = t & 0xff;
+                this.ecu.v[0xf] = this.ecu.v[y] >= this.ecu.v[x] ? 1 : 0;
               },
             ];
           case 6:
@@ -434,9 +434,9 @@ export default class Emulator extends EventEmitter {
               "8XY6",
               "shift",
               () => {
-                const t = this.ecu.v[X] >> 1;
-                this.ecu.v[X] = t & 0xff;
-                this.ecu.v[0xf] = this.ecu.v[X] & 0x1 ? 1 : 0;
+                const t = this.ecu.v[x] >> 1;
+                this.ecu.v[x] = t & 0xff;
+                this.ecu.v[0xf] = this.ecu.v[x] & 0x1 ? 1 : 0;
               },
             ];
           case 0xe:
@@ -444,22 +444,22 @@ export default class Emulator extends EventEmitter {
               "8XYE",
               "shift",
               () => {
-                const t = this.ecu.v[X] << 1;
-                this.ecu.v[X] = t & 0xff;
-                this.ecu.v[0xf] = (this.ecu.v[X] >> 7) & 0x1 ? 1 : 0;
+                const t = this.ecu.v[x] << 1;
+                this.ecu.v[x] = t & 0xff;
+                this.ecu.v[0xf] = (this.ecu.v[x] >> 7) & 0x1 ? 1 : 0;
               },
             ];
         }
         break;
       }
       case 0xa:
-        return ["ANNN", "set index", () => (this.ecu.i = NNN)];
+        return ["ANNN", "set index", () => (this.ecu.i = nnn)];
       case 0xb:
         return [
           "BNNN",
           "jump with offset",
           () => {
-            this.ecu.pc = NNN + this.ecu.v[0];
+            this.ecu.pc = nnn + this.ecu.v[0];
           },
         ];
       case 0xc:
@@ -467,17 +467,17 @@ export default class Emulator extends EventEmitter {
           "CXNN",
           "random",
           () => {
-            this.ecu.v[X] = (Math.random() * 256) & NN;
+            this.ecu.v[x] = (Math.random() * 256) & nn;
           },
         ];
       case 0xd:
         return [
           "DXYN",
           "display",
-          () => this.draw(this.ecu.v[X], this.ecu.v[Y], N),
+          () => this.draw(this.ecu.v[x], this.ecu.v[y], n),
         ];
       case 0xf: {
-        switch (NN) {
+        switch (nn) {
           // timers
           case 0x07:
             return [
@@ -485,7 +485,7 @@ export default class Emulator extends EventEmitter {
               "load delay timer",
               () => {
                 // TODO(@elvis): properly implement timers, decrementing does the job for now
-                this.ecu.v[X] = --this.ecu.dt;
+                this.ecu.v[x] = --this.ecu.dt;
               },
             ];
           case 0x15:
@@ -493,7 +493,7 @@ export default class Emulator extends EventEmitter {
               "0x15",
               "set delay timer",
               () => {
-                this.ecu.dt = this.ecu.v[X];
+                this.ecu.dt = this.ecu.v[x];
               },
             ];
           case 0x18:
@@ -501,7 +501,7 @@ export default class Emulator extends EventEmitter {
               "0x18",
               "set sound timer",
               () => {
-                this.ecu.st = this.ecu.v[X];
+                this.ecu.st = this.ecu.v[x];
               },
             ];
           // rest
@@ -510,7 +510,7 @@ export default class Emulator extends EventEmitter {
               "FX0A",
               "get key",
               () => {
-                this.waitReg = X;
+                this.waitReg = x;
                 this.waitingInput = true;
               },
             ];
@@ -519,7 +519,7 @@ export default class Emulator extends EventEmitter {
               "FX1E",
               "add to index",
               () => {
-                this.ecu.i = (this.ecu.i + this.ecu.v[X]) & 0xffff;
+                this.ecu.i = (this.ecu.i + this.ecu.v[x]) & 0xffff;
               },
             ];
           case 0x29:
@@ -527,7 +527,7 @@ export default class Emulator extends EventEmitter {
               "FX29",
               "font character",
               () => {
-                this.ecu.i = (this.ecu.v[X] & 0xf) * 5;
+                this.ecu.i = (this.ecu.v[x] & 0xf) * 5;
               },
             ];
           case 0x33:
@@ -535,9 +535,9 @@ export default class Emulator extends EventEmitter {
               "FX33",
               "store",
               () => {
-                this.ram[this.ecu.i] = Math.floor(this.ecu.v[X] / 100) % 10;
-                this.ram[this.ecu.i + 1] = Math.floor(this.ecu.v[X] / 10) % 10;
-                this.ram[this.ecu.i + 2] = this.ecu.v[X] % 10;
+                this.ram[this.ecu.i] = Math.floor(this.ecu.v[x] / 100) % 10;
+                this.ram[this.ecu.i + 1] = Math.floor(this.ecu.v[x] / 10) % 10;
+                this.ram[this.ecu.i + 2] = this.ecu.v[x] % 10;
               },
             ];
           case 0x55:
@@ -545,10 +545,10 @@ export default class Emulator extends EventEmitter {
               "FX55",
               "store",
               () => {
-                for (let z = 0; z <= X; z++) {
+                for (let z = 0; z <= x; z++) {
                   this.ram[this.ecu.i + z] = this.ecu.v[z];
                 }
-                this.ecu.i = (this.ecu.i + X + 1) & 0xffff;
+                this.ecu.i = (this.ecu.i + x + 1) & 0xffff;
               },
             ];
           case 0x65:
@@ -556,10 +556,10 @@ export default class Emulator extends EventEmitter {
               "FX65",
               "load",
               () => {
-                for (let z = 0; z <= X; z++) {
+                for (let z = 0; z <= x; z++) {
                   this.ecu.v[z] = this.ram[this.ecu.i + z];
                 }
-                this.ecu.i = (this.ecu.i + X + 1) & 0xffff;
+                this.ecu.i = (this.ecu.i + x + 1) & 0xffff;
               },
             ];
           case 0x75:
@@ -567,7 +567,7 @@ export default class Emulator extends EventEmitter {
               "FX75",
               "push",
               () => {
-                for (var z = 0; z <= X; z++) {
+                for (var z = 0; z <= x; z++) {
                   this.ecu.f[z] = this.ecu.v[z];
                 }
               },
@@ -577,7 +577,7 @@ export default class Emulator extends EventEmitter {
               "FX85",
               "pop",
               () => {
-                for (var z = 0; z <= X; z++) {
+                for (var z = 0; z <= x; z++) {
                   this.ecu.v[z] = 0xff & this.ecu.f[z];
                 }
               },
