@@ -105,7 +105,6 @@ function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
 function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
   emulator.load(data);
-  emulator.run();
   drawDisplay(emulator, name, data);
   emulator.on("tick", () => drawDisplay(emulator, name, data));
 }
@@ -118,11 +117,7 @@ document.addEventListener("keydown", async (e) => {
 
   switch (e.keyCode) {
     case 13: // Enter
-      emulator.paused = false;
       loadAndRun(romList.peek());
-      break;
-    case 32: // Space
-      emulator.paused = !emulator.paused;
       break;
     case 78: // N
       loadAndRun(romList.next());

@@ -112,10 +112,6 @@ export default class Emulator extends EventEmitter {
   private waitingInput = false;
   private waitReg = -1;
 
-  public paused: boolean = false;
-
-  private loopId: any = null;
-
   constructor(private _offset = 0x200) {
     super();
     this.init();
@@ -156,33 +152,21 @@ export default class Emulator extends EventEmitter {
     }
   }
 
-  public run(_: number = 25) {
-    this.loopId && clearTimeout(this.loopId);
-    // main program loop
-    !this.paused && this.tick();
-    this.loopId = setTimeout(() => this.run(), 0);
-  }
-
   public tick() {
     if (this.waitingInput) {
       return;
     }
 
-    try {
-      const op = this.fetchOp(this.ecu.pc);
-      this.emit("tick");
-      // increment already
-      this.ecu.pc += 2;
+    const op = this.fetchOp(this.ecu.pc);
+    this.emit("tick");
+    // increment already
+    this.ecu.pc += 2;
 
-      const [, , handler] = this.getOpMeta(op);
-      if (!handler) {
-        throw new Error(`No handler found for instruction ${op}`);
-      }
-      handler();
-    } catch (err) {
-      this.paused = true;
-      throw err;
+    const [, , handler] = this.getOpMeta(op);
+    if (!handler) {
+      throw new Error(`No handler found for instruction ${op}`);
     }
+    handler();
   }
 
   public setInput(key: number) {
