@@ -75,7 +75,7 @@ function getEmulatorECUStr(emulator: Emulator) {
   return output;
 }
 
-function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
+function drawDisplay(emulator: Emulator) {
   display.clear();
   display.write(
     emulator.state.framebuffer,
@@ -87,7 +87,7 @@ function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
   info.write(
     `[Space] Pause | [Enter] Run | [T] Next Tick | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
   );
-  info.write(`ROM: ${romName}\n`);
+  info.write(`ROM: ${emulator.romDisk.name}\n`);
   info.write("\n");
 
   // show more info depending on verbosity level
@@ -98,15 +98,15 @@ function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
 
   if (verbosity > 1) {
     // rom offset = pc - offset
-    info.write(getRomHexStr(romData, emulator.state.ecu.pc - emulator.offset));
+    info.write(getRomHexStr(emulator.romDisk.data, emulator.state.ecu.pc - emulator.offset));
   }
 }
 
-function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
+function loadAndRun(romDisk: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
-  emulator.load(data);
-  drawDisplay(emulator, name, data);
-  emulator.on("tick", () => drawDisplay(emulator, name, data));
+  emulator.load(romDisk);
+  drawDisplay(emulator);
+  emulator.on("tick", () => drawDisplay(emulator));
 }
 
 document.addEventListener("keydown", async (e) => {

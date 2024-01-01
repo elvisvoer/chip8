@@ -102,6 +102,11 @@ type ECU = {
   f: number[];
 };
 
+type RomDisk = {
+  name: string;
+  data: Uint8Array;
+};
+
 export default class Emulator extends EventEmitter {
   private ecu!: ECU; // Emulator Control Unit state
   private ram: Uint8Array = new Uint8Array(4 * 1024);
@@ -111,6 +116,8 @@ export default class Emulator extends EventEmitter {
   // input handling
   private waitingInput = false;
   private waitReg = -1;
+
+  private _romDisk!: RomDisk;
 
   constructor(private _offset = 0x200) {
     super();
@@ -129,6 +136,10 @@ export default class Emulator extends EventEmitter {
     return this._offset;
   }
 
+  get romDisk() {
+    return this._romDisk;
+  }
+
   get state() {
     // make copy for arrays
     return {
@@ -143,12 +154,14 @@ export default class Emulator extends EventEmitter {
     };
   }
 
-  public load(data: Uint8Array) {
+  public load(romDisk: RomDisk) {
     this.init();
 
+    this._romDisk = romDisk;
+
     // load data into ram at offset
-    for (let i = 0; i < data.length; i += 1) {
-      this.ram[this._offset + i] = data[i];
+    for (let i = 0; i < romDisk.data.length; i += 1) {
+      this.ram[this._offset + i] = romDisk.data[i];
     }
   }
 
