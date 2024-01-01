@@ -129,7 +129,12 @@ export default class Emulator {
   }
 
   public load(data: Uint8Array, offset: number = 0x200) {
+    this.ready = false;
     this.reset();
+
+    if (data.length + offset > this.ram.length) {
+      throw new Error("Failed to load - ROM too large.");
+    }
 
     // load data into ram at offset
     for (let i = 0; i < data.length; i += 1) {
