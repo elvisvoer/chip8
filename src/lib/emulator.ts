@@ -113,7 +113,6 @@ export default class Emulator extends EventEmitter {
   private waitReg = -1;
 
   private currentOp!: string;
-  private history: any[] = [];
 
   public paused: boolean = false;
 
@@ -171,11 +170,11 @@ export default class Emulator extends EventEmitter {
   public run(_: number = 25) {
     this.loopId && clearTimeout(this.loopId);
     // main program loop
-    !this.paused && this.next();
+    !this.paused && this.tick();
     this.loopId = setTimeout(() => this.run(), 0);
   }
 
-  public next() {
+  public tick() {
     if (this.waitingInput) {
       return;
     }
@@ -187,17 +186,6 @@ export default class Emulator extends EventEmitter {
       this.paused = true;
       throw err;
     }
-  }
-
-  public prev() {
-    if (this.waitingInput) {
-      return;
-    }
-    // go back 2 instr and execute it so all events are fired
-    // or execute first instruction if only one present
-    this.history.length && this.setState(this.history.pop());
-    this.history.length && this.setState(this.history.pop());
-    this.next();
   }
 
   public setInput(key: number) {
@@ -252,7 +240,6 @@ export default class Emulator extends EventEmitter {
 
   private fetch() {
     this.currentOp = this.getCurrentOp();
-    this.history.push(this.state);
     this.emit("tick");
 
     // increment already
@@ -603,14 +590,7 @@ export default class Emulator extends EventEmitter {
     for (let z = 0; z < font.length; z++) {
       this.ram[z] = font[z];
     }
-    // reset
-    this.history = [];
-    this.waitingInput = false;
-  }
 
-  private setState({ ecu, framebuffer, hires }: any) {
-    this.ecu = ecu;
-    this.framebuffer = framebuffer;
-    this.hires = hires;
+    this.waitingInput = false;
   }
 }

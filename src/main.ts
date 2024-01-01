@@ -86,7 +86,7 @@ function drawDisplay(emulator: Emulator, romName: string, romData: Uint8Array) {
   info.clear();
   const [opCode, opName, op] = emulator.getCurrentOpInfo();
   info.write(
-    `[Space] Pause | [Enter] Run | [H] Prev OP | [L] Next OP | [K] Prev ROM | [J] Next ROM | [U] Upload ROM \n\n`
+    `[Space] Pause | [Enter] Run | [T] Next Tick | [P] Prev ROM | [N] Next ROM | [U] Upload ROM \n\n`
   );
   info.write(`ROM: ${romName}\n`);
   info.write(`OP: ${op} (${opCode} - ${opName})\n`);
@@ -108,7 +108,6 @@ function loadAndRun({ name, data }: { name: string; data: Uint8Array }) {
   emulator.clearListeners();
   emulator.load(data);
   emulator.run();
-  // draw initial display
   drawDisplay(emulator, name, data);
   emulator.on("tick", () => drawDisplay(emulator, name, data));
 }
@@ -124,25 +123,23 @@ document.addEventListener("keydown", async (e) => {
       emulator.paused = false;
       loadAndRun(romList.peek());
       break;
-    case 32: // space
+    case 32: // Space
       emulator.paused = !emulator.paused;
       break;
-    case 72: // H
-      emulator.prev();
-      break;
-    case 74: // J
+    case 78: // N
       loadAndRun(romList.next());
       break;
-    case 75: // K
+    case 80: // P
       loadAndRun(romList.prev());
       break;
-    case 76: // L
-      emulator.next();
+    case 84: // T
+      emulator.tick();
       break;
     case 85: // U
       const rom = await uploadRom();
       loadAndRun(romList.add(rom));
       break;
+
     case 66: // B
       verbosity = ++verbosity % 3;
       // force next tick
