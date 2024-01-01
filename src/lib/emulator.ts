@@ -1,4 +1,4 @@
-// octo font
+// font
 const font = [
   0xf0,
   0x90,
@@ -161,10 +161,7 @@ export default class Emulator {
     // increment already
     this.ecu.pc += 2;
 
-    const [, , handler] = this.getOpMeta(op);
-    if (!handler) {
-      throw new Error(`No handler found for instruction ${op}`);
-    }
+    const handler = this.getOpHandler(op);
     handler();
   }
 
@@ -220,37 +217,26 @@ export default class Emulator {
       .toUpperCase();
   }
 
-  private getOpMeta(op: string) {
+  private getOpHandler(op: string) {
     const nnn = parseInt(op, 16) & 0x0fff;
     const nn = parseInt(op, 16) & 0x00ff;
     const [o, x, y, n] = op.split("").map((d) => parseInt(d, 16));
 
     const simpleOps: any = {
-      "0000": [
-        "0000",
-        "noop",
-        () => {
-          /* noop*/
-        },
-      ],
-      "00E0": ["00E0", "clear screen", () => this.clearFramebuffer()],
-      "00EE": [
-        "00EE",
-        "subroutine return",
-        () => {
-          // pop address from return stack
-          const addr = this.ecu.r.pop() as number;
-          this.ecu.pc = addr;
-        },
-      ],
-      "00FF": [
-        "00FF",
-        "high resolution",
-        () => {
-          this.hires = true;
-          this.clearFramebuffer();
-        },
-      ],
+      "0000": () => {
+        /* noop*/
+      },
+
+      "00E0": () => this.clearFramebuffer(),
+      "00EE": () => {
+        // pop address from return stack
+        const addr = this.ecu.r.pop() as number;
+        this.ecu.pc = addr;
+      },
+      "00FF": () => {
+        this.hires = true;
+        this.clearFramebuffer();
+      },
     };
 
     if (Object.keys(simpleOps).includes(op)) {
@@ -259,270 +245,159 @@ export default class Emulator {
 
     switch (o) {
       case 1:
-        return ["1NNN", "jump", () => (this.ecu.pc = nnn)];
+        return () => (this.ecu.pc = nnn);
       case 2:
-        return [
-          "2NNN",
-          "subroutine call",
-          () => {
-            // push return address to return stack
-            this.ecu.r.push(this.ecu.pc);
-            this.ecu.pc = nnn;
-          },
-        ];
+        return () => {
+          // push return address to return stack
+          this.ecu.r.push(this.ecu.pc);
+          this.ecu.pc = nnn;
+        };
       case 3:
-        return [
-          "3XNN",
-          "skip if equal",
-          () => {
-            if (this.ecu.v[x] === nn) {
-              this.ecu.pc += 2;
-            }
-          },
-        ];
+        return () => {
+          if (this.ecu.v[x] === nn) {
+            this.ecu.pc += 2;
+          }
+        };
       case 4:
-        return [
-          "4XNN",
-          "skip if not equal",
-          () => {
-            if (this.ecu.v[x] !== nn) {
-              this.ecu.pc += 2;
-            }
-          },
-        ];
+        return () => {
+          if (this.ecu.v[x] !== nn) {
+            this.ecu.pc += 2;
+          }
+        };
       case 5:
-        return [
-          "5XY0",
-          "skip if equal",
-          () => {
-            if (this.ecu.v[x] === this.ecu.v[y]) {
-              this.ecu.pc += 2;
-            }
-          },
-        ];
+        return () => {
+          if (this.ecu.v[x] === this.ecu.v[y]) {
+            this.ecu.pc += 2;
+          }
+        };
       case 9:
-        return [
-          "9XY0",
-          "skip if not equal",
-          () => {
-            if (this.ecu.v[x] !== this.ecu.v[y]) {
-              this.ecu.pc += 2;
-            }
-          },
-        ];
+        return () => {
+          if (this.ecu.v[x] !== this.ecu.v[y]) {
+            this.ecu.pc += 2;
+          }
+        };
       case 6:
-        return ["6XNN", "set", () => (this.ecu.v[x] = nn)];
+        return () => (this.ecu.v[x] = nn);
       case 7:
-        return [
-          "7XNN",
-          "add",
-          () => (this.ecu.v[x] = (this.ecu.v[x] + nn) & 0xff),
-        ];
+        return () => (this.ecu.v[x] = (this.ecu.v[x] + nn) & 0xff);
       case 8: {
         switch (n) {
           case 0:
-            return ["8XY0", "set", () => (this.ecu.v[x] = this.ecu.v[y])];
+            return () => (this.ecu.v[x] = this.ecu.v[y]);
           case 1:
-            return [
-              "8XY1",
-              "binary or",
-              () => (this.ecu.v[x] |= this.ecu.v[y]),
-            ];
+            return () => (this.ecu.v[x] |= this.ecu.v[y]);
           case 2:
-            return [
-              "8XY2",
-              "binary and",
-              () => (this.ecu.v[x] &= this.ecu.v[y]),
-            ];
+            return () => (this.ecu.v[x] &= this.ecu.v[y]);
           case 3:
-            return [
-              "8XY3",
-              "logical xor",
-              () => (this.ecu.v[x] ^= this.ecu.v[y]),
-            ];
+            return () => (this.ecu.v[x] ^= this.ecu.v[y]);
           case 4:
-            return [
-              "8XY4",
-              "add",
-              () => {
-                const t = this.ecu.v[x] + this.ecu.v[y];
-                this.ecu.v[x] = t & 0xff;
-                this.ecu.v[0xf] = t > 0xff ? 1 : 0;
-              },
-            ];
+            return () => {
+              const t = this.ecu.v[x] + this.ecu.v[y];
+              this.ecu.v[x] = t & 0xff;
+              this.ecu.v[0xf] = t > 0xff ? 1 : 0;
+            };
           case 5:
-            return [
-              "8XY5",
-              "subtract",
-              () => {
-                const t = this.ecu.v[x] - this.ecu.v[y];
-                this.ecu.v[x] = t & 0xff;
-                this.ecu.v[0xf] = this.ecu.v[x] >= this.ecu.v[y] ? 1 : 0;
-              },
-            ];
+            return () => {
+              const t = this.ecu.v[x] - this.ecu.v[y];
+              this.ecu.v[x] = t & 0xff;
+              this.ecu.v[0xf] = this.ecu.v[x] >= this.ecu.v[y] ? 1 : 0;
+            };
           case 7:
-            return [
-              "8XY7",
-              "subtract",
-              () => {
-                const t = this.ecu.v[y] - this.ecu.v[x];
-                this.ecu.v[x] = t & 0xff;
-                this.ecu.v[0xf] = this.ecu.v[y] >= this.ecu.v[x] ? 1 : 0;
-              },
-            ];
+            return () => {
+              const t = this.ecu.v[y] - this.ecu.v[x];
+              this.ecu.v[x] = t & 0xff;
+              this.ecu.v[0xf] = this.ecu.v[y] >= this.ecu.v[x] ? 1 : 0;
+            };
           case 6:
-            return [
-              "8XY6",
-              "shift",
-              () => {
-                const t = this.ecu.v[x] >> 1;
-                this.ecu.v[x] = t & 0xff;
-                this.ecu.v[0xf] = this.ecu.v[x] & 0x1 ? 1 : 0;
-              },
-            ];
+            return () => {
+              const t = this.ecu.v[x] >> 1;
+              this.ecu.v[x] = t & 0xff;
+              this.ecu.v[0xf] = this.ecu.v[x] & 0x1 ? 1 : 0;
+            };
           case 0xe:
-            return [
-              "8XYE",
-              "shift",
-              () => {
-                const t = this.ecu.v[x] << 1;
-                this.ecu.v[x] = t & 0xff;
-                this.ecu.v[0xf] = (this.ecu.v[x] >> 7) & 0x1 ? 1 : 0;
-              },
-            ];
+            return () => {
+              const t = this.ecu.v[x] << 1;
+              this.ecu.v[x] = t & 0xff;
+              this.ecu.v[0xf] = (this.ecu.v[x] >> 7) & 0x1 ? 1 : 0;
+            };
         }
         break;
       }
       case 0xa:
-        return ["ANNN", "set index", () => (this.ecu.i = nnn)];
+        return () => (this.ecu.i = nnn);
       case 0xb:
-        return [
-          "BNNN",
-          "jump with offset",
-          () => {
-            this.ecu.pc = nnn + this.ecu.v[0];
-          },
-        ];
+        return () => {
+          this.ecu.pc = nnn + this.ecu.v[0];
+        };
       case 0xc:
-        return [
-          "CXNN",
-          "random",
-          () => {
-            this.ecu.v[x] = (Math.random() * 256) & nn;
-          },
-        ];
+        return () => {
+          this.ecu.v[x] = (Math.random() * 256) & nn;
+        };
       case 0xd:
-        return [
-          "DXYN",
-          "display",
-          () => this.draw(this.ecu.v[x], this.ecu.v[y], n),
-        ];
+        return () => this.draw(this.ecu.v[x], this.ecu.v[y], n);
       case 0xf: {
         switch (nn) {
           // timers
           case 0x07:
-            return [
-              "0x07",
-              "load delay timer",
-              () => {
-                // TODO(@elvis): properly implement timers, decrementing does the job for now
-                this.ecu.v[x] = --this.ecu.dt;
-              },
-            ];
+            return () => {
+              // TODO(@elvis): properly implement timers, decrementing does the job for now
+              this.ecu.v[x] = --this.ecu.dt;
+            };
+
           case 0x15:
-            return [
-              "0x15",
-              "set delay timer",
-              () => {
-                this.ecu.dt = this.ecu.v[x];
-              },
-            ];
+            return () => {
+              this.ecu.dt = this.ecu.v[x];
+            };
           case 0x18:
-            return [
-              "0x18",
-              "set sound timer",
-              () => {
-                this.ecu.st = this.ecu.v[x];
-              },
-            ];
-          // rest
+            return () => {
+              this.ecu.st = this.ecu.v[x];
+            };
           case 0x0a:
-            return [
-              "FX0A",
-              "get key",
-              () => {
-                this.waitReg = x;
-                this.waitingInput = true;
-              },
-            ];
+            return () => {
+              this.waitReg = x;
+              this.waitingInput = true;
+            };
           case 0x1e:
-            return [
-              "FX1E",
-              "add to index",
-              () => {
-                this.ecu.i = (this.ecu.i + this.ecu.v[x]) & 0xffff;
-              },
-            ];
+            return () => {
+              this.ecu.i = (this.ecu.i + this.ecu.v[x]) & 0xffff;
+            };
           case 0x29:
-            return [
-              "FX29",
-              "font character",
-              () => {
-                this.ecu.i = (this.ecu.v[x] & 0xf) * 5;
-              },
-            ];
+            return () => {
+              this.ecu.i = (this.ecu.v[x] & 0xf) * 5;
+            };
           case 0x33:
-            return [
-              "FX33",
-              "store",
-              () => {
-                this.ram[this.ecu.i] = Math.floor(this.ecu.v[x] / 100) % 10;
-                this.ram[this.ecu.i + 1] = Math.floor(this.ecu.v[x] / 10) % 10;
-                this.ram[this.ecu.i + 2] = this.ecu.v[x] % 10;
-              },
-            ];
+            return () => {
+              this.ram[this.ecu.i] = Math.floor(this.ecu.v[x] / 100) % 10;
+              this.ram[this.ecu.i + 1] = Math.floor(this.ecu.v[x] / 10) % 10;
+              this.ram[this.ecu.i + 2] = this.ecu.v[x] % 10;
+            };
           case 0x55:
-            return [
-              "FX55",
-              "store",
-              () => {
-                for (let z = 0; z <= x; z++) {
-                  this.ram[this.ecu.i + z] = this.ecu.v[z];
-                }
-                this.ecu.i = (this.ecu.i + x + 1) & 0xffff;
-              },
-            ];
+            return () => {
+              for (let z = 0; z <= x; z++) {
+                this.ram[this.ecu.i + z] = this.ecu.v[z];
+              }
+              this.ecu.i = (this.ecu.i + x + 1) & 0xffff;
+            };
+
           case 0x65:
-            return [
-              "FX65",
-              "load",
-              () => {
-                for (let z = 0; z <= x; z++) {
-                  this.ecu.v[z] = this.ram[this.ecu.i + z];
-                }
-                this.ecu.i = (this.ecu.i + x + 1) & 0xffff;
-              },
-            ];
+            return () => {
+              for (let z = 0; z <= x; z++) {
+                this.ecu.v[z] = this.ram[this.ecu.i + z];
+              }
+              this.ecu.i = (this.ecu.i + x + 1) & 0xffff;
+            };
           case 0x75:
-            return [
-              "FX75",
-              "push",
-              () => {
-                for (var z = 0; z <= x; z++) {
-                  this.ecu.f[z] = this.ecu.v[z];
-                }
-              },
-            ];
+            return () => {
+              for (var z = 0; z <= x; z++) {
+                this.ecu.f[z] = this.ecu.v[z];
+              }
+            };
           case 0x85:
-            return [
-              "FX85",
-              "pop",
-              () => {
-                for (var z = 0; z <= x; z++) {
-                  this.ecu.v[z] = 0xff & this.ecu.f[z];
-                }
-              },
-            ];
+            return () => {
+              for (var z = 0; z <= x; z++) {
+                this.ecu.v[z] = 0xff & this.ecu.f[z];
+              }
+            };
         }
         break;
       }
