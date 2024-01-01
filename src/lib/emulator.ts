@@ -103,7 +103,7 @@ type CPU = {
 export default class Emulator {
   private cpu!: CPU; // Emulator Control Unit state
   private ram!: Uint8Array;
-  private fb: number[] = [];
+  private fb!: Uint8Array;
   private hires = false; // high resolution
 
   // input handling
@@ -112,7 +112,9 @@ export default class Emulator {
 
   private ready = false;
 
-  constructor(private memSize: number = 4 * 1024) {}
+  constructor(private memSize: number = 4 * 1024) {
+    this.reset();
+  }
 
   get framebuffer() {
     return this.fb;
@@ -127,24 +129,7 @@ export default class Emulator {
   }
 
   public load(data: Uint8Array, offset: number = 0x200) {
-    this.cpu = {
-      v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      pc: 0,
-      i: 0,
-      dt: 0,
-      st: 0,
-      r: [],
-      f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    };
-    this.ram = new Uint8Array(this.memSize);
-    this.clearFramebuffer();
-    this.hires = false;
-    this.waitingInput = false;
-
-    // reload font
-    for (let z = 0; z < font.length; z++) {
-      this.ram[z] = font[z];
-    }
+    this.reset();
 
     // load data into ram at offset
     for (let i = 0; i < data.length; i += 1) {
@@ -178,6 +163,8 @@ export default class Emulator {
   /* Private Methods */
 
   private clearFramebuffer() {
+    this.fb = new Uint8Array(this.framebufferHeight * this.framebufferWidth);
+
     for (var z = 0; z < this.framebufferHeight * this.framebufferWidth; z++) {
       this.fb[z] = 0;
     }
@@ -407,5 +394,26 @@ export default class Emulator {
     }
 
     throw new Error(`Unknown instruction #${op}`);
+  }
+
+  private reset() {
+    this.cpu = {
+      v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      pc: 0,
+      i: 0,
+      dt: 0,
+      st: 0,
+      r: [],
+      f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    this.ram = new Uint8Array(this.memSize);
+    this.clearFramebuffer();
+    this.hires = false;
+    this.waitingInput = false;
+
+    // reload font
+    for (let z = 0; z < font.length; z++) {
+      this.ram[z] = font[z];
+    }
   }
 }

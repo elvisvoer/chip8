@@ -21,7 +21,7 @@ export class BitMapDisplay {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  public write(data: number[], width: number, height: number) {
+  public write(data: Uint8Array, width: number, height: number) {
     this.ctx.reset();
     const size = this.canvas.width / width;
     for (let z = 0; z < width * height; z++) {
