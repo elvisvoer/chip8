@@ -1,7 +1,7 @@
 import "./style.css";
 import Emulator from "./lib/emulator.ts";
 import { CanvasDisplay } from "./lib/display.ts";
-import { fetchRom } from "./utils.ts";
+import { fetchRom, uploadRom } from "./utils.ts";
 
 const display = new CanvasDisplay(
   document.getElementById("display")! as HTMLCanvasElement,
@@ -62,6 +62,12 @@ async function main(fileName: string) {
     if (hex) {
       emulator.setInput(hex);
     }
+
+    // handle file upload
+    if (e.key.toLowerCase() === "u") {
+      const rom = await uploadRom();
+      emulator.load(rom.data);
+    }
   });
 
   // main loop
@@ -73,4 +79,4 @@ async function main(fileName: string) {
   emulator.load(await fetchRom(fileName));
 }
 
-main("chipcross.ch8");
+main("ibm-logo.ch8");
