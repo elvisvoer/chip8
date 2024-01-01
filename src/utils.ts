@@ -1,27 +1,23 @@
 export async function fetchRom(fileName: string) {
-  try {
-    const response = await fetch(fileName);
-    if (!response.ok) {
-      throw new Error(`Invalid response code: ${response.status}`);
-    }
-
-    const blob = await response.blob();
-
-    const buffer: ArrayBuffer = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        resolve(e.target?.result as ArrayBuffer);
-      };
-      reader.onerror = (e) => {
-        reject(e);
-      };
-      reader.readAsArrayBuffer(blob);
-    });
-
-    return new Uint8Array(buffer);
-  } catch (err) {
-    console.log("fetchROM error:", err);
+  const response = await fetch(fileName);
+  if (!response.ok) {
+    throw new Error(`Invalid response code: ${response.status}`);
   }
+
+  const blob = await response.blob();
+
+  const buffer: ArrayBuffer = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      resolve(e.target?.result as ArrayBuffer);
+    };
+    reader.onerror = (e) => {
+      reject(e);
+    };
+    reader.readAsArrayBuffer(blob);
+  });
+
+  return new Uint8Array(buffer);
 }
 
 export async function uploadRom() {
