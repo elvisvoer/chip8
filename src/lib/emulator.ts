@@ -82,7 +82,7 @@ const font = [
   0x80, // F
 ];
 
-type ECU = {
+type CPU = {
   // standard registries
   v: number[];
   pc: number;
@@ -101,7 +101,7 @@ type ECU = {
 };
 
 export default class Emulator {
-  private ecu!: ECU; // Emulator Control Unit state
+  private cpu!: CPU; // Emulator Control Unit state
   private ram!: Uint8Array;
   private fb: number[] = [];
   private hires = false; // high resolution
@@ -127,7 +127,7 @@ export default class Emulator {
   }
 
   public load(data: Uint8Array, offset: number = 0x200) {
-    this.ecu = {
+    this.cpu = {
       v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       pc: 0,
       i: 0,
@@ -151,7 +151,7 @@ export default class Emulator {
       this.ram[offset + i] = data[i];
     }
 
-    this.ecu.pc = offset;
+    this.cpu.pc = offset;
     this.ready = true;
   }
 
@@ -160,9 +160,9 @@ export default class Emulator {
       return;
     }
 
-    const op = this.fetchOp(this.ecu.pc);
+    const op = this.fetchOp(this.cpu.pc);
     // increment already
-    this.ecu.pc += 2;
+    this.cpu.pc += 2;
 
     const handler = this.getOpHandler(op);
     handler();
@@ -170,7 +170,7 @@ export default class Emulator {
 
   public setInput(key: number) {
     if (this.waitingInput) {
-      this.ecu.v[this.waitReg] = key & 0xff;
+      this.cpu.v[this.waitReg] = key & 0xff;
       this.waitingInput = false;
     }
   }
@@ -184,7 +184,7 @@ export default class Emulator {
   }
 
   private draw(x: number, y: number, len: number) {
-    this.ecu.v[0xf] = 0x0;
+    this.cpu.v[0xf] = 0x0;
 
     // draw a Chip8 8xN sprite
     for (let a = 0; a < len; a++) {
@@ -192,7 +192,7 @@ export default class Emulator {
         const target =
           ((x + b) % this.framebufferWidth) +
           ((y + a) % this.framebufferHeight) * this.framebufferWidth;
-        const source = ((this.ram[this.ecu.i + a] >> (7 - b)) & 0x1) != 0;
+        const source = ((this.ram[this.cpu.i + a] >> (7 - b)) & 0x1) != 0;
 
         if (!source) {
           continue;
@@ -200,7 +200,7 @@ export default class Emulator {
 
         if (this.fb[target]) {
           this.fb[target] = 0;
-          this.ecu.v[0xf] = 0x1;
+          this.cpu.v[0xf] = 0x1;
         } else {
           this.fb[target] = 1;
         }
@@ -233,8 +233,8 @@ export default class Emulator {
       "00E0": () => this.clearFramebuffer(),
       "00EE": () => {
         // pop address from return stack
-        const addr = this.ecu.r.pop() as number;
-        this.ecu.pc = addr;
+        const addr = this.cpu.r.pop() as number;
+        this.cpu.pc = addr;
       },
       "00FF": () => {
         this.hires = true;
@@ -248,112 +248,112 @@ export default class Emulator {
 
     switch (o) {
       case 1:
-        return () => (this.ecu.pc = nnn);
+        return () => (this.cpu.pc = nnn);
       case 2:
         return () => {
           // push return address to return stack
-          this.ecu.r.push(this.ecu.pc);
-          this.ecu.pc = nnn;
+          this.cpu.r.push(this.cpu.pc);
+          this.cpu.pc = nnn;
         };
       case 3:
         return () => {
-          if (this.ecu.v[x] === nn) {
-            this.ecu.pc += 2;
+          if (this.cpu.v[x] === nn) {
+            this.cpu.pc += 2;
           }
         };
       case 4:
         return () => {
-          if (this.ecu.v[x] !== nn) {
-            this.ecu.pc += 2;
+          if (this.cpu.v[x] !== nn) {
+            this.cpu.pc += 2;
           }
         };
       case 5:
         return () => {
-          if (this.ecu.v[x] === this.ecu.v[y]) {
-            this.ecu.pc += 2;
+          if (this.cpu.v[x] === this.cpu.v[y]) {
+            this.cpu.pc += 2;
           }
         };
       case 9:
         return () => {
-          if (this.ecu.v[x] !== this.ecu.v[y]) {
-            this.ecu.pc += 2;
+          if (this.cpu.v[x] !== this.cpu.v[y]) {
+            this.cpu.pc += 2;
           }
         };
       case 6:
-        return () => (this.ecu.v[x] = nn);
+        return () => (this.cpu.v[x] = nn);
       case 7:
-        return () => (this.ecu.v[x] = (this.ecu.v[x] + nn) & 0xff);
+        return () => (this.cpu.v[x] = (this.cpu.v[x] + nn) & 0xff);
       case 8: {
         switch (n) {
           case 0:
-            return () => (this.ecu.v[x] = this.ecu.v[y]);
+            return () => (this.cpu.v[x] = this.cpu.v[y]);
           case 1:
-            return () => (this.ecu.v[x] |= this.ecu.v[y]);
+            return () => (this.cpu.v[x] |= this.cpu.v[y]);
           case 2:
-            return () => (this.ecu.v[x] &= this.ecu.v[y]);
+            return () => (this.cpu.v[x] &= this.cpu.v[y]);
           case 3:
-            return () => (this.ecu.v[x] ^= this.ecu.v[y]);
+            return () => (this.cpu.v[x] ^= this.cpu.v[y]);
           case 4:
             return () => {
-              const t = this.ecu.v[x] + this.ecu.v[y];
-              this.ecu.v[x] = t & 0xff;
-              this.ecu.v[0xf] = t > 0xff ? 1 : 0;
+              const t = this.cpu.v[x] + this.cpu.v[y];
+              this.cpu.v[x] = t & 0xff;
+              this.cpu.v[0xf] = t > 0xff ? 1 : 0;
             };
           case 5:
             return () => {
-              const t = this.ecu.v[x] - this.ecu.v[y];
-              this.ecu.v[x] = t & 0xff;
-              this.ecu.v[0xf] = this.ecu.v[x] >= this.ecu.v[y] ? 1 : 0;
+              const t = this.cpu.v[x] - this.cpu.v[y];
+              this.cpu.v[x] = t & 0xff;
+              this.cpu.v[0xf] = this.cpu.v[x] >= this.cpu.v[y] ? 1 : 0;
             };
           case 7:
             return () => {
-              const t = this.ecu.v[y] - this.ecu.v[x];
-              this.ecu.v[x] = t & 0xff;
-              this.ecu.v[0xf] = this.ecu.v[y] >= this.ecu.v[x] ? 1 : 0;
+              const t = this.cpu.v[y] - this.cpu.v[x];
+              this.cpu.v[x] = t & 0xff;
+              this.cpu.v[0xf] = this.cpu.v[y] >= this.cpu.v[x] ? 1 : 0;
             };
           case 6:
             return () => {
-              const t = this.ecu.v[x] >> 1;
-              this.ecu.v[x] = t & 0xff;
-              this.ecu.v[0xf] = this.ecu.v[x] & 0x1 ? 1 : 0;
+              const t = this.cpu.v[x] >> 1;
+              this.cpu.v[x] = t & 0xff;
+              this.cpu.v[0xf] = this.cpu.v[x] & 0x1 ? 1 : 0;
             };
           case 0xe:
             return () => {
-              const t = this.ecu.v[x] << 1;
-              this.ecu.v[x] = t & 0xff;
-              this.ecu.v[0xf] = (this.ecu.v[x] >> 7) & 0x1 ? 1 : 0;
+              const t = this.cpu.v[x] << 1;
+              this.cpu.v[x] = t & 0xff;
+              this.cpu.v[0xf] = (this.cpu.v[x] >> 7) & 0x1 ? 1 : 0;
             };
         }
         break;
       }
       case 0xa:
-        return () => (this.ecu.i = nnn);
+        return () => (this.cpu.i = nnn);
       case 0xb:
         return () => {
-          this.ecu.pc = nnn + this.ecu.v[0];
+          this.cpu.pc = nnn + this.cpu.v[0];
         };
       case 0xc:
         return () => {
-          this.ecu.v[x] = (Math.random() * 256) & nn;
+          this.cpu.v[x] = (Math.random() * 256) & nn;
         };
       case 0xd:
-        return () => this.draw(this.ecu.v[x], this.ecu.v[y], n);
+        return () => this.draw(this.cpu.v[x], this.cpu.v[y], n);
       case 0xf: {
         switch (nn) {
           // timers
           case 0x07:
             return () => {
               // TODO(@elvis): properly implement timers, decrementing does the job for now
-              this.ecu.v[x] = --this.ecu.dt;
+              this.cpu.v[x] = --this.cpu.dt;
             };
 
           case 0x15:
             return () => {
-              this.ecu.dt = this.ecu.v[x];
+              this.cpu.dt = this.cpu.v[x];
             };
           case 0x18:
             return () => {
-              this.ecu.st = this.ecu.v[x];
+              this.cpu.st = this.cpu.v[x];
             };
           case 0x0a:
             return () => {
@@ -362,43 +362,43 @@ export default class Emulator {
             };
           case 0x1e:
             return () => {
-              this.ecu.i = (this.ecu.i + this.ecu.v[x]) & 0xffff;
+              this.cpu.i = (this.cpu.i + this.cpu.v[x]) & 0xffff;
             };
           case 0x29:
             return () => {
-              this.ecu.i = (this.ecu.v[x] & 0xf) * 5;
+              this.cpu.i = (this.cpu.v[x] & 0xf) * 5;
             };
           case 0x33:
             return () => {
-              this.ram[this.ecu.i] = Math.floor(this.ecu.v[x] / 100) % 10;
-              this.ram[this.ecu.i + 1] = Math.floor(this.ecu.v[x] / 10) % 10;
-              this.ram[this.ecu.i + 2] = this.ecu.v[x] % 10;
+              this.ram[this.cpu.i] = Math.floor(this.cpu.v[x] / 100) % 10;
+              this.ram[this.cpu.i + 1] = Math.floor(this.cpu.v[x] / 10) % 10;
+              this.ram[this.cpu.i + 2] = this.cpu.v[x] % 10;
             };
           case 0x55:
             return () => {
               for (let z = 0; z <= x; z++) {
-                this.ram[this.ecu.i + z] = this.ecu.v[z];
+                this.ram[this.cpu.i + z] = this.cpu.v[z];
               }
-              this.ecu.i = (this.ecu.i + x + 1) & 0xffff;
+              this.cpu.i = (this.cpu.i + x + 1) & 0xffff;
             };
 
           case 0x65:
             return () => {
               for (let z = 0; z <= x; z++) {
-                this.ecu.v[z] = this.ram[this.ecu.i + z];
+                this.cpu.v[z] = this.ram[this.cpu.i + z];
               }
-              this.ecu.i = (this.ecu.i + x + 1) & 0xffff;
+              this.cpu.i = (this.cpu.i + x + 1) & 0xffff;
             };
           case 0x75:
             return () => {
               for (var z = 0; z <= x; z++) {
-                this.ecu.f[z] = this.ecu.v[z];
+                this.cpu.f[z] = this.cpu.v[z];
               }
             };
           case 0x85:
             return () => {
               for (var z = 0; z <= x; z++) {
-                this.ecu.v[z] = 0xff & this.ecu.f[z];
+                this.cpu.v[z] = 0xff & this.cpu.f[z];
               }
             };
         }
