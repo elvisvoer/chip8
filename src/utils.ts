@@ -40,29 +40,6 @@ export async function uploadRom() {
   });
 }
 
-export function circularArray(list: any[]) {
-  let current = -1;
-
-  return {
-    add: (rom: any) => {
-      list.push(rom);
-      current = list.length - 1;
-      return rom;
-    },
-    peek: () => list[current],
-    next: () => {
-      current += 1;
-      current = current < list.length ? current : 0; // rotate to first
-      return list[current];
-    },
-    prev: () => {
-      current -= 1;
-      current = current < 0 ? list.length - 1 : current; // rotate to last
-      return list[current];
-    },
-  };
-}
-
 export function decimalToHexStr(val: number, strWidth = 0) {
   let str = val.toString(16).toUpperCase();
   if (str.length < strWidth) {

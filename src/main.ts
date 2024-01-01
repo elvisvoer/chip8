@@ -49,7 +49,7 @@ async function main(fileName: string) {
     drawDisplay(emulator);
   }, 0);
 
-  emulator.load({ name: fileName, data: await fetchRom(fileName) });
+  emulator.load(await fetchRom(fileName));
 }
 
 main("chipcross.ch8");

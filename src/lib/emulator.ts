@@ -100,14 +100,9 @@ type ECU = {
   f: number[];
 };
 
-type RomDisk = {
-  name: string;
-  data: Uint8Array;
-};
-
 export default class Emulator {
   private ecu!: ECU; // Emulator Control Unit state
-  private ram: Uint8Array = new Uint8Array(4 * 1024);
+  private ram!: Uint8Array;
   private fb: number[] = [];
   private hires = false; // high resolution
 
@@ -115,11 +110,9 @@ export default class Emulator {
   private waitingInput = false;
   private waitReg = -1;
 
-  private _romDisk!: RomDisk;
+  private ready = false;
 
-  constructor(private _offset = 0x200) {
-    this.reset();
-  }
+  constructor(private memSize: number = 4 * 1024) {}
 
   get framebuffer() {
     return this.fb;
@@ -133,26 +126,37 @@ export default class Emulator {
     return this.hires ? 128 : 64;
   }
 
-  get offset() {
-    return this._offset;
-  }
+  public load(data: Uint8Array, offset: number = 0x200) {
+    this.ecu = {
+      v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      pc: 0,
+      i: 0,
+      dt: 0,
+      st: 0,
+      r: [],
+      f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    this.ram = new Uint8Array(this.memSize);
+    this.clearFramebuffer();
+    this.hires = false;
+    this.waitingInput = false;
 
-  get romDisk() {
-    return this._romDisk;
-  }
-
-  public load(romDisk: RomDisk) {
-    this._romDisk = romDisk;
-    this.reset();
+    // reload font
+    for (let z = 0; z < font.length; z++) {
+      this.ram[z] = font[z];
+    }
 
     // load data into ram at offset
-    for (let i = 0; i < romDisk.data.length; i += 1) {
-      this.ram[this._offset + i] = romDisk.data[i];
+    for (let i = 0; i < data.length; i += 1) {
+      this.ram[offset + i] = data[i];
     }
+
+    this.ecu.pc = offset;
+    this.ready = true;
   }
 
   public tick() {
-    if (this.waitingInput) {
+    if (!this.ready || this.waitingInput) {
       return;
     }
 
@@ -403,30 +407,5 @@ export default class Emulator {
     }
 
     throw new Error(`Unknown instruction #${op}`);
-  }
-
-  private reset() {
-    // init ECU
-    this.ecu = {
-      v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      pc: 0,
-      i: 0,
-      dt: 0,
-      st: 0,
-      r: [],
-      f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    };
-    this.ecu.pc = this._offset;
-    // init ram
-    this.ram = new Uint8Array(4 * 1024);
-    // init display
-    this.clearFramebuffer();
-    this.hires = false;
-    // init font
-    for (let z = 0; z < font.length; z++) {
-      this.ram[z] = font[z];
-    }
-
-    this.waitingInput = false;
   }
 }
