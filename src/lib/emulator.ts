@@ -545,9 +545,10 @@ export default class Emulator extends EventEmitter {
               "FX55",
               "store",
               () => {
-                for (let i = 0; i <= X; i++) {
-                  this.ram[this.ecu.i + i] = this.ecu.v[i];
+                for (let z = 0; z <= X; z++) {
+                  this.ram[this.ecu.i + z] = this.ecu.v[z];
                 }
+                this.ecu.i = (this.ecu.i + X + 1) & 0xffff;
               },
             ];
           case 0x65:
@@ -555,9 +556,10 @@ export default class Emulator extends EventEmitter {
               "FX65",
               "load",
               () => {
-                for (let i = 0; i <= X; i++) {
-                  this.ecu.v[i] = this.ram[this.ecu.i + i];
+                for (let z = 0; z <= X; z++) {
+                  this.ecu.v[z] = this.ram[this.ecu.i + z];
                 }
+                this.ecu.i = (this.ecu.i + X + 1) & 0xffff;
               },
             ];
           case 0x75:
