@@ -56,17 +56,26 @@ function drawDisplay(emulator: Emulator) {
   );
 }
 
-async function main(fileName: string) {
-  document.addEventListener("keydown", async (e) => {
-    const hex = qKeyboardMapping[e.key];
-    if (hex) {
-      emulator.setInput(hex);
-    }
+async function main() {
+  let data = await fetchRom("ibm-logo.ch8");
+  const reload = () => emulator.load(data);
 
-    // handle file upload
-    if (e.key.toLowerCase() === "u") {
-      const rom = await uploadRom();
-      emulator.load(rom.data);
+  document.addEventListener("keydown", async (e) => {
+    switch (e.key.toLowerCase()) {
+      case "u":
+        const rom = await uploadRom();
+        data = rom.data;
+        reload();
+        break;
+      case "enter":
+        reload();
+        break;
+      default:
+        // default to sending keys to emulator
+        const hex = qKeyboardMapping[e.key];
+        if (hex) {
+          emulator.setInput(hex);
+        }
     }
   });
 
@@ -76,7 +85,8 @@ async function main(fileName: string) {
     drawDisplay(emulator);
   }, 0);
 
-  emulator.load(await fetchRom(fileName));
+  // initial ROM load
+  reload();
 }
 
-main("ibm-logo.ch8");
+main();
