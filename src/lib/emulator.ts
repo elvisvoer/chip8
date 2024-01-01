@@ -180,8 +180,16 @@ export default class Emulator extends EventEmitter {
     }
 
     try {
-      this.fetch();
-      this.exec();
+      this.currentOp = this.getCurrentOp();
+      this.emit("tick");
+      // increment already
+      this.ecu.pc += 2;
+
+      const [, , handler] = this.getOpMeta(this.currentOp);
+      if (!handler) {
+        throw new Error(`No handler found for instruction ${this.currentOp}`);
+      }
+      handler();
     } catch (err) {
       this.paused = true;
       throw err;
@@ -226,24 +234,6 @@ export default class Emulator extends EventEmitter {
         }
       }
     }
-  }
-
-  private exec() {
-    const [, , handler] = this.getOpMeta(this.currentOp);
-
-    if (!handler) {
-      throw new Error(`No handler found for instruction ${this.currentOp}`);
-    }
-
-    handler();
-  }
-
-  private fetch() {
-    this.currentOp = this.getCurrentOp();
-    this.emit("tick");
-
-    // increment already
-    this.ecu.pc += 2;
   }
 
   private getCurrentOp() {
