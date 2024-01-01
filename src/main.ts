@@ -12,6 +12,22 @@ const display = new CanvasDisplay(
 );
 const emulator = new Emulator();
 
+/**
+ * Mapping from (qwerty)
+ *
+ * 1 2 3 4
+ * q w e r
+ * a s d f
+ * z x c v
+ *
+ * to (chip-8)
+ *
+ * 1 2 3 C
+ * 4 5 6 D
+ * 7 8 9 E
+ * A 0 B F
+ *
+ */
 const qKeyboardMapping: any = {
   "1": 0x1,
   "2": 0x2,
