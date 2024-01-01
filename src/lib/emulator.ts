@@ -1,5 +1,3 @@
-import EventEmitter from "./events";
-
 // octo font
 const font = [
   0xf0,
@@ -107,7 +105,7 @@ type RomDisk = {
   data: Uint8Array;
 };
 
-export default class Emulator extends EventEmitter {
+export default class Emulator {
   private ecu!: ECU; // Emulator Control Unit state
   private ram: Uint8Array = new Uint8Array(4 * 1024);
   private framebuffer: number[] = [];
@@ -120,7 +118,6 @@ export default class Emulator extends EventEmitter {
   private _romDisk!: RomDisk;
 
   constructor(private _offset = 0x200) {
-    super();
     this.init();
   }
 
@@ -171,7 +168,6 @@ export default class Emulator extends EventEmitter {
     }
 
     const op = this.fetchOp(this.ecu.pc);
-    this.emit("tick");
     // increment already
     this.ecu.pc += 2;
 

@@ -98,15 +98,18 @@ function drawDisplay(emulator: Emulator) {
 
   if (verbosity > 1) {
     // rom offset = pc - offset
-    info.write(getRomHexStr(emulator.romDisk.data, emulator.state.ecu.pc - emulator.offset));
+    info.write(
+      getRomHexStr(
+        emulator.romDisk.data,
+        emulator.state.ecu.pc - emulator.offset
+      )
+    );
   }
 }
 
 function loadAndRun(romDisk: { name: string; data: Uint8Array }) {
-  emulator.clearListeners();
   emulator.load(romDisk);
   drawDisplay(emulator);
-  emulator.on("tick", () => drawDisplay(emulator));
 }
 
 document.addEventListener("keydown", async (e) => {
@@ -138,6 +141,8 @@ document.addEventListener("keydown", async (e) => {
       break;
     default:
   }
+
+  drawDisplay(emulator);
 });
 
 // start with first element
