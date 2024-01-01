@@ -167,11 +167,9 @@ export default class Emulator {
   /* Private Methods */
 
   private clearFramebuffer() {
-    this.fb = new Uint8Array(this.framebufferHeight * this.framebufferWidth);
-
-    for (var z = 0; z < this.framebufferHeight * this.framebufferWidth; z++) {
-      this.fb[z] = 0;
-    }
+    this.fb = new Uint8Array(
+      this.framebufferHeight * this.framebufferWidth
+    ).fill(0);
   }
 
   private draw(x: number, y: number, len: number) {
@@ -409,9 +407,9 @@ export default class Emulator {
       r: [],
       f: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     };
-    this.ram = new Uint8Array(this.memSize);
-    this.clearFramebuffer();
+    this.ram = new Uint8Array(this.memSize).fill(0);
     this.hires = false;
+    this.clearFramebuffer();
     this.waitingInput = false;
 
     // reload font
