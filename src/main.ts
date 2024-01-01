@@ -1,12 +1,17 @@
 import "./style.css";
 import Emulator from "./lib/emulator.ts";
-import { BitMapDisplay } from "./lib/display.ts";
+import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom } from "./utils.ts";
 
-const display = new BitMapDisplay(
-  document.getElementById("display")! as HTMLCanvasElement
+const display = new CanvasDisplay(
+  document.getElementById("display")! as HTMLCanvasElement,
+  {
+    width: 640,
+    height: 320,
+  }
 );
 const emulator = new Emulator();
+
 const qKeyboardMapping: any = {
   "1": 0x1,
   "2": 0x2,

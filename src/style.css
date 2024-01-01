@@ -23,13 +23,8 @@ body {
   padding: 1rem;
 }
 
-div {
-  max-width: 640px;
-  font-family: monospace;
-  line-height: 1rem;
-  font-size: 1rem;
-  white-space: pre-wrap;
-  color: green;
+canvas {
+  border: 1px solid black;
 }
 
 @media (prefers-color-scheme: light) {

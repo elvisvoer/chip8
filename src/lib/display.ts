@@ -1,20 +1,16 @@
-export class TextDisplay {
-  constructor(private el: HTMLElement) {}
-
-  public clear() {
-    this.el.innerHTML = "";
-  }
-
-  public write(data: string) {
-    this.el.innerHTML += data;
-  }
-}
-
-export class BitMapDisplay {
+export class CanvasDisplay {
   private ctx: CanvasRenderingContext2D;
 
-  constructor(private canvas: HTMLCanvasElement) {
+  constructor(
+    private canvas: HTMLCanvasElement,
+    opt: {
+      width: number;
+      height: number;
+    }
+  ) {
     this.ctx = canvas.getContext("2d")!;
+    this.canvas.width = opt.width;
+    this.canvas.height = opt.height;
   }
 
   public clear() {
