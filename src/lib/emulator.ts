@@ -146,10 +146,9 @@ export default class Emulator {
     }
 
     const op = this.fetchOp(this.cpu.pc);
+    const handler = this.getOpHandler(op);
     // increment already
     this.cpu.pc += 2;
-
-    const handler = this.getOpHandler(op);
     handler();
   }
 
@@ -200,36 +199,35 @@ export default class Emulator {
       throw new Error(`Attempt to read outside RAM bounds.`);
     }
 
-    const H1 = this.ram[pc];
-    const H2 = this.ram[pc + 1];
-    return [(H1 & 0xf0) >> 4, H1 & 0x0f, (H2 & 0xf0) >> 4, H2 & 0x0f]
-      .reduce((n, d) => n + d.toString(16), "")
-      .toUpperCase();
+    return (this.ram[pc] << 8) | this.ram[pc + 1];
   }
 
-  private getOpHandler(op: string) {
-    const nnn = parseInt(op, 16) & 0x0fff;
-    const nn = parseInt(op, 16) & 0x00ff;
-    const [o, x, y, n] = op.split("").map((d) => parseInt(d, 16));
+  private getOpHandler(op: number) {
+    const o = (op >> 12) & 0x000f;
+    const x = (op >> 8) & 0x000f;
+    const y = (op >> 4) & 0x000f;
+    const nnn = op & 0x0fff;
+    const nn = op & 0x00ff;
+    const n = op & 0x000f;
 
     const simpleOps: any = {
-      "0000": () => {
+      0x0000: () => {
         /* noop*/
       },
 
-      "00E0": () => this.clearFramebuffer(),
-      "00EE": () => {
+      0x00e0: () => this.clearFramebuffer(),
+      0x00ee: () => {
         // pop address from return stack
         const addr = this.cpu.r.pop() as number;
         this.cpu.pc = addr;
       },
-      "00FF": () => {
+      0x00ff: () => {
         this.hires = true;
         this.clearFramebuffer();
       },
     };
 
-    if (Object.keys(simpleOps).includes(op)) {
+    if (simpleOps[op]) {
       return simpleOps[op];
     }
 
