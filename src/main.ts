@@ -52,4 +52,4 @@ async function main(fileName: string) {
   emulator.load({ name: fileName, data: await fetchRom(fileName) });
 }
 
-main("ibm-logo.ch8");
+main("chipcross.ch8");
