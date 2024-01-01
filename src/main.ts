@@ -48,11 +48,7 @@ function getRomHexStr(data: Uint8Array, pos: number) {
 
   for (let i = 0; i < data.length; i += 2) {
     output += getColoredText(
-      `${decimalToHexStr((data[i] >> 4) & 0xf)}${decimalToHexStr(
-        data[i] & 0xf
-      )}${decimalToHexStr((data[i + 1] >> 4) & 0xf)}${decimalToHexStr(
-        data[i + 1] & 0xf
-      )} `,
+      `${decimalToHexStr(data[i], 2)}${decimalToHexStr(data[i + 1], 2)} `,
       [i, i + 1].includes(pos) ? "red" : "inherit"
     );
   }
