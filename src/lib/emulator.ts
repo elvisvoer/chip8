@@ -288,26 +288,30 @@ export default class Emulator {
           case 5:
             return () => {
               const t = this.cpu.v[x] - this.cpu.v[y];
+              const c = this.cpu.v[x] >= this.cpu.v[y];
               this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = this.cpu.v[x] >= this.cpu.v[y] ? 1 : 0;
+              this.cpu.v[0xf] = c ? 1 : 0;
             };
           case 7:
             return () => {
               const t = this.cpu.v[y] - this.cpu.v[x];
+              const c = this.cpu.v[y] >= this.cpu.v[x];
               this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = this.cpu.v[y] >= this.cpu.v[x] ? 1 : 0;
+              this.cpu.v[0xf] = c ? 1 : 0;
             };
           case 6:
             return () => {
-              const t = this.cpu.v[x] >> 1;
+              const t = this.cpu.v[y] >> 1;
+              const c = this.cpu.v[y] & 0x1;
               this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = this.cpu.v[x] & 0x1 ? 1 : 0;
+              this.cpu.v[0xf] = c ? 1 : 0;
             };
           case 0xe:
             return () => {
-              const t = this.cpu.v[x] << 1;
+              const t = this.cpu.v[y] << 1;
+              const c = (this.cpu.v[y] >> 7) & 0x1;
               this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = (this.cpu.v[x] >> 7) & 0x1 ? 1 : 0;
+              this.cpu.v[0xf] = c ? 1 : 0;
             };
         }
         break;
