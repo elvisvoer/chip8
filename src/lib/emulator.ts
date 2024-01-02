@@ -155,10 +155,9 @@ export default class Emulator {
     }
 
     const op = (this.ram[this.cpu.pc] << 8) | this.ram[this.cpu.pc + 1];
-    const handler = this.getOpHandler(op);
-    // increment before we execute the handler
+    // increment PC before we execute the op
     this.cpu.pc += 2;
-    handler();
+    this.executeOp(op);
   }
 
   public setInput(key: number) {
@@ -199,7 +198,7 @@ export default class Emulator {
     }
   }
 
-  private getOpHandler(op: number) {
+  private executeOp(op: number) {
     const o = (op >> 12) & 0x000f;
     const x = (op >> 8) & 0x000f;
     const y = (op >> 4) & 0x000f;
@@ -225,174 +224,174 @@ export default class Emulator {
     };
 
     if (simpleOps[op]) {
-      return simpleOps[op];
+      simpleOps[op]();
+      return;
     }
 
     switch (o) {
-      case 1:
-        return () => (this.cpu.pc = nnn);
-      case 2:
-        return () => {
-          // push return address to return stack
-          this.cpu.r.push(this.cpu.pc);
-          this.cpu.pc = nnn;
-        };
-      case 3:
-        return () => {
-          if (this.cpu.v[x] === nn) {
-            this.cpu.pc += 2;
-          }
-        };
-      case 4:
-        return () => {
-          if (this.cpu.v[x] !== nn) {
-            this.cpu.pc += 2;
-          }
-        };
-      case 5:
-        return () => {
-          if (this.cpu.v[x] === this.cpu.v[y]) {
-            this.cpu.pc += 2;
-          }
-        };
-      case 9:
-        return () => {
-          if (this.cpu.v[x] !== this.cpu.v[y]) {
-            this.cpu.pc += 2;
-          }
-        };
-      case 6:
-        return () => (this.cpu.v[x] = nn);
-      case 7:
-        return () => (this.cpu.v[x] = (this.cpu.v[x] + nn) & 0xff);
-      case 8: {
+      case 0x1:
+        this.cpu.pc = nnn;
+        break;
+      case 0x2:
+        // push return address to return stack
+        this.cpu.r.push(this.cpu.pc);
+        this.cpu.pc = nnn;
+        break;
+      case 0x3:
+        if (this.cpu.v[x] === nn) {
+          this.cpu.pc += 2;
+        }
+        break;
+      case 0x4:
+        if (this.cpu.v[x] !== nn) {
+          this.cpu.pc += 2;
+        }
+        break;
+      case 0x5:
+        if (this.cpu.v[x] === this.cpu.v[y]) {
+          this.cpu.pc += 2;
+        }
+        break;
+      case 0x9:
+        if (this.cpu.v[x] !== this.cpu.v[y]) {
+          this.cpu.pc += 2;
+        }
+        break;
+      case 0x6:
+        this.cpu.v[x] = nn;
+        break;
+      case 0x7:
+        this.cpu.v[x] = (this.cpu.v[x] + nn) & 0xff;
+        break;
+      case 0x8: {
         switch (n) {
-          case 0:
-            return () => (this.cpu.v[x] = this.cpu.v[y]);
-          case 1:
-            return () => (this.cpu.v[x] |= this.cpu.v[y]);
-          case 2:
-            return () => (this.cpu.v[x] &= this.cpu.v[y]);
-          case 3:
-            return () => (this.cpu.v[x] ^= this.cpu.v[y]);
-          case 4:
-            return () => {
-              const t = this.cpu.v[x] + this.cpu.v[y];
-              this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = t > 0xff ? 1 : 0;
-            };
-          case 5:
-            return () => {
-              const t = this.cpu.v[x] - this.cpu.v[y];
-              const c = this.cpu.v[x] >= this.cpu.v[y];
-              this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = c ? 1 : 0;
-            };
-          case 7:
-            return () => {
-              const t = this.cpu.v[y] - this.cpu.v[x];
-              const c = this.cpu.v[y] >= this.cpu.v[x];
-              this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = c ? 1 : 0;
-            };
-          case 6:
-            return () => {
-              const t = this.cpu.v[y] >> 1;
-              const c = this.cpu.v[y] & 0x1;
-              this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = c ? 1 : 0;
-            };
-          case 0xe:
-            return () => {
-              const t = this.cpu.v[y] << 1;
-              const c = (this.cpu.v[y] >> 7) & 0x1;
-              this.cpu.v[x] = t & 0xff;
-              this.cpu.v[0xf] = c ? 1 : 0;
-            };
+          case 0x0:
+            this.cpu.v[x] = this.cpu.v[y];
+            break;
+          case 0x1:
+            this.cpu.v[x] |= this.cpu.v[y];
+            break;
+          case 0x2:
+            this.cpu.v[x] &= this.cpu.v[y];
+            break;
+          case 0x3:
+            this.cpu.v[x] ^= this.cpu.v[y];
+            break;
+          case 0x4: {
+            const t = this.cpu.v[x] + this.cpu.v[y];
+            this.cpu.v[x] = t & 0xff;
+            this.cpu.v[0xf] = t > 0xff ? 1 : 0;
+            break;
+          }
+          case 0x5: {
+            const t = this.cpu.v[x] - this.cpu.v[y];
+            const c = this.cpu.v[x] >= this.cpu.v[y];
+            this.cpu.v[x] = t & 0xff;
+            this.cpu.v[0xf] = c ? 1 : 0;
+            break;
+          }
+          case 0x7: {
+            const t = this.cpu.v[y] - this.cpu.v[x];
+            const c = this.cpu.v[y] >= this.cpu.v[x];
+            this.cpu.v[x] = t & 0xff;
+            this.cpu.v[0xf] = c ? 1 : 0;
+            break;
+          }
+          case 0x6: {
+            const t = this.cpu.v[y] >> 1;
+            const c = this.cpu.v[y] & 0x1;
+            this.cpu.v[x] = t & 0xff;
+            this.cpu.v[0xf] = c ? 1 : 0;
+            break;
+          }
+          case 0xe: {
+            const t = this.cpu.v[y] << 1;
+            const c = (this.cpu.v[y] >> 7) & 0x1;
+            this.cpu.v[x] = t & 0xff;
+            this.cpu.v[0xf] = c ? 1 : 0;
+            break;
+          }
+          default:
+            throw new Error(
+              `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
+            );
         }
         break;
       }
       case 0xa:
-        return () => (this.cpu.i = nnn);
+        this.cpu.i = nnn;
+        break;
       case 0xb:
-        return () => {
-          this.cpu.pc = nnn + this.cpu.v[0];
-        };
+        this.cpu.pc = nnn + this.cpu.v[0];
+        break;
       case 0xc:
-        return () => {
-          this.cpu.v[x] = (Math.random() * 256) & nn;
-        };
+        this.cpu.v[x] = (Math.random() * 256) & nn;
+        break;
       case 0xd:
-        return () => this.draw(this.cpu.v[x], this.cpu.v[y], n);
+        this.draw(this.cpu.v[x], this.cpu.v[y], n);
+        break;
       case 0xf: {
         switch (nn) {
           // timers
           case 0x07:
-            return () => {
-              // TODO(@elvis): properly implement timers, decrementing does the job for now
-              this.cpu.v[x] = --this.cpu.dt;
-            };
-
+            // TODO(@elvis): properly implement timers, decrementing does the job for now
+            this.cpu.v[x] = --this.cpu.dt;
+            break;
           case 0x15:
-            return () => {
-              this.cpu.dt = this.cpu.v[x];
-            };
+            this.cpu.dt = this.cpu.v[x];
+            break;
           case 0x18:
-            return () => {
-              this.cpu.st = this.cpu.v[x];
-            };
+            this.cpu.st = this.cpu.v[x];
+            break;
           case 0x0a:
-            return () => {
-              this.waitReg = x;
-              this.waitingInput = true;
-            };
+            this.waitReg = x;
+            this.waitingInput = true;
+            break;
           case 0x1e:
-            return () => {
-              this.cpu.i = (this.cpu.i + this.cpu.v[x]) & 0xffff;
-            };
+            this.cpu.i = (this.cpu.i + this.cpu.v[x]) & 0xffff;
+            break;
           case 0x29:
-            return () => {
-              this.cpu.i = (this.cpu.v[x] & 0xf) * 5;
-            };
+            this.cpu.i = (this.cpu.v[x] & 0xf) * 5;
+            break;
           case 0x33:
-            return () => {
-              this.ram[this.cpu.i] = Math.floor(this.cpu.v[x] / 100) % 10;
-              this.ram[this.cpu.i + 1] = Math.floor(this.cpu.v[x] / 10) % 10;
-              this.ram[this.cpu.i + 2] = this.cpu.v[x] % 10;
-            };
+            this.ram[this.cpu.i] = Math.floor(this.cpu.v[x] / 100) % 10;
+            this.ram[this.cpu.i + 1] = Math.floor(this.cpu.v[x] / 10) % 10;
+            this.ram[this.cpu.i + 2] = this.cpu.v[x] % 10;
+            break;
           case 0x55:
-            return () => {
-              for (let z = 0; z <= x; z++) {
-                this.ram[this.cpu.i + z] = this.cpu.v[z];
-              }
-              this.cpu.i = (this.cpu.i + x + 1) & 0xffff;
-            };
-
+            for (let z = 0; z <= x; z++) {
+              this.ram[this.cpu.i + z] = this.cpu.v[z];
+            }
+            this.cpu.i = (this.cpu.i + x + 1) & 0xffff;
+            break;
           case 0x65:
-            return () => {
-              for (let z = 0; z <= x; z++) {
-                this.cpu.v[z] = this.ram[this.cpu.i + z];
-              }
-              this.cpu.i = (this.cpu.i + x + 1) & 0xffff;
-            };
+            for (let z = 0; z <= x; z++) {
+              this.cpu.v[z] = this.ram[this.cpu.i + z];
+            }
+            this.cpu.i = (this.cpu.i + x + 1) & 0xffff;
+            break;
           case 0x75:
-            return () => {
-              for (var z = 0; z <= x; z++) {
-                this.cpu.f[z] = this.cpu.v[z];
-              }
-            };
+            for (let z = 0; z <= x; z++) {
+              this.cpu.f[z] = this.cpu.v[z];
+            }
+            break;
           case 0x85:
-            return () => {
-              for (var z = 0; z <= x; z++) {
-                this.cpu.v[z] = 0xff & this.cpu.f[z];
-              }
-            };
+            for (let z = 0; z <= x; z++) {
+              this.cpu.v[z] = 0xff & this.cpu.f[z];
+            }
+            break;
+          default:
+            throw new Error(
+              `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
+            );
         }
         break;
       }
+      default:
+        throw new Error(
+          `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
+        );
     }
-
-    throw new Error(`Unknown instruction #${op}`);
   }
 
   private reset() {
