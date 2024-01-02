@@ -150,9 +150,13 @@ export default class Emulator {
       return;
     }
 
-    const op = this.fetchOp(this.cpu.pc);
+    if (this.cpu.pc > this.ram.length) {
+      throw new Error(`Attempt to read outside RAM bounds.`);
+    }
+
+    const op = (this.ram[this.cpu.pc] << 8) | this.ram[this.cpu.pc + 1];
     const handler = this.getOpHandler(op);
-    // increment already
+    // increment before we execute the handler
     this.cpu.pc += 2;
     handler();
   }
@@ -193,14 +197,6 @@ export default class Emulator {
         }
       }
     }
-  }
-
-  private fetchOp(pc: number) {
-    if (pc > this.ram.length) {
-      throw new Error(`Attempt to read outside RAM bounds.`);
-    }
-
-    return (this.ram[pc] << 8) | this.ram[pc + 1];
   }
 
   private getOpHandler(op: number) {
