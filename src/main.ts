@@ -62,7 +62,7 @@ async function main() {
 
   document.addEventListener("keydown", async (e) => {
     switch (e.key.toLowerCase()) {
-      case "u":
+      case "o":
         const rom = await uploadRom();
         data = rom.data;
         reload();
@@ -80,10 +80,12 @@ async function main() {
   });
 
   // main loop
-  setInterval(() => {
+  const loop = () => {
     emulator.tick();
     drawDisplay(emulator);
-  }, 0);
+    setTimeout(loop, 0);
+  };
+  setTimeout(loop, 0);
 
   // initial ROM load
   reload();
