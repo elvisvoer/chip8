@@ -25,6 +25,10 @@ body {
   justify-content: center;
 }
 
+canvas {
+  border: 1px solid black;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
