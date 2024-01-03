@@ -57,6 +57,13 @@ async function main() {
   const reload = () => emulator.load(data);
 
   document.addEventListener("keydown", async (e) => {
+    const hex = qKeyboardMapping[e.key];
+    if (hex) {
+      emulator.onKeyDown(hex);
+    }
+
+    // handle extra key for open a local ROM file
+    // or reload the program
     switch (e.key.toLowerCase()) {
       case "o":
         const rom = await uploadRom();
@@ -66,12 +73,13 @@ async function main() {
       case "enter":
         reload();
         break;
-      default:
-        // default to sending keys to emulator
-        const hex = qKeyboardMapping[e.key];
-        if (hex) {
-          emulator.setInput(hex);
-        }
+    }
+  });
+
+  document.addEventListener("keyup", (e) => {
+    const hex = qKeyboardMapping[e.key];
+    if (hex) {
+      emulator.onKeyUp(hex);
     }
   });
 

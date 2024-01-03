@@ -112,6 +112,9 @@ export default class Emulator {
 
   private ready = false;
 
+  // actively pressed key(s)
+  private k = new Set();
+
   constructor(private memSize: number = 4 * 1024) {
     this.reset();
   }
@@ -154,17 +157,28 @@ export default class Emulator {
       throw new Error(`Attempt to read outside RAM bounds.`);
     }
 
+    // TODO(@elvis): move timers outside of the main loop.
+    // This will hopefully improve things for now
+    this.cpu.dt > 0 && this.cpu.dt--;
+    this.cpu.st > 0 && this.cpu.st--;
+
     const op = (this.ram[this.cpu.pc] << 8) | this.ram[this.cpu.pc + 1];
     // increment PC before we execute the op
     this.cpu.pc += 2;
     this.executeOp(op);
   }
 
-  public setInput(key: number) {
+  public onKeyDown(key: number) {
+    this.k.add(key);
+
     if (this.waitingInput) {
       this.cpu.v[this.waitReg] = key & 0xff;
       this.waitingInput = false;
     }
+  }
+
+  public onKeyUp(key: number) {
+    this.k.delete(key);
   }
 
   /* Private Methods */
@@ -330,12 +344,31 @@ export default class Emulator {
       case 0xd:
         this.draw(this.cpu.v[x], this.cpu.v[y], n);
         break;
+      case 0xe: {
+        // EX9E and EXA1: Skip if key
+        switch (nn) {
+          case 0x9e:
+            if (this.k.has(this.cpu.v[x])) {
+              this.cpu.pc += 2;
+            }
+            break;
+          case 0xa1:
+            if (!this.k.has(this.cpu.v[x])) {
+              this.cpu.pc += 2;
+            }
+            break;
+          default:
+            throw new Error(
+              `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
+            );
+        }
+        break;
+      }
       case 0xf: {
         switch (nn) {
           // timers
           case 0x07:
-            // TODO(@elvis): properly implement timers, decrementing does the job for now
-            this.cpu.v[x] = --this.cpu.dt;
+            this.cpu.v[x] = this.cpu.dt;
             break;
           case 0x15:
             this.cpu.dt = this.cpu.v[x];
@@ -408,6 +441,7 @@ export default class Emulator {
     this.hires = false;
     this.clearFramebuffer();
     this.waitingInput = false;
+    this.k = new Set();
 
     // reload font
     for (let z = 0; z < font.length; z++) {
