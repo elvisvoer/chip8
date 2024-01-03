@@ -157,15 +157,15 @@ export default class Emulator {
       throw new Error(`Attempt to read outside RAM bounds.`);
     }
 
-    // TODO(@elvis): move timers outside of the main loop.
-    // This will hopefully improve things for now
-    this.cpu.dt > 0 && this.cpu.dt--;
-    this.cpu.st > 0 && this.cpu.st--;
-
     const op = (this.ram[this.cpu.pc] << 8) | this.ram[this.cpu.pc + 1];
     // increment PC before we execute the op
     this.cpu.pc += 2;
     this.executeOp(op);
+  }
+
+  public updateTimers() {
+    this.cpu.dt > 0 && this.cpu.dt--;
+    this.cpu.st > 0 && this.cpu.st--;
   }
 
   public onKeyDown(key: number) {

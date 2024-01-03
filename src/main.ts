@@ -85,7 +85,11 @@ async function main() {
 
   // main loop
   const loop = () => {
+    // make tick "clock" 2 times faster than timers and display update
     emulator.tick();
+    emulator.tick();
+
+    emulator.updateTimers();
     drawDisplay(emulator);
     setTimeout(loop, 0);
   };
