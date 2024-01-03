@@ -13,18 +13,16 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
   display: flex;
-  flex-direction: column;
-  gap: 4rem;
-  place-items: center;
-  min-width: 320px;
-  padding: 1rem;
-}
-
-canvas {
-  border: 1px solid black;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (prefers-color-scheme: light) {

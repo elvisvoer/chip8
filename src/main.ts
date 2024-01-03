@@ -4,11 +4,7 @@ import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom, uploadRom } from "./utils.ts";
 
 const display = new CanvasDisplay(
-  document.getElementById("display")! as HTMLCanvasElement,
-  {
-    width: 640,
-    height: 320,
-  }
+  document.getElementById("display")! as HTMLCanvasElement
 );
 const emulator = new Emulator();
 

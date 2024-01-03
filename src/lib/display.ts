@@ -1,16 +1,17 @@
 export class CanvasDisplay {
   private ctx: CanvasRenderingContext2D;
 
-  constructor(
-    private canvas: HTMLCanvasElement,
-    opt: {
-      width: number;
-      height: number;
-    }
-  ) {
+  constructor(private canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext("2d")!;
-    this.canvas.width = opt.width;
-    this.canvas.height = opt.height;
+
+    const resize = () => {
+      this.canvas.width = this.canvas.parentElement?.offsetWidth || 0;
+      const heightRatio = 0.5;
+      this.canvas.height = this.canvas.width * heightRatio;
+    };
+
+    window.addEventListener("resize", resize);
+    resize();
   }
 
   public clear() {
