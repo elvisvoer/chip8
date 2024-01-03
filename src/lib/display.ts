@@ -5,8 +5,12 @@ export class CanvasDisplay {
     this.ctx = canvas.getContext("2d")!;
 
     const resize = () => {
-      this.canvas.width = this.canvas.parentElement?.offsetWidth || 0;
+      // needs to be a multiple of 64 to avoid gaps in fillRect drawing
+      const width = 64 * Math.floor(this.canvas.parentElement!.offsetWidth / 64);
       const heightRatio = 0.5;
+
+      // make 768px the max width allowed
+      this.canvas.width = Math.min(width, 768);
       this.canvas.height = this.canvas.width * heightRatio;
     };
 
