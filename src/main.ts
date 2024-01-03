@@ -85,7 +85,7 @@ async function main() {
 
   // main loop
   const loop = () => {
-    // make tick "clock" 2 times faster than timers and display update
+    // make CPU clock tick 2 times faster than timers and display update
     emulator.tick();
     emulator.tick();
 
