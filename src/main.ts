@@ -59,7 +59,7 @@ async function main() {
   document.addEventListener("keydown", async (e) => {
     const hex = qKeyboardMapping[e.key];
     if (hex) {
-      emulator.onKeyDown(hex);
+      emulator.setKeyDown(hex);
     }
 
     // handle extra key for open a local ROM file
@@ -79,7 +79,7 @@ async function main() {
   document.addEventListener("keyup", (e) => {
     const hex = qKeyboardMapping[e.key];
     if (hex) {
-      emulator.onKeyUp(hex);
+      emulator.setKeyUp(hex);
     }
   });
 

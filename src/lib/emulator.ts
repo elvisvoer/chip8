@@ -168,7 +168,7 @@ export default class Emulator {
     this.cpu.st > 0 && this.cpu.st--;
   }
 
-  public onKeyDown(key: number) {
+  public setKeyDown(key: number) {
     this.k.add(key);
 
     if (this.waitingInput) {
@@ -177,7 +177,7 @@ export default class Emulator {
     }
   }
 
-  public onKeyUp(key: number) {
+  public setKeyUp(key: number) {
     this.k.delete(key);
   }
 
