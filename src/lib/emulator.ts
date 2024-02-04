@@ -212,6 +212,12 @@ export default class Emulator {
     }
   }
 
+  private errorOnUnknownOp(op: number) {
+    throw new Error(
+      `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
+    );
+  }
+
   private executeOp(op: number) {
     const o = (op >> 12) & 0x000f;
     const x = (op >> 8) & 0x000f;
@@ -326,9 +332,7 @@ export default class Emulator {
             break;
           }
           default:
-            throw new Error(
-              `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
-            );
+            this.errorOnUnknownOp(op);
         }
         break;
       }
@@ -358,9 +362,7 @@ export default class Emulator {
             }
             break;
           default:
-            throw new Error(
-              `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
-            );
+            this.errorOnUnknownOp(op);
         }
         break;
       }
@@ -414,16 +416,12 @@ export default class Emulator {
             }
             break;
           default:
-            throw new Error(
-              `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
-            );
+            this.errorOnUnknownOp(op);
         }
         break;
       }
       default:
-        throw new Error(
-          `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
-        );
+        this.errorOnUnknownOp(op);
     }
   }
 
