@@ -148,6 +148,19 @@ export default class Emulator {
     this.ready = true;
   }
 
+  public setKeyDown(key: number) {
+    this.k.add(key);
+
+    if (this.waitingInput) {
+      this.cpu.v[this.waitReg] = key & 0xff;
+      this.waitingInput = false;
+    }
+  }
+
+  public setKeyUp(key: number) {
+    this.k.delete(key);
+  }
+
   public tick() {
     if (!this.ready || this.waitingInput) {
       return;
@@ -166,19 +179,6 @@ export default class Emulator {
   public updateTimers() {
     this.cpu.dt > 0 && this.cpu.dt--;
     this.cpu.st > 0 && this.cpu.st--;
-  }
-
-  public setKeyDown(key: number) {
-    this.k.add(key);
-
-    if (this.waitingInput) {
-      this.cpu.v[this.waitReg] = key & 0xff;
-      this.waitingInput = false;
-    }
-  }
-
-  public setKeyUp(key: number) {
-    this.k.delete(key);
   }
 
   /* Private Methods */
