@@ -52,9 +52,18 @@ function drawDisplay(emulator: Emulator) {
   );
 }
 
+function load(data: Uint8Array) {
+  emulator.load(data);
+}
+
+async function fetchAndLoad(romName: string) {
+  const data = await fetchRom(romName);
+  load(data);
+}
+
 async function main() {
-  let data = await fetchRom("ibm-logo.ch8");
-  const reload = () => emulator.load(data);
+  const roms = ["ibm-logo.ch8", "chipcross.ch8", "snake.ch8"];
+  let currentRomIndex = 0;
 
   document.addEventListener("keydown", async (e) => {
     const hex = qKeyboardMapping[e.key];
@@ -67,11 +76,14 @@ async function main() {
     switch (e.key.toLowerCase()) {
       case "o":
         const rom = await uploadRom();
-        data = rom.data;
-        reload();
+        load(rom.data);
+        break;
+      case "n":
+        currentRomIndex = (currentRomIndex + 1) % roms.length;
+        await fetchAndLoad(roms[currentRomIndex]);
         break;
       case "enter":
-        reload();
+        await fetchAndLoad(roms[currentRomIndex]);
         break;
     }
   });
@@ -96,7 +108,7 @@ async function main() {
   setTimeout(loop, 0);
 
   // initial ROM load
-  reload();
+  await fetchAndLoad(roms[currentRomIndex]);
 }
 
 main();
