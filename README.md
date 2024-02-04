@@ -2,7 +2,6 @@
 
 A simple Chip8 emulator inspired from [Tobias V. Langhoff blog post](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/).
 
-The emulator will display the IBM logo after which you can press "O" key to upload and use a new ROM.
 The keyboard keys are mapped as described in this comment:
 
 ```
