@@ -4,18 +4,7 @@ export async function fetchRom(fileName: string) {
     throw new Error(`Invalid response code: ${response.status}`);
   }
 
-  const blob = await response.blob();
-
-  const buffer: ArrayBuffer = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      resolve(e.target?.result as ArrayBuffer);
-    };
-    reader.onerror = (e) => {
-      reject(e);
-    };
-    reader.readAsArrayBuffer(blob);
-  });
+  const buffer = await response.arrayBuffer();
 
   return new Uint8Array(buffer);
 }
