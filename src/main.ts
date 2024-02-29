@@ -62,7 +62,13 @@ async function fetchAndLoad(romName: string) {
 }
 
 async function main() {
-  const roms = ["ibm-logo.ch8", "chipcross.ch8", "snake.ch8"];
+  const roms = [
+    "ibm-logo.ch8",
+    "chipcross.ch8",
+    "pong.ch8",
+    "br8kout.ch8",
+    "snake.ch8",
+  ];
   let currentRomIndex = 0;
 
   document.addEventListener("keydown", async (e) => {
