@@ -34,6 +34,16 @@ canvas {
   border-radius: 5px;
 }
 
+div {
+  font-size: 1rem;
+}
+
+pre {
+  font-family: monospace;
+  padding: 0;
+  margin: 0;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
