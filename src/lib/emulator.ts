@@ -104,7 +104,7 @@ export default class Emulator {
   private cpu!: CPU; // Emulator Control Unit state
   private ram!: Uint8Array;
   private fb!: Uint8Array;
-  private hires = false; // high resolution
+  private hires = true; // high resolution
 
   // input handling
   private waitingInput = false;
