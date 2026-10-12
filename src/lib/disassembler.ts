@@ -1,16 +1,14 @@
 export class Disassembler {
   public static toHex(data: Uint8Array): string {
     const result: string[] = [];
-    let programCount = 0;
 
-    while (programCount < data.length) {
-      if (data[programCount + 1] === undefined) {
-        result.push(`0x${data[programCount].toString(16).padStart(2, "0")}`);
+    for (let i = 0; i < data.length; i += 2) {
+      if (data[i + 1] === undefined) {
+        result.push(`0x${data[i].toString(16).padStart(2, "0")}`);
         break;
       }
-      const op = (data[programCount] << 8) | data[programCount + 1];
-      result.push(Disassembler.opToHex(op));
-      programCount += 2;
+      const op = (data[i] << 8) | data[i + 1];
+      result.push(`0x${op.toString(16).padStart(4, "0")}`);
     }
 
     return result.join("\n");
