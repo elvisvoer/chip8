@@ -4,6 +4,10 @@ export class Disassembler {
     let programCount = 0;
 
     while (programCount < data.length) {
+      if (data[programCount + 1] === undefined) {
+        result.push(`0x${data[programCount].toString(16).padStart(2, "0")}`);
+        break;
+      }
       const op = (data[programCount] << 8) | data[programCount + 1];
       result.push(Disassembler.opToHex(op));
       programCount += 2;
@@ -14,10 +18,18 @@ export class Disassembler {
 
   public static fromHex(data: string): Uint8Array {
     const lines = data.split("\n");
-    const result = new Uint8Array(lines.length * 2);
+    const isOddSize = lines[lines.length - 1].length === 4;
+    const size = lines.length * 2 - (isOddSize ? 1 : 0);
+    const result = new Uint8Array(size);
 
     for (let i = 0; i < lines.length; i++) {
-      const hex = parseInt(lines[i]);
+      const hexStr = lines[i];
+      const hex = parseInt(hexStr);
+      if (hexStr.length === 4) {
+        result[i * 2] = hex & 0xff;
+        break;
+      }
+
       result[i * 2] = (hex & 0xff00) >> 8;
       result[i * 2 + 1] = hex & 0x00ff;
     }
