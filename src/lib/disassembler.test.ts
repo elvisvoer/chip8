@@ -1,5 +1,5 @@
 import { Disassembler } from "./disassembler";
-import { readRomAsUint8Array } from "../test/utils";
+import { readRom } from "../test/utils";
 import { describe, expect, test } from "vitest";
 
 function areBuffersEqual(left: Uint8Array, right: Uint8Array): boolean {
@@ -18,7 +18,7 @@ function areBuffersEqual(left: Uint8Array, right: Uint8Array): boolean {
 
 describe("Disassembler", () => {
   test("can correctly disassemble/assemble the IBM logo", () => {
-    const ibmLogo = readRomAsUint8Array("public/ibm-logo.ch8");
-    expect(areBuffersEqual(ibmLogo, Disassembler.encode(Disassembler.decode(ibmLogo)))).toBeTruthy();
+    const ibmLogo = readRom("public/ibm-logo.ch8");
+    expect(areBuffersEqual(ibmLogo, Disassembler.fromHex(Disassembler.toHex(ibmLogo)))).toBeTruthy();
   });
 });

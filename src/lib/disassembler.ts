@@ -1,18 +1,18 @@
 export class Disassembler {
-  public static decode(data: Uint8Array): string {
+  public static toHex(data: Uint8Array): string {
     const result: string[] = [];
     let programCount = 0;
 
     while (programCount < data.length) {
       const op = (data[programCount] << 8) | data[programCount + 1];
-      result.push(Disassembler.decodeOp(op));
+      result.push(Disassembler.opToHex(op));
       programCount += 2;
     }
 
     return result.join("\n");
   }
 
-  public static encode(data: string): Uint8Array {
+  public static fromHex(data: string): Uint8Array {
     const lines = data.split("\n");
     const result = new Uint8Array(lines.length * 2);
 
@@ -25,7 +25,7 @@ export class Disassembler {
     return result;
   }
 
-  private static decodeOp(op: number) {
+  private static opToHex(op: number) {
     const o = (op >> 12) & 0x000f;
     const x = (op >> 8) & 0x000f;
     const y = (op >> 4) & 0x000f;
