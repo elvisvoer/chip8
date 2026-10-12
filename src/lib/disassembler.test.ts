@@ -17,8 +17,15 @@ function areBuffersEqual(left: Uint8Array, right: Uint8Array): boolean {
 }
 
 describe("Disassembler", () => {
-  test("can correctly disassemble/assemble the IBM logo", () => {
-    const ibmLogo = readRom("public/ibm-logo.ch8");
-    expect(areBuffersEqual(ibmLogo, Disassembler.fromHex(Disassembler.toHex(ibmLogo)))).toBeTruthy();
+  test.each([
+    "ibm-logo.ch8",
+    "chipcross.ch8",
+    "pong.ch8",
+    "br8kout.ch8",
+    "snake.ch8",
+  ])("can correctly disassemble/assemble %1", (rom) => {
+    const buffer = readRom(`public/${rom}`);
+    const newBuffer = Disassembler.fromHex(Disassembler.toHex(buffer));
+    expect(areBuffersEqual(buffer, newBuffer)).toBeTruthy();
   });
 });
