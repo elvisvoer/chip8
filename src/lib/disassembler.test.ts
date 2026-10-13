@@ -1,6 +1,6 @@
 import { Disassembler } from "./disassembler";
-import { readRom } from "../test/utils";
 import { describe, expect, test } from "vitest";
+import { readFileSync, writeFileSync } from "node:fs";
 
 function areBuffersEqual(left: Uint8Array, right: Uint8Array): boolean {
   if (left.length !== right.length) {
@@ -24,8 +24,11 @@ describe("Disassembler", () => {
     "br8kout.ch8",
     "snake.ch8",
   ])("can correctly disassemble/assemble %1", (rom) => {
-    const buffer = readRom(`public/${rom}`);
-    const newBuffer = Disassembler.fromHex(Disassembler.toHex(buffer));
+    const buffer = new Uint8Array(readFileSync(`public/${rom}`));
+    const newBuffer = Disassembler.fromAsm(Disassembler.toAsm(buffer));
+
+    writeFileSync(`public/${rom}.ead.asm`, Disassembler.toAsm(buffer));
+
     expect(areBuffersEqual(buffer, newBuffer)).toBeTruthy();
   });
 });
