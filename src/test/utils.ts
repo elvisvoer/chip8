@@ -4,8 +4,8 @@ export function readRom(path: string): Uint8Array {
   return new Uint8Array(readFileSync(path));
 }
 
-export function writeRom(path: string, buffer: Uint8Array): void {
-  writeFileSync(path, buffer);
+export function writeRom(path: string, data: Uint8Array | string): void {
+  writeFileSync(path, data);
 }
 
 export function printBuffer(buffer: Uint8Array): void {

@@ -40,14 +40,17 @@ export class Disassembler {
 
   public static toAsm(data: Uint8Array): string {
     const result: string[] = [];
+    const pc = 0x200;
 
     for (let i = 0; i < data.length; i += 2) {
+      const offset = `0x${(pc + i).toString(16).padStart(4, "0")}`;
       if (data[i + 1] === undefined) {
-        result.push(`0x${data[i].toString(16).padStart(2, "0")}`);
+        const line = `${offset}: 0x${data[i].toString(16).padStart(2, "0")}`;
+        result.push(line);
         break;
       }
       const op = (data[i] << 8) | data[i + 1];
-      result.push(Disassembler.opToAsm(op));
+      result.push(`${offset}: ${Disassembler.opToAsm(op)}`);
     }
 
     return result.join("\n");
@@ -73,8 +76,8 @@ export class Disassembler {
     const nnnStr = nnn.toString(16).padStart(3, "0");
     const nnStr = nn.toString(16).padStart(2, "0");
     const nStr = n.toString(16);
-    const xStr = x.toString(16);
-    const yStr = y.toString(16);
+    const xStr = x.toString(16).toUpperCase();
+    const yStr = y.toString(16).toUpperCase();
 
     const simpleOps: any = {
       0x0000: () => {
@@ -100,60 +103,60 @@ export class Disassembler {
       case 0x2:
         return `PUSH 0x${nnnStr}`;
       case 0x3:
-        return `JIF v${xStr} 0x${nnStr}`;
+        return `JEQ V${xStr} 0x${nnStr}`;
       case 0x4:
-        return `JNIF v${xStr} 0x${nnStr}`;
+        return `JNQ V${xStr} 0x${nnStr}`;
       case 0x5:
-        return `JIRF v${xStr} v${yStr} 0x${nStr}`;
+        return `JEQ V${xStr} V${yStr} 0x${nStr}`;
       case 0x9:
-        return `JNIRF v${xStr} v${yStr} 0x${nStr}`;
+        return `JNQ V${xStr} V${yStr} 0x${nStr}`;
       case 0x6:
-        return `SETV v${xStr} 0x${nnStr}`;
+        return `V${xStr} := 0x${nnStr}`;
       case 0x7:
-        return `ADDV v${xStr} 0x${nnStr}`;
+        return `V${xStr} += 0x${nnStr}`;
       case 0x8: {
         switch (n) {
           case 0x0:
-            return `MOVE v${xStr} v${yStr} 0x0`;
+            return `V${xStr} := V${yStr}`;
           case 0x1:
-            return `OR v${xStr} v${yStr} 0x1`;
+            return `V${xStr} |= V${yStr}`;
           case 0x2:
-            return `AND v${xStr} v${yStr} 0x2`;
+            return `V${xStr} &= V${yStr}`;
           case 0x3:
-            return `XOR v${xStr} v${yStr} 0x3`;
+            return `V${xStr} ^= V${yStr}`;
           case 0x4: {
-            return `ADD v${xStr} v${yStr} 0x4`;
+            return `V${xStr} += V${yStr}`;
           }
           case 0x5: {
-            return `SUB v${xStr} v${yStr} 0x5`;
+            return `V${xStr} -= V${yStr}`;
           }
           case 0x7: {
-            return `SUB v${xStr} v${yStr} 0x7`;
+            return `V${xStr} ~= V${yStr}`;
           }
           case 0x6: {
-            return `SHIFT v${xStr} v${yStr} 0x6`;
+            return `V${xStr} >> V${yStr}`;
           }
           case 0xe: {
-            return `SHIFT v${xStr} v${yStr} 0xe`;
+            return `V${xStr} << V${yStr}`;
           }
         }
         break;
       }
       case 0xa:
-        return `SET 0x${nnnStr}`;
+        return `I := 0x${nnnStr}`;
       case 0xb:
         return `JOFF 0x${nnnStr}`;
       case 0xc:
-        return `RAND v${xStr} 0x${nnStr}`;
+        return `RAND V${xStr} 0x${nnStr}`;
       case 0xd:
-        return `DRAW v${xStr} v${yStr} 0x${nStr}`;
+        return `DRAW V${xStr} V${yStr} 0x${nStr}`;
       case 0xe: {
         // EX9E and EXA1: Skip if key
         switch (nn) {
           case 0x9e:
-            return `SIK v${xStr} 0x9e`;
+            return `SIK V${xStr}`;
           case 0xa1:
-            return `SINK v${xStr} 0xa1`;
+            return `SINK V${xStr}`;
         }
         break;
       }
@@ -161,27 +164,27 @@ export class Disassembler {
         switch (nn) {
           // timers
           case 0x07:
-            return `DTVX v${xStr} 0x07`;
+            return `DTVX V${xStr}`;
           case 0x15:
-            return `VXDT v${xStr} 0x15`;
+            return `VXDT V${xStr}`;
           case 0x18:
-            return `VXST v${xStr} 0x18`;
+            return `VXST V${xStr}`;
           case 0x0a:
-            return `GET v${xStr} 0x0a`;
+            return `GET V${xStr}`;
           case 0x1e:
-            return `INC v${xStr} 0x1e`;
+            return `INC V${xStr}`;
           case 0x29:
-            return `FONT v${xStr} 0x29`;
+            return `FONT V${xStr}`;
           case 0x33:
-            return `BCDC v${xStr} 0x33`;
+            return `BCDC V${xStr}`;
           case 0x55:
-            return `SETM v${xStr} 0x55`;
+            return `SAVE V${xStr}`;
           case 0x65:
-            return `LOADM v${xStr} 0x65`;
+            return `LOAD V${xStr}`;
           case 0x75:
-            return `PUSHF v${xStr} 0x75`;
+            return `PUSHF V${xStr}`;
           case 0x85:
-            return `POPF v${xStr} 0x85`;
+            return `POPF V${xStr}`;
         }
       }
     }
