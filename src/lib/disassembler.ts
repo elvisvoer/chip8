@@ -1,3 +1,6 @@
+import nearley from "nearley";
+import grammar from "./asm/asm";
+
 export class Disassembler {
   public static toHex(data: Uint8Array): string {
     const result: string[] = [];
@@ -51,113 +54,11 @@ export class Disassembler {
   }
 
   public static fromAsm(data: string): Uint8Array {
-    const lines = data.split("\n");
-    // hack for making br8kout pass the test for now.
-    const isOddSize = lines[lines.length - 1].startsWith("0x");
-    const size = lines.length * 2 - (isOddSize ? 1 : 0);
-    const result = new Uint8Array(size);
+    const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
+    parser.feed(data);
 
-    for (let i = 0; i < lines.length; i++) {
-      const hexString = Disassembler.opAsmToHex(lines[i]);
-      const hex = Disassembler.fromHex(hexString);
-
-      result[i * 2] = hex[0];
-      result[i * 2 + 1] = hex[1];
-    }
-
-    return result;
-  }
-
-  private static opAsmToHex(line: string): string {
-    const [comm, arg1, arg2, arg3] = line.split(" ");
-    const x = parseInt(arg1, 16);
-    const y = parseInt(arg2, 16);
-    const n = parseInt(arg3, 16);
-    const nn = parseInt(`${arg2}${arg3}`, 16);
-    const nnn = parseInt(`${arg1}${arg2}${arg3}`, 16);
-
-    const nnnStr = nnn.toString(16).padStart(3, "0");
-    const nnStr = nn.toString(16).padStart(2, "0");
-    const nStr = n.toString(16);
-    const xStr = x.toString(16);
-    const yStr = y.toString(16);
-
-    switch (comm) {
-      case "NOOP":
-        return "0x0000";
-      case "CLEAR":
-        return "0x00e0";
-      case "POP":
-        return "0x00ee";
-      case "HIRES":
-        return "0x00ff";
-      case "JUMP":
-        return `0x1${nnnStr}`;
-      case "PUSH":
-        return `0x2${nnnStr}`;
-      case "JOFF":
-        return `0xb${nnnStr}`;
-      case "SETV":
-        return `0x6${xStr}${nnStr}`;
-      case "ADDV":
-        return `0x7${xStr}${nnStr}`;
-      case "SET":
-        return `0xa${nnnStr}`;
-      case "DRAW":
-        return `0xd${xStr}${yStr}${nStr}`;
-      case "JIF":
-        return `0x3${xStr}${nnStr}`;
-      case "JNIF":
-        return `0x4${xStr}${nnStr}`;
-      case "JIRF":
-        return `0x5${xStr}${yStr}${nStr}`;
-      case "JNIRF":
-        return `0x9${xStr}${yStr}${nStr}`;
-      case "RAND":
-        return `0xc${xStr}${nnStr}`;
-      case "MOVE":
-        return `0x8${xStr}${yStr}0`;
-      case "OR":
-        return `0x8${xStr}${yStr}1`;
-      case "AND":
-        return `0x8${xStr}${yStr}2`;
-      case "XOR":
-        return `0x8${xStr}${yStr}3`;
-      case "ADD":
-        return `0x8${xStr}${yStr}4`;
-      case "SUB":
-        return `0x8${xStr}${yStr}${nStr}`;
-      case "SHIFT":
-        return `0x8${xStr}${yStr}${nStr}`;
-      case "SIK":
-        return `0xe${xStr}9e`;
-      case "SINK":
-        return `0xe${xStr}a1`;
-      case "DTVX":
-        return `0xf${xStr}07`;
-      case "VXDT":
-        return `0xf${xStr}15`;
-      case "VXST":
-        return `0xf${xStr}18`;
-      case "GET":
-        return `0xf${xStr}0a`;
-      case "INC":
-        return `0xf${xStr}1e`;
-      case "FONT":
-        return `0xf${xStr}29`;
-      case "BCDC":
-        return `0xf${xStr}33`;
-      case "SETM":
-        return `0xf${xStr}55`;
-      case "LOADM":
-        return `0xf${xStr}65`;
-      case "PUSHF":
-        return `0xf${xStr}75`;
-      case "POPF":
-        return `0xf${xStr}85`;
-    }
-
-    return comm;
+    const hexString = parser.results[0][0].flat().join("\n");
+    return Disassembler.fromHex(hexString);
   }
 
   private static opToAsm(op: number) {
