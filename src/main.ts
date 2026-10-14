@@ -3,9 +3,21 @@ import Emulator from "./lib/emulator.ts";
 import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom, uploadRom } from "./utils.ts";
 
-const display = new CanvasDisplay(
-  document.getElementById("display")! as HTMLCanvasElement
-);
+// needs to be a multiple of 64 to avoid gaps in fillRect drawing
+const canvas = document.getElementById("display")! as HTMLCanvasElement;
+const display = new CanvasDisplay(canvas);
+const resize = () => {
+  // needs to be a multiple of 64 to avoid gaps in fillRect drawing
+  const width = Math.min(64 * Math.floor(canvas.parentElement!.offsetWidth / 64), 768);
+  const heightRatio = 0.5;
+
+  display.resize(width, width * heightRatio);
+};
+
+window.addEventListener("resize", resize);
+resize();
+
+
 const emulator = new Emulator();
 
 /**
@@ -48,7 +60,7 @@ function drawDisplay(emulator: Emulator) {
   display.write(
     emulator.framebuffer,
     emulator.framebufferWidth,
-    emulator.framebufferHeight
+    emulator.framebufferHeight,
   );
 }
 
