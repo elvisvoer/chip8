@@ -14,6 +14,17 @@ export class CanvasDisplay {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  public writeText(text: string[]) {
+    let y = 10;
+    let x = 15;
+    let step = 20;
+
+    this.ctx.reset();
+    this.ctx.font = `15px "Lucida Console", "Courier New", monospace`;
+    this.ctx.fillStyle = "green";
+    text.forEach((line, index) => this.ctx.fillText(line, y, x + step * index));
+  }
+
   public write(data: Uint8Array, width: number, height: number) {
     this.ctx.reset();
     const size = this.canvas.width / width;

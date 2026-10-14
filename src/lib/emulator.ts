@@ -82,7 +82,7 @@ const font = [
   0x80, // F
 ];
 
-type CPU = {
+export type CPU = {
   // standard registries
   v: number[];
   pc: number;
@@ -100,6 +100,13 @@ type CPU = {
   f: number[];
 };
 
+export type Machine = {
+  cpu: CPU;
+  ram: Uint8Array;
+  frameBuffer: Uint8Array;
+  hires: boolean;
+};
+
 export default class Emulator {
   private cpu!: CPU; // Emulator Control Unit state
   private ram!: Uint8Array;
@@ -115,7 +122,10 @@ export default class Emulator {
   // actively pressed key(s)
   private k = new Set();
 
-  constructor(private memSize: number = 4 * 1024) {
+  constructor(
+    private memSize: number = 4 * 1024,
+    private onBeforeTick?: (op: number, m: Machine) => void,
+  ) {
     this.reset();
   }
 
@@ -171,6 +181,14 @@ export default class Emulator {
     }
 
     const op = (this.ram[this.cpu.pc] << 8) | this.ram[this.cpu.pc + 1];
+
+    this.onBeforeTick?.(op, {
+      cpu: structuredClone(this.cpu),
+      ram: structuredClone(this.ram),
+      frameBuffer: structuredClone(this.fb),
+      hires: this.hires,
+    });
+
     // increment PC before we execute the op
     this.cpu.pc += 2;
     this.executeOp(op);
@@ -214,7 +232,7 @@ export default class Emulator {
 
   private errorOnUnknownOp(op: number) {
     throw new Error(
-      `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`
+      `Unknown instruction 0x${op.toString(16).padStart(4, "0")}`,
     );
   }
 
