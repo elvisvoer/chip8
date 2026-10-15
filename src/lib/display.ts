@@ -25,6 +25,19 @@ export class CanvasDisplay {
     text.forEach((line, index) => this.ctx.fillText(line, y, x + step * index));
   }
 
+  public writeGr(data: Uint8Array, width: number, height: number) {
+    this.ctx.reset();
+    const size = this.canvas.width / width;
+    for (let z = 0; z < width * height; z++) {
+      const x = Math.floor(z / width);
+      const y = z % width;
+      if (data[z]) {
+        this.ctx.fillStyle = `rgb(0, ${255 - data[z]}, 0)`;
+        this.ctx.fillRect(y * size, x * size, size, size);
+      }
+    }
+  }
+
   public write(data: Uint8Array, width: number, height: number) {
     this.ctx.reset();
     const size = this.canvas.width / width;

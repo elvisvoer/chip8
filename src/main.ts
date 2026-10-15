@@ -4,20 +4,23 @@ import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom, uploadRom } from "./utils.ts";
 import { opToAsm } from "./lib/opToAsm.ts";
 
-const canvas = document.getElementById("display")! as HTMLCanvasElement;
-const debugCanvas = document.getElementById("debug")! as HTMLCanvasElement;
-const display = new CanvasDisplay(canvas);
-const debug = new CanvasDisplay(debugCanvas);
+const displayElement = document.getElementById("display")! as HTMLCanvasElement;
+const debugElement = document.getElementById("debug")! as HTMLCanvasElement;
+const ramElement = document.getElementById("ram")! as HTMLCanvasElement;
+const display = new CanvasDisplay(displayElement);
+const debug = new CanvasDisplay(debugElement);
+const ramDebug = new CanvasDisplay(ramElement);
 const resize = () => {
   // needs to be a multiple of 64 to avoid gaps in fillRect drawing
   const width = Math.min(
-    64 * Math.floor(canvas.parentElement!.offsetWidth / 64),
+    64 * Math.floor(displayElement.parentElement!.offsetWidth / 64),
     768,
   );
   const heightRatio = 0.5;
 
   display.resize(width, width * heightRatio);
   debug.resize(width, (width * heightRatio) / 2);
+  ramDebug.resize(768, 192);
 };
 
 window.addEventListener("resize", resize);
@@ -90,14 +93,21 @@ const emulator = new Emulator(4 * 1024, (op, m) => {
     emState.push([op, m]);
   }
 
-  const {cpu} = m;
+  const {cpu, ram} = m;
+  drawRam(ram);
   debug.writeText(cpuToDisplayText(cpu, op));
 });
 
+function drawRam(ram: Uint8Array) {
+  ramDebug.clear();
+  ramDebug.writeGr(ram, 128, 32);
+}
+
 function drawNextState() {
   const [op, m] = emState[emStateIndex];
-  const {cpu, frameBuffer} = m;
+  const {cpu,ram, frameBuffer} = m;
 
+  drawRam(ram);
   debug.writeText(cpuToDisplayText(cpu, op));
   drawDisplay(frameBuffer, emulator.framebufferWidth, emulator.framebufferHeight);
 }

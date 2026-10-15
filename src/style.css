@@ -31,7 +31,10 @@ body {
 
 canvas {
   background-color: #1a1a1a;
-  border-radius: 5px;
+}
+
+#ram {
+  background-color: #242424;
 }
 
 div {
