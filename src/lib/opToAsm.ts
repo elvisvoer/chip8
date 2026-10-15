@@ -20,7 +20,7 @@ export function opToAsm(op: number) {
 
     0x00e0: () => "CLEAR",
     0x00ee: () => {
-      return "POP";
+      return "RETURN";
     },
     0x00ff: () => {
       return "HIRES";
@@ -35,7 +35,7 @@ export function opToAsm(op: number) {
     case 0x1:
       return `JUMP 0x${nnnStr}`;
     case 0x2:
-      return `PUSH 0x${nnnStr}`;
+      return `CALL 0x${nnnStr}`;
     case 0x3:
       return `JUMP IF V${xStr} == 0x${nnStr}`;
     case 0x4:
@@ -104,7 +104,7 @@ export function opToAsm(op: number) {
         case 0x18:
           return `ST := V${xStr}`;
         case 0x0a:
-          return `GET V${xStr}`;
+          return `READ V${xStr}`;
         case 0x1e:
           return `INC V${xStr}`;
         case 0x29:
