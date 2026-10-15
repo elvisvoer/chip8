@@ -44,7 +44,7 @@ export class Disassembler {
     const pc = 0x200;
 
     for (let i = 0; i < data.length; i += 2) {
-      const offset = `0x${(pc + i).toString(16).padStart(4, "0")}`;
+      const offset = `0x${(pc + i).toString(16).padStart(3, "0")}`;
       if (data[i + 1] === undefined) {
         const line = `${offset}: 0x${data[i].toString(16).padStart(2, "0")}`;
         result.push(line);

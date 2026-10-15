@@ -37,9 +37,9 @@ export function opToAsm(op: number) {
     case 0x2:
       return `PUSH 0x${nnnStr}`;
     case 0x3:
-      return `JEQ V${xStr} 0x${nnStr}`;
+      return `JUMP IF V${xStr} == 0x${nnStr}`;
     case 0x4:
-      return `JNQ V${xStr} 0x${nnStr}`;
+      return `JUMP IF V${xStr} != 0x${nnStr}`;
     case 0x5:
       return `JEQ V${xStr} V${yStr} 0x${nStr}`;
     case 0x9:
@@ -79,7 +79,7 @@ export function opToAsm(op: number) {
     case 0xa:
       return `I := 0x${nnnStr}`;
     case 0xb:
-      return `JOFF 0x${nnnStr}`;
+      return `JUMP TO 0x${nnnStr}`;
     case 0xc:
       return `RAND V${xStr} 0x${nnStr}`;
     case 0xd:
@@ -88,9 +88,9 @@ export function opToAsm(op: number) {
       // EX9E and EXA1: Skip if key
       switch (nn) {
         case 0x9e:
-          return `SIK V${xStr}`;
+          return `SKIP IF KEY == V${xStr}`;
         case 0xa1:
-          return `SINK V${xStr}`;
+          return `SKIP IF KEY != V${xStr}`;
       }
       break;
     }
@@ -98,11 +98,11 @@ export function opToAsm(op: number) {
       switch (nn) {
         // timers
         case 0x07:
-          return `DTVX V${xStr}`;
+          return `V${xStr} := DT`;
         case 0x15:
-          return `VXDT V${xStr}`;
+          return `DT := V${xStr}`;
         case 0x18:
-          return `VXST V${xStr}`;
+          return `ST := V${xStr}`;
         case 0x0a:
           return `GET V${xStr}`;
         case 0x1e:

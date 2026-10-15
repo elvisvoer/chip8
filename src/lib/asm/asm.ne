@@ -36,37 +36,47 @@ command            -> hexNum
                     | loadm
                     | pushf
                     | popf
-                    | jump
                     | push
+                    | jump
                     | jif
                     | jnif
+                    | joff
                     | setv
                     | addv
                     | jirf
                     | jnirf
                     | set
-                    | joff
                     | rand
                     | draw
 
-noop               -> "NOOP"                          {% () => "0x0000" %}
-clear              -> "CLEAR"                         {% () => "0x00e0" %}
-pop                -> "POP"                           {% () => "0x00ee" %}
-hires              -> "HIRES"                         {% () => "0x00ff" %}
-move               -> varg _ asg_op _ varg            {% (d) => "0x8" + d[0] + d[4]+ "0"  %}
-or                 -> varg _ or_op _ varg             {% (d) => "0x8" + d[0] + d[4]+ "1"  %}
-and                -> varg _ and_op _ varg            {% (d) => "0x8" + d[0] + d[4]+ "2"  %}
-xor                -> varg _ xor_op _ varg            {% (d) => "0x8" + d[0] + d[4]+ "3"  %}
-add                -> varg _ add_op _ varg            {% (d) => "0x8" + d[0] + d[4]+ "4"  %}
-sub                -> varg _ sub_op _ varg            {% (d) => "0x8" + d[0] + d[4]+ "5"  %}
-                    | varg _ reverse_sub_op _ varg    {% (d) => "0x8" + d[0] + d[4]+ "7"  %}
-shift              -> varg _ shift_right_op _ varg    {% (d) => "0x8" + d[0] + d[4]+ "6"  %}
-                    | varg _ shift_left_op _ varg     {% (d) => "0x8" + d[0] + d[4]+ "e"  %}
-sik                -> "SIK" _ varg                    {% (d) => "0xe" + d[2] + "9e" %}
-sink               -> "SINK" _ varg                   {% (d) => "0xe" + d[2] + "a1" %}
-dtvx               -> "DTVX" _ varg                   {% (d) => "0xf" + d[2] + "07" %}
-vxdt               -> "VXDT" _ varg                   {% (d) => "0xf" + d[2] + "15" %}
-vxst               -> "VXST" _ varg                   {% (d) => "0xf" + d[2] + "18" %}
+# Conditionals
+jump               -> "JUMP" _ arg                          {% (d) => "0x1" + d[2] %}
+jif                -> "JUMP IF"  _ varg _ eq_op _ arg       {% (d) => "0x3" + d[2] + d[6] %}
+jnif               -> "JUMP IF"  _ varg _ not_eq_op _ arg   {% (d) => "0x4" + d[2] + d[6] %}
+joff               -> "JUMP TO" _ arg                       {% (d) => "0xb" + d[2] %}
+
+# Timers
+dtvx               -> varg _ asg_op _ "DT"                  {% (d) => "0xf" + d[0] + "07" %}
+vxdt               -> "DT" _ asg_op _ varg                  {% (d) => "0xf" + d[4] + "15" %}
+vxst               -> "ST" _ asg_op _ varg                  {% (d) => "0xf" + d[4] + "18" %}
+
+# Misc
+noop               -> "NOOP"                                {% () => "0x0000" %}
+clear              -> "CLEAR"                               {% () => "0x00e0" %}
+pop                -> "POP"                                 {% () => "0x00ee" %}
+hires              -> "HIRES"                               {% () => "0x00ff" %}
+move               -> varg _ asg_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "0"  %}
+or                 -> varg _ or_op _ varg                   {% (d) => "0x8" + d[0] + d[4]+ "1"  %}
+and                -> varg _ and_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "2"  %}
+xor                -> varg _ xor_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "3"  %}
+add                -> varg _ add_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "4"  %}
+sub                -> varg _ sub_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "5"  %}
+                    | varg _ reverse_sub_op _ varg          {% (d) => "0x8" + d[0] + d[4]+ "7"  %}
+shift              -> varg _ shift_right_op _ varg          {% (d) => "0x8" + d[0] + d[4]+ "6"  %}
+                    | varg _ shift_left_op _ varg           {% (d) => "0x8" + d[0] + d[4]+ "e"  %}
+sik                -> "SKIP IF KEY" _ eq_op _ varg          {% (d) => "0xe" + d[4] + "9e" %}
+sink               -> "SKIP IF KEY" _ not_eq_op _ varg      {% (d) => "0xe" + d[4] + "a1" %}
+
 get                -> "GET" _ varg                    {% (d) => "0xf" + d[2] + "0a" %}
 inc                -> "INC" _ varg                    {% (d) => "0xf" + d[2] + "1e" %}
 font               -> "FONT" _ varg                   {% (d) => "0xf" + d[2] + "29" %}
@@ -75,16 +85,14 @@ savem              -> "SAVE" _ varg                   {% (d) => "0xf" + d[2] + "
 loadm              -> "LOAD" _ varg                   {% (d) => "0xf" + d[2] + "65" %}
 pushf              -> "PUSHF" _ varg                  {% (d) => "0xf" + d[2] + "75" %}
 popf               -> "POPF" _ varg                   {% (d) => "0xf" + d[2] + "85" %}
-jump               -> "JUMP" _ arg                    {% (d) => "0x1" + d[2] %}
+
 push               -> "PUSH" _ arg                    {% (d) => "0x2" + d[2] %}
-jif                -> "JEQ"  _ varg _ arg             {% (d) => "0x3" + d[2] + d[4] %}
-jnif               -> "JNQ" _ varg _ arg              {% (d) => "0x4" + d[2] + d[4] %}
+
 setv               -> varg _ asg_op _ arg             {% (d) => "0x6" + d[0] + d[4] %}
 addv               -> varg _ add_op _ arg             {% (d) => "0x7" + d[0] + d[4] %}
 jirf               -> "JEQ" _ varg _ varg _ arg       {% (d) => "0x5" + d[2] + d[4] + d[6] %}
 jnirf              -> "JNQ" _ varg _ varg _ arg       {% (d) => "0x9" + d[2] + d[4] + d[6] %}
 set                -> "I" _ asg_op _ arg              {% (d) => "0xa" + d[4] %}
-joff               -> "JOFF" _ arg                    {% (d) => "0xb" + d[2] %}
 rand               -> "RAND" _ varg _ arg             {% (d) => "0xc" + d[2] + d[4] %}
 draw               -> "DRAW" _ varg _ varg _ arg      {% (d) => "0xd" + d[2] + d[4] + d[6] %}
 
@@ -103,6 +111,8 @@ sub_op             -> "-="
 reverse_sub_op     -> "~="
 shift_right_op     -> ">>"
 shift_left_op      -> "<<"
+eq_op              -> "=="
+not_eq_op          -> "!="
 
 newline            -> "\r" "\n"                       {% empty %}
                     | "\r" | "\n"                     {% empty %}
