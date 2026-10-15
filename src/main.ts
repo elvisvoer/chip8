@@ -41,7 +41,7 @@ function cpuToDisplayText(cpu: CPU, op: number) {
   result.push(` ST: ${cpu.st.toString(16).padStart(4, "0")}`);
   result.push(` I:  ${cpu.i.toString(16).padStart(4, "0")}`);
   result.push(``);
-  result.push(` 0x${cpu.pc.toString(16).padStart(4, "0")}: ${opToAsm(op)}`);
+  result.push(` Next OP: 0x${cpu.pc.toString(16).padStart(4, "0")}:${opToAsm(op)}`);
   result.push(
     ` Return stack: ${cpu.r.reverse().map((rs) => ` ${rs.toString(16).padStart(4, "0")}`)}`,
   );
