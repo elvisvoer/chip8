@@ -10,7 +10,8 @@
     "deploy": "npm run build && gh-pages -d dist",
     "test": "vitest",
     "nearleyc": "nearleyc",
-    "gen-grammar": "nearleyc src/lib/asm/asm.ne -o src/lib/asm/asm.js"
+    "ne-asm": "nearleyc src/lib/asm/asm.ne -o src/lib/asm/asm.js",
+    "all": "npm run ne-asm && npm test"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
