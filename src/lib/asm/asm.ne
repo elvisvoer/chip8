@@ -1,14 +1,9 @@
-@{%
-var appendItem = function (a, b) { return function (d) { return d[a].concat([d[b]]); } };
-var empty = function (d) { return []; };
-%}
-
 main -> lines
-lines              -> lines newline line                    {% appendItem(0, 2) %}
+lines              -> lines newline line                    {% d => [...d[0], d[2]] %}
                     | lines newline                         {% d => d[0]        %}
                     | line                                  {% id %}
 
-line               -> hex_literal ":" _ command             {% d => d[3] %}
+line               -> hex_literal _ command                 {% d => d[2] %}
 
 command            -> noop
                     | clear
@@ -84,7 +79,7 @@ timers             -> varg _ asg_op _ "DT"                  {% (d) => "0xf" + d[
 varg               -> "V" hex                               {% (d) => d[1].toUpperCase() %}
 arg                -> "0x" hex                              {% (d) => d[1] %}
 hex_literal        -> "0x" hex                              {% (d) => "0x" + d[1] %}
-hex                -> [0-9a-fA-F]:+                         {% function(d) {return d[0].join(""); } %}
+hex                -> [0-9a-fA-F]:+                         {% (d) => d[0].join("") %}
 
 asg_op             -> ":="
 or_op              -> "|="
@@ -98,6 +93,6 @@ shift_left_op      -> "<<"
 eq_op              -> "=="
 not_eq_op          -> "!="
 
-newline            -> "\r" "\n"                             {% empty %}
-                    | "\r" | "\n"                           {% empty %}
-_                  -> [\s]:*                                {% function(d) {return null; } %}
+newline            -> "\r" "\n"                             {% () => [] %}
+                    | "\r" | "\n"                           {% () => [] %}
+_                  -> [\s]:*                                {% d => null %}

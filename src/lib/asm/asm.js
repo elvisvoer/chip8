@@ -2,17 +2,14 @@
 // http://github.com/Hardmath123/nearley
 (function () {
 function id(x) { return x[0]; }
-
-var appendItem = function (a, b) { return function (d) { return d[a].concat([d[b]]); } };
-var empty = function (d) { return []; };
 var grammar = {
     Lexer: undefined,
     ParserRules: [
     {"name": "main", "symbols": ["lines"]},
-    {"name": "lines", "symbols": ["lines", "newline", "line"], "postprocess": appendItem(0, 2)},
+    {"name": "lines", "symbols": ["lines", "newline", "line"], "postprocess": d => [...d[0], d[2]]},
     {"name": "lines", "symbols": ["lines", "newline"], "postprocess": d => d[0]},
     {"name": "lines", "symbols": ["line"], "postprocess": id},
-    {"name": "line", "symbols": ["hex_literal", {"literal":":"}, "_", "command"], "postprocess": d => d[3]},
+    {"name": "line", "symbols": ["hex_literal", "_", "command"], "postprocess": d => d[2]},
     {"name": "command", "symbols": ["noop"]},
     {"name": "command", "symbols": ["clear"]},
     {"name": "command", "symbols": ["hires"]},
@@ -99,7 +96,7 @@ var grammar = {
     {"name": "hex_literal", "symbols": ["hex_literal$string$1", "hex"], "postprocess": (d) => "0x" + d[1]},
     {"name": "hex$ebnf$1", "symbols": [/[0-9a-fA-F]/]},
     {"name": "hex$ebnf$1", "symbols": ["hex$ebnf$1", /[0-9a-fA-F]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "hex", "symbols": ["hex$ebnf$1"], "postprocess": function(d) {return d[0].join(""); }},
+    {"name": "hex", "symbols": ["hex$ebnf$1"], "postprocess": (d) => d[0].join("")},
     {"name": "asg_op$string$1", "symbols": [{"literal":":"}, {"literal":"="}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "asg_op", "symbols": ["asg_op$string$1"]},
     {"name": "or_op$string$1", "symbols": [{"literal":"|"}, {"literal":"="}], "postprocess": function joiner(d) {return d.join('');}},
@@ -122,12 +119,12 @@ var grammar = {
     {"name": "eq_op", "symbols": ["eq_op$string$1"]},
     {"name": "not_eq_op$string$1", "symbols": [{"literal":"!"}, {"literal":"="}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "not_eq_op", "symbols": ["not_eq_op$string$1"]},
-    {"name": "newline", "symbols": [{"literal":"\r"}, {"literal":"\n"}], "postprocess": empty},
+    {"name": "newline", "symbols": [{"literal":"\r"}, {"literal":"\n"}], "postprocess": () => []},
     {"name": "newline", "symbols": [{"literal":"\r"}]},
-    {"name": "newline", "symbols": [{"literal":"\n"}], "postprocess": empty},
+    {"name": "newline", "symbols": [{"literal":"\n"}], "postprocess": () => []},
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", /[\s]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": function(d) {return null; }}
+    {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": d => null}
 ]
   , ParserStart: "main"
 }
