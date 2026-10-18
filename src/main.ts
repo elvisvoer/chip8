@@ -64,9 +64,11 @@ const qKeyboardMapping: any = {
 let loopDetected = false;
 let loopItems: number[] = [];
 
-const emulator = new Emulator(4 * 1024, (op, m) => {
+const emulator = new Emulator(4 * 1024, (op, cpu) => {
+  display.write(emulator.framebuffer, emulator.framebufferWidth, emulator.framebufferHeight);
+
   if (!loopDetected) {
-    const opStr = `0x${m.cpu.pc.toString(16).padStart(3, "0")} ${opToAsm(op)}`;
+    const opStr = `0x${cpu.pc.toString(16).padStart(3, "0")} ${opToAsm(op)}`;
     (window as any).ead.length < 200 && (window as any).ead.push(opStr);
 
     loopDetected = loopItems.length === 10 && loopItems.every((i) => i === op);
@@ -84,11 +86,6 @@ function loop() {
   // emulator.tick();
 
   emulator.updateTimers();
-  drawDisplay(
-    emulator.framebuffer,
-    emulator.framebufferWidth,
-    emulator.framebufferHeight,
-  );
 }
 
 function stopLoop() {
@@ -101,11 +98,6 @@ function startLoop() {
   loopDetected = false;
   stopLoop();
   loopIntervalId = setInterval(loop, 0);
-}
-
-function drawDisplay(data: Uint8Array, width: number, height: number) {
-  display.clear();
-  display.write(data, width, height);
 }
 
 function load(data: Uint8Array) {

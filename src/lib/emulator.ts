@@ -82,7 +82,7 @@ const font = [
   0x80, // F
 ];
 
-export type CPU = {
+type CPU = {
   // standard registries
   v: number[];
   pc: number;
@@ -98,13 +98,6 @@ export type CPU = {
 
   // flags copy
   f: number[];
-};
-
-export type Machine = {
-  cpu: CPU;
-  ram: Uint8Array;
-  frameBuffer: Uint8Array;
-  hires: boolean;
 };
 
 export default class Emulator {
@@ -124,7 +117,7 @@ export default class Emulator {
 
   constructor(
     private memSize: number = 4 * 1024,
-    private onBeforeTick?: (op: number, m: Machine) => void,
+    private onBeforeTick?: (op: number, cpu: CPU) => void,
   ) {
     this.reset();
   }
@@ -182,12 +175,7 @@ export default class Emulator {
 
     const op = (this.ram[this.cpu.pc] << 8) | this.ram[this.cpu.pc + 1];
 
-    this.onBeforeTick?.(op, {
-      cpu: structuredClone(this.cpu),
-      ram: structuredClone(this.ram),
-      frameBuffer: structuredClone(this.fb),
-      hires: this.hires,
-    });
+    this.onBeforeTick?.(op, structuredClone(this.cpu));
 
     // increment PC before we execute the op
     this.cpu.pc += 2;
