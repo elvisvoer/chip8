@@ -81,7 +81,7 @@ line
 
 line_comment -> comment                         {% d => ({...d[0], type: "line_comment"}) %}
 
-statements -> statement                         {% d => d[0] %}
+statements -> statement                         {% id %}
 
 statement ->  label __ executable_statements
              {%

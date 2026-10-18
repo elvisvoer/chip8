@@ -106,7 +106,7 @@ export function fromBasic(data: string): Uint8Array {
   // console.log(JSON.stringify(parser.results[0], undefined, 2));
 
   console.time();
-  const results = parser.results[0].flat(2);
+  const results = parser.results[0].flat(3);
   const asmString = astToAsm(results);
   console.timeEnd();
 
