@@ -4,14 +4,19 @@ import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom, uploadRom } from "./utils.ts";
 import { opToAsm } from "./lib/opToAsm.ts";
 
+function nearestMaxWidth(n) {
+  return n & 0xffde;
+}
+
 const displayElement = document.getElementById("display")! as HTMLCanvasElement;
 const display = new CanvasDisplay(displayElement);
 const resize = () => {
   // needs to be a multiple of 64 to avoid gaps in fillRect drawing
   const width = Math.min(
     64 * Math.floor(displayElement.parentElement!.offsetWidth / 64),
-    768,
+    nearestMaxWidth(document.body.clientWidth),
   );
+
   const heightRatio = 0.5;
 
   display.resize(width, width * heightRatio);
