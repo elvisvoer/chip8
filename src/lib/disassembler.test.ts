@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fromBasic } from "./basic/compiler";
+import { toAsm } from "./disassembler";
 
 function areBuffersEqual(left: Uint8Array, right: Uint8Array): boolean {
   if (left.length !== right.length) {
@@ -25,10 +26,15 @@ describe("Disassembler", () => {
     "snake.ch8",
   ])("can correctly disassemble/assemble %1", (rom) => {
     const buffer = new Uint8Array(readFileSync(`public/${rom}`));
+    const asm = toAsm(buffer);
+
+    writeFileSync(`public/${rom.replace("ch8", "asm")}`, asm);
 
     const newBuffer = fromBasic(
       readFileSync(`public/${rom.replace("ch8", "b")}`, "utf-8"),
     );
+
+    writeFileSync(`public/${rom.replace("ch8", "d.ch8")}`, newBuffer);
 
     expect(areBuffersEqual(buffer, newBuffer)).toBeTruthy();
     // expect(true).toBeTruthy();
