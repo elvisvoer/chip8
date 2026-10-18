@@ -41,7 +41,9 @@ function cpuToDisplayText(cpu: CPU, op: number) {
   result.push(` ST: ${cpu.st.toString(16).padStart(4, "0")}`);
   result.push(` I:  ${cpu.i.toString(16).padStart(4, "0")}`);
   result.push(``);
-  result.push(` Next OP: 0x${cpu.pc.toString(16).padStart(4, "0")}:${opToAsm(op)}`);
+  result.push(
+    ` Next OP: 0x${cpu.pc.toString(16).padStart(4, "0")}:${opToAsm(op)}`,
+  );
   result.push(
     ` Return stack: ${cpu.r.reverse().map((rs) => ` ${rs.toString(16).padStart(4, "0")}`)}`,
   );
@@ -88,12 +90,25 @@ let loopIntervalId: any = null;
 let emState: [number, Machine][] = [];
 let emStateIndex = 0;
 
+(window as any).ead = [];
+let loopDetected = false;
+let loopItems: number[] = [];
+
 const emulator = new Emulator(4 * 1024, (op, m) => {
   if (loopIntervalId === null) {
     emState.push([op, m]);
   }
 
-  const {cpu, ram} = m;
+  if (!loopDetected) {
+    const opStr = `0x${m.cpu.pc.toString(16).padStart(3, "0")} ${opToAsm(op)}`;
+    (window as any).ead.length < 200 && (window as any).ead.push(opStr);
+
+    loopDetected = loopItems.length === 10 && loopItems.every((i) => i === op);
+    loopItems.unshift(op);
+    loopItems.splice(10);
+  }
+
+  const { cpu, ram } = m;
   drawRam(ram);
   debug.writeText(cpuToDisplayText(cpu, op));
 });
@@ -105,11 +120,15 @@ function drawRam(ram: Uint8Array) {
 
 function drawNextState() {
   const [op, m] = emState[emStateIndex];
-  const {cpu,ram, frameBuffer} = m;
+  const { cpu, ram, frameBuffer } = m;
 
   drawRam(ram);
   debug.writeText(cpuToDisplayText(cpu, op));
-  drawDisplay(frameBuffer, emulator.framebufferWidth, emulator.framebufferHeight);
+  drawDisplay(
+    frameBuffer,
+    emulator.framebufferWidth,
+    emulator.framebufferHeight,
+  );
 }
 
 function previousEmState() {
@@ -154,6 +173,8 @@ function stopLoop() {
 }
 
 function startLoop() {
+  (window as any).ead = [];
+  loopDetected = false;
   stopLoop();
   loopIntervalId = setInterval(loop, 0);
 }
