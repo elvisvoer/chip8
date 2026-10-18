@@ -6,10 +6,8 @@ import { opToAsm } from "./lib/opToAsm.ts";
 
 const displayElement = document.getElementById("display")! as HTMLCanvasElement;
 const debugElement = document.getElementById("debug")! as HTMLCanvasElement;
-const ramElement = document.getElementById("ram")! as HTMLCanvasElement;
 const display = new CanvasDisplay(displayElement);
 const debug = new CanvasDisplay(debugElement);
-const ramDebug = new CanvasDisplay(ramElement);
 const resize = () => {
   // needs to be a multiple of 64 to avoid gaps in fillRect drawing
   const width = Math.min(
@@ -20,7 +18,6 @@ const resize = () => {
 
   display.resize(width, width * heightRatio);
   debug.resize(width, (width * heightRatio) / 2);
-  ramDebug.resize(768, 192);
 };
 
 window.addEventListener("resize", resize);
@@ -108,21 +105,14 @@ const emulator = new Emulator(4 * 1024, (op, m) => {
     loopItems.splice(10);
   }
 
-  const { cpu, ram } = m;
-  drawRam(ram);
+  const { cpu } = m;
   debug.writeText(cpuToDisplayText(cpu, op));
 });
 
-function drawRam(ram: Uint8Array) {
-  ramDebug.clear();
-  ramDebug.writeGr(ram, 128, 32);
-}
-
 function drawNextState() {
   const [op, m] = emState[emStateIndex];
-  const { cpu, ram, frameBuffer } = m;
+  const { cpu, frameBuffer } = m;
 
-  drawRam(ram);
   debug.writeText(cpuToDisplayText(cpu, op));
   drawDisplay(
     frameBuffer,
