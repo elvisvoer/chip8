@@ -1,13 +1,11 @@
 import "./style.css";
-import Emulator, { CPU, Machine } from "./lib/emulator.ts";
+import Emulator from "./lib/emulator.ts";
 import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom, uploadRom } from "./utils.ts";
 import { opToAsm } from "./lib/opToAsm.ts";
 
 const displayElement = document.getElementById("display")! as HTMLCanvasElement;
-const debugElement = document.getElementById("debug")! as HTMLCanvasElement;
 const display = new CanvasDisplay(displayElement);
-const debug = new CanvasDisplay(debugElement);
 const resize = () => {
   // needs to be a multiple of 64 to avoid gaps in fillRect drawing
   const width = Math.min(
@@ -17,36 +15,10 @@ const resize = () => {
   const heightRatio = 0.5;
 
   display.resize(width, width * heightRatio);
-  debug.resize(width, (width * heightRatio) / 2);
 };
 
 window.addEventListener("resize", resize);
 resize();
-
-function cpuToDisplayText(cpu: CPU, op: number) {
-  const result = [];
-  result.push(
-    "     0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  6 |  9 |  a |  b |  c |  d |  e |  f ",
-  );
-  result.push(
-    ` V: ${cpu.v.map((v) => v.toString(16).padStart(2, " ")).join(" | ")}`,
-  );
-  result.push(
-    ` F: ${cpu.f.map((f) => f.toString(16).padStart(2, " ")).join(" | ")}`,
-  );
-  result.push(` DT: ${cpu.dt.toString(16).padStart(4, "0")}`);
-  result.push(` ST: ${cpu.st.toString(16).padStart(4, "0")}`);
-  result.push(` I:  ${cpu.i.toString(16).padStart(4, "0")}`);
-  result.push(``);
-  result.push(
-    ` Next OP: 0x${cpu.pc.toString(16).padStart(4, "0")}:${opToAsm(op)}`,
-  );
-  result.push(
-    ` Return stack: ${cpu.r.reverse().map((rs) => ` ${rs.toString(16).padStart(4, "0")}`)}`,
-  );
-
-  return result;
-}
 
 /**
  * Mapping from (qwerty)
@@ -83,19 +55,11 @@ const qKeyboardMapping: any = {
   v: 0xf,
 };
 
-let loopIntervalId: any = null;
-let emState: [number, Machine][] = [];
-let emStateIndex = 0;
-
 (window as any).ead = [];
 let loopDetected = false;
 let loopItems: number[] = [];
 
 const emulator = new Emulator(4 * 1024, (op, m) => {
-  if (loopIntervalId === null) {
-    emState.push([op, m]);
-  }
-
   if (!loopDetected) {
     const opStr = `0x${m.cpu.pc.toString(16).padStart(3, "0")} ${opToAsm(op)}`;
     (window as any).ead.length < 200 && (window as any).ead.push(opStr);
@@ -104,44 +68,9 @@ const emulator = new Emulator(4 * 1024, (op, m) => {
     loopItems.unshift(op);
     loopItems.splice(10);
   }
-
-  const { cpu } = m;
-  debug.writeText(cpuToDisplayText(cpu, op));
 });
 
-function drawNextState() {
-  const [op, m] = emState[emStateIndex];
-  const { cpu, frameBuffer } = m;
-
-  debug.writeText(cpuToDisplayText(cpu, op));
-  drawDisplay(
-    frameBuffer,
-    emulator.framebufferWidth,
-    emulator.framebufferHeight,
-  );
-}
-
-function previousEmState() {
-  emStateIndex = Math.max(--emStateIndex, 0);
-
-  if (emState[emStateIndex] === undefined) {
-    emulator.tick();
-    return;
-  }
-
-  drawNextState();
-}
-
-function nextEmState() {
-  emStateIndex += 1;
-
-  if (emState[emStateIndex] === undefined) {
-    emulator.tick();
-    return;
-  }
-
-  drawNextState();
-}
+let loopIntervalId: any = null;
 
 // main loop
 function loop() {
@@ -202,18 +131,6 @@ async function main() {
     // handle extra key for open a local ROM file
     // or reload the program
     switch (e.key.toLowerCase()) {
-      case "b":
-        stopLoop();
-        await fetchAndLoad(roms[currentRomIndex]);
-        emState = [];
-        emStateIndex = 0;
-        break;
-      case "arrowleft":
-        previousEmState();
-        break;
-      case "arrowright":
-        nextEmState();
-        break;
       case "o":
         const rom = await uploadRom();
         load(rom.data);
