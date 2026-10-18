@@ -23,11 +23,17 @@ const lexer = moo.compile({
         match: /#[^\n]*/,
         value: s => s.substring(1)
     },
+    label: {
+        match: /@[0-9a-z]+/,
+    },
     hex_literal: {
       match: /0x[0-9a-z]+/,
     },
     identifier: {
       match: /[A-Z][A-Z0-9]*/,
+      type: moo.keywords({
+        "GOTO": "GOTO"
+      })
     }
 });
 
@@ -74,11 +80,31 @@ var grammar = {
     {"name": "line", "symbols": ["statements"], "postprocess": d => d[0]},
     {"name": "line", "symbols": ["statements", "_", "comment"], "postprocess": d => d[0]},
     {"name": "line_comment", "symbols": ["comment"], "postprocess": d => ({...d[0], type: "line_comment"})},
-    {"name": "statements", "symbols": ["hex", "__", "executable_statements"], "postprocess": d => d[2]},
-    {"name": "statements", "symbols": ["executable_statements"], "postprocess": d => d[0]},
+    {"name": "statements", "symbols": ["statement"], "postprocess": d => d[0]},
+    {"name": "statement", "symbols": ["hex", "__", "executable_statements"], "postprocess": d => d[2]},
+    {"name": "statement", "symbols": ["label", "__", "executable_statements"], "postprocess": 
+        d => ({
+            type: "label_expression",
+            label: d[0],
+            arguments: d[2],
+            start: d[0].start,
+            end: d[0].end
+        })
+                     },
+    {"name": "statement", "symbols": ["executable_statements"], "postprocess": d => d[0]},
     {"name": "executable_statements", "symbols": ["call_expression"]},
+    {"name": "executable_statements", "symbols": ["goto_expression"]},
     {"name": "executable_statements", "symbols": ["binary_expr"]},
     {"name": "executable_statements", "symbols": ["hex"]},
+    {"name": "goto_expression", "symbols": [{"literal":"GOTO"}, "__", "label"], "postprocess": 
+        d => ({
+            type: "goto_expression",
+            name: d[0],
+            label: d[2],
+            start: d[0].start,
+            end: d[0].end
+        })
+              },
     {"name": "call_expression", "symbols": ["identifier", "_", "expression_list"], "postprocess": 
         d => ({
             type: "call_expression",
@@ -128,6 +154,7 @@ var grammar = {
     {"name": "boolean_op", "symbols": [{"literal":"=="}]},
     {"name": "boolean_op", "symbols": [{"literal":"!="}]},
     {"name": "comment", "symbols": [(lexer.has("comment") ? {type: "comment"} : comment)], "postprocess": convertTokenId},
+    {"name": "label", "symbols": [(lexer.has("label") ? {type: "label"} : label)], "postprocess": convertTokenId},
     {"name": "hex", "symbols": [(lexer.has("hex_literal") ? {type: "hex_literal"} : hex_literal)], "postprocess": convertTokenId},
     {"name": "identifier", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": convertTokenId},
     {"name": "__$ebnf$1", "symbols": [(lexer.has("ws") ? {type: "ws"} : ws)]},

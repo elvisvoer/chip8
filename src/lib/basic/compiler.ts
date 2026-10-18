@@ -42,14 +42,17 @@ function astNodeToAsm(node: any): string {
       return binaryExprToAsm(node);
     case "hex_literal":
       return node.value;
+    case "goto_expression":
+        return `JUMP ${node.label.value}`;
     default:
       console.log(node);
-      throw new Error("Unknown command");
+      throw new Error("Unknown node");
   }
 }
 
 function astToAsm(astNodes: any[]): string {
-  const results: string[] = [];
+  let asmLines: string[] = [];
+  const labelMapping = new Map<string, string>();
   let offset = 0x200;
 
   astNodes.forEach((node) => {
@@ -60,7 +63,14 @@ function astToAsm(astNodes: any[]): string {
       case "call_expression":
       case "binary_expr":
       case "hex_literal":
-        results.push(`${offsetStr} ${astNodeToAsm(node)}`);
+        asmLines.push(`${offsetStr} ${astNodeToAsm(node)}`);
+        break;
+      case "label_expression":
+        labelMapping.set(node.label.value, offsetStr);
+        asmLines.push(`${offsetStr} ${astNodeToAsm(node.arguments[0])}`);
+        break;
+      case "goto_expression":
+        asmLines.push(`${offsetStr} ${astNodeToAsm(node)}`);
         break;
       case "line_comment":
         // ignore full line comments
@@ -72,7 +82,19 @@ function astToAsm(astNodes: any[]): string {
     }
   });
 
-  return results.join("\n");
+  asmLines = asmLines.map(line => {
+    const labelList = Array.from(labelMapping.keys());
+    for (let i = 0; i < labelList.length; i++) {
+      const label = labelList[i];
+      if (line.includes(label)) {
+        return line.replace(label, labelMapping.get(label)!)
+      }
+    }
+
+    return line;
+  })
+
+  return asmLines.join("\n");
 }
 
 export function fromBasic(data: string): Uint8Array {
@@ -80,6 +102,8 @@ export function fromBasic(data: string): Uint8Array {
   console.time();
   parser.feed(data);
   console.timeEnd();
+
+  // console.log(JSON.stringify(parser.results[0], undefined, 2));
 
   console.time();
   const results = parser.results[0].flat(2);

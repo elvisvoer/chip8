@@ -19,11 +19,17 @@ const lexer = moo.compile({
         match: /#[^\n]*/,
         value: s => s.substring(1)
     },
+    label: {
+        match: /@[0-9a-z]+/,
+    },
     hex_literal: {
       match: /0x[0-9a-z]+/,
     },
     identifier: {
       match: /[A-Z][A-Z0-9]*/,
+      type: moo.keywords({
+        "GOTO": "GOTO"
+      })
     }
 });
 
@@ -74,13 +80,39 @@ line
     | statements _ comment                      {% d => d[0] %}
 
 line_comment -> comment                         {% d => ({...d[0], type: "line_comment"}) %}
-statements ->  hex __ executable_statements     {% d => d[2] %}
-            |  executable_statements            {% d => d[0] %}
+
+statements -> statement                         {% d => d[0] %}
+
+statement ->  hex __ executable_statements     {% d => d[2] %}
+            | label __ executable_statements
+             {%
+                d => ({
+                    type: "label_expression",
+                    label: d[0],
+                    arguments: d[2],
+                    start: d[0].start,
+                    end: d[0].end
+                })
+             %}
+            | executable_statements            {% d => d[0] %}
 
 executable_statements
     -> call_expression
+    |  goto_expression
     |  binary_expr
     |  hex
+
+goto_expression
+    -> "GOTO" __ label
+      {%
+        d => ({
+            type: "goto_expression",
+            name: d[0],
+            label: d[2],
+            start: d[0].start,
+            end: d[0].end
+        })
+      %}
 
 call_expression
     -> identifier _ expression_list
@@ -146,7 +178,8 @@ boolean_op
     -> "=="
     |  "!="
 
-comment -> %comment  {% convertTokenId %}
+comment -> %comment       {% convertTokenId %}
+label -> %label           {% convertTokenId %}
 hex -> %hex_literal       {% convertTokenId %}
 identifier -> %identifier {% convertTokenId %}
 
