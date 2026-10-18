@@ -83,8 +83,7 @@ line_comment -> comment                         {% d => ({...d[0], type: "line_c
 
 statements -> statement                         {% d => d[0] %}
 
-statement ->  hex __ executable_statements     {% d => d[2] %}
-            | label __ executable_statements
+statement ->  label __ executable_statements
              {%
                 d => ({
                     type: "label_expression",
