@@ -395,9 +395,10 @@ export default class Emulator {
             this.cpu.index = (this.cpu.v[x] & 0xf) * 5;
             break;
           case 0x33:
-            this.ram[this.cpu.index] = Math.floor(this.cpu.v[x] / 100) % 10;
-            this.ram[this.cpu.index + 1] = Math.floor(this.cpu.v[x] / 10) % 10;
-            this.ram[this.cpu.index + 2] = this.cpu.v[x] % 10;
+            for (let i = 0; i < 3; i++) {
+              this.ram[this.cpu.index + i] =
+                Math.floor(this.cpu.v[x] / Math.pow(10, 2 - i)) % 10;
+            }
             break;
           case 0x55:
             for (let z = 0; z <= x; z++) {
