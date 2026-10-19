@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .vitest/
+
+public/*.b.ch8
+public/*.asm
