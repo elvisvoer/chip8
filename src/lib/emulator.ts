@@ -86,7 +86,7 @@ type CPU = {
   // standard registries
   v: number[];
   pc: number;
-  i: number;
+  index: number;
 
   // delay timer
   dt: number;
@@ -202,7 +202,7 @@ export default class Emulator {
         const target =
           ((x + b) % this.framebufferWidth) +
           ((y + a) % this.framebufferHeight) * this.framebufferWidth;
-        const source = ((this.ram[this.cpu.i + a] >> (7 - b)) & 0x1) != 0;
+        const source = ((this.ram[this.cpu.index + a] >> (7 - b)) & 0x1) != 0;
 
         if (!source) {
           continue;
@@ -343,7 +343,7 @@ export default class Emulator {
         break;
       }
       case 0xa:
-        this.cpu.i = nnn;
+        this.cpu.index = nnn;
         break;
       case 0xb:
         this.cpu.pc = nnn + this.cpu.v[0];
@@ -389,27 +389,27 @@ export default class Emulator {
             this.waitingInput = true;
             break;
           case 0x1e:
-            this.cpu.i = (this.cpu.i + this.cpu.v[x]) & 0xffff;
+            this.cpu.index = (this.cpu.index + this.cpu.v[x]) & 0xffff;
             break;
           case 0x29:
-            this.cpu.i = (this.cpu.v[x] & 0xf) * 5;
+            this.cpu.index = (this.cpu.v[x] & 0xf) * 5;
             break;
           case 0x33:
-            this.ram[this.cpu.i] = Math.floor(this.cpu.v[x] / 100) % 10;
-            this.ram[this.cpu.i + 1] = Math.floor(this.cpu.v[x] / 10) % 10;
-            this.ram[this.cpu.i + 2] = this.cpu.v[x] % 10;
+            this.ram[this.cpu.index] = Math.floor(this.cpu.v[x] / 100) % 10;
+            this.ram[this.cpu.index + 1] = Math.floor(this.cpu.v[x] / 10) % 10;
+            this.ram[this.cpu.index + 2] = this.cpu.v[x] % 10;
             break;
           case 0x55:
             for (let z = 0; z <= x; z++) {
-              this.ram[this.cpu.i + z] = this.cpu.v[z];
+              this.ram[this.cpu.index + z] = this.cpu.v[z];
             }
-            this.cpu.i = (this.cpu.i + x + 1) & 0xffff;
+            this.cpu.index = (this.cpu.index + x + 1) & 0xffff;
             break;
           case 0x65:
             for (let z = 0; z <= x; z++) {
-              this.cpu.v[z] = this.ram[this.cpu.i + z];
+              this.cpu.v[z] = this.ram[this.cpu.index + z];
             }
-            this.cpu.i = (this.cpu.i + x + 1) & 0xffff;
+            this.cpu.index = (this.cpu.index + x + 1) & 0xffff;
             break;
           case 0x75:
             for (let z = 0; z <= x; z++) {
@@ -435,7 +435,7 @@ export default class Emulator {
     this.cpu = {
       v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       pc: 0,
-      i: 0,
+      index: 0,
       dt: 0,
       st: 0,
       r: [],
