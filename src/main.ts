@@ -61,7 +61,7 @@ let loopDetected = false;
 let loopItems: number[] = [];
 
 const emulator = new Emulator(4 * 1024, (op, cpu) => {
-  display.write(emulator.framebuffer, emulator.framebufferWidth, emulator.framebufferHeight);
+  display.write(emulator.frameBuffer, emulator.framebufferWidth, emulator.framebufferHeight);
 
   if (!loopDetected) {
     const opStr = `0x${cpu.pc.toString(16).padStart(3, "0")} ${opToAsm(op)}`;
