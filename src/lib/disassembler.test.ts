@@ -21,9 +21,9 @@ describe("Disassembler", () => {
   test.each([
     // "ibm-logo.ch8",
     // "chipcross.ch8",
-    // "pong.ch8",
+    "pong.ch8",
     // "br8kout.ch8",
-    "snake.ch8",
+    // "snake.ch8",
   ])("can correctly disassemble/assemble %1", (rom) => {
     const buffer = new Uint8Array(readFileSync(`public/${rom}`));
     const asm = toAsm(buffer);
