@@ -27,7 +27,7 @@ const lexer = moo.compile({
         match: /@[0-9a-z]+/,
     },
     hex_literal: {
-      match: /0x[0-9a-z]+/,
+      match: /0x[0-9a-fA-F]+/,
     },
     identifier: {
       match: /[A-Z][A-Z0-9]*/,
