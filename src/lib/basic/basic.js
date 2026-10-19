@@ -79,6 +79,7 @@ var grammar = {
     {"name": "line", "symbols": ["comment"]},
     {"name": "line", "symbols": ["statements"], "postprocess": d => d[0]},
     {"name": "statements", "symbols": ["statement"], "postprocess": id},
+    {"name": "statement", "symbols": ["hex", "__", "executable_statements"], "postprocess": d => d[2]},
     {"name": "statement", "symbols": ["label", "__", "executable_statements"], "postprocess": 
         d => ({
             type: "label_expression",

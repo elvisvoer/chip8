@@ -80,7 +80,8 @@ line
 
 statements -> statement                         {% id %}
 
-statement ->  label __ executable_statements
+statement ->  hex __ executable_statements     {% d => d[2] %}
+            | label __ executable_statements
              {%
                 d => ({
                     type: "label_expression",
