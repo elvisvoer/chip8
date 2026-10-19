@@ -26,6 +26,6 @@ export function fromAsm(data: string): Uint8Array {
   const parser = new nearley.Parser(nearley.Grammar.fromCompiled(asmGrm));
   parser.feed(data);
 
-  const hexString = parser.results[0][0].flat().join("\n");
+  const hexString = parser.results.flat(3).join("\n");
   return fromHex(hexString);
 }
