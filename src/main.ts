@@ -130,7 +130,7 @@ function startLoop() {
   (window as any).ead = [];
   loopDetected = false;
   stopLoop();
-  loopIntervalId = setInterval(loop, 1_00);
+  loopIntervalId = setInterval(loop, 10);
 }
 
 function load(data: Uint8Array) {
