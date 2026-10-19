@@ -155,7 +155,7 @@ async function main() {
 
   document.addEventListener("keydown", async (e) => {
     const hex = qKeyboardMapping[e.key];
-    if (hex) {
+    if (hex !== undefined) {
       emulator.setKeyDown(hex);
     }
 
