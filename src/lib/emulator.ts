@@ -82,7 +82,7 @@ const font = [
   0x80, // F
 ];
 
-type CPU = {
+export type CPU = {
   // standard registries
   v: number[];
   pc: number;

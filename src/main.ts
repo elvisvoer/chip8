@@ -1,22 +1,56 @@
 import "./style.css";
-import Emulator from "./lib/emulator.ts";
+import Emulator, { CPU } from "./lib/emulator.ts";
 import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom, uploadRom } from "./utils.ts";
 import { opToAsm } from "./lib/opToAsm.ts";
 
 const displayElement = document.getElementById("display")! as HTMLCanvasElement;
 const display = new CanvasDisplay(displayElement);
+
+const debugElement = document.getElementById("debug")! as HTMLCanvasElement;
+const debug = new CanvasDisplay(debugElement, false);
+
 const resize = () => {
   // needs to be a multiple of 64 to avoid gaps in fillRect drawing
   const width = Math.min(
     64 * Math.floor(displayElement.parentElement!.offsetWidth / 64),
-    1280,
+    1152,
   );
 
   const heightRatio = 0.5;
 
   display.resize(width, width * heightRatio);
+  debug.resize(width, (width * heightRatio) / 2);
 };
+
+function cpuToDisplayText(cpu: CPU, op: number) {
+  const result = [];
+  result.push(
+    "     0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  6 |  9 |  a |  b |  c |  d |  e |  f ",
+  );
+  result.push(
+    ` V: ${cpu.v.map((v) => v.toString(16).padStart(2, " ")).join(" | ")}`,
+  );
+  result.push(
+    ` F: ${cpu.f.map((f) => f.toString(16).padStart(2, " ")).join(" | ")}`,
+  );
+  result.push(` DT: ${cpu.dt.toString(16).padStart(4, "0")}`);
+  result.push(` ST: ${cpu.st.toString(16).padStart(4, "0")}`);
+  result.push(` I:  ${cpu.index.toString(16).padStart(4, "0")}`);
+  result.push(``);
+  result.push(
+    ` Next OP: 0x${cpu.pc.toString(16).padStart(4, "0")} ${opToAsm(op)}`,
+  );
+  result.push(
+    ` Return stack: ${cpu.r.reverse().map((rs) => ` ${rs.toString(16).padStart(4, "0")}`)}`,
+  );
+
+  console.log(
+    `0x${cpu.pc.toString(16).padStart(4, "0")} ${opToAsm(op)}`,
+  );
+
+  return result;
+}
 
 window.addEventListener("resize", resize);
 resize();
@@ -61,7 +95,11 @@ let loopDetected = false;
 let loopItems: number[] = [];
 
 const emulator = new Emulator(4 * 1024, (op, cpu) => {
-  display.write(emulator.frameBuffer, emulator.framebufferWidth, emulator.framebufferHeight);
+  display.write(
+    emulator.frameBuffer,
+    emulator.framebufferWidth,
+    emulator.framebufferHeight,
+  );
 
   if (!loopDetected) {
     const opStr = `0x${cpu.pc.toString(16).padStart(3, "0")} ${opToAsm(op)}`;
@@ -71,6 +109,8 @@ const emulator = new Emulator(4 * 1024, (op, cpu) => {
     loopItems.unshift(op);
     loopItems.splice(10);
   }
+
+  debug.writeText(cpuToDisplayText(cpu, op));
 });
 
 let loopIntervalId: any = null;
@@ -80,7 +120,6 @@ function loop() {
   // make CPU clock tick 2 times faster than timers and display update
   emulator.tick();
   // emulator.tick();
-
   emulator.updateTimers();
 }
 
@@ -93,7 +132,7 @@ function startLoop() {
   (window as any).ead = [];
   loopDetected = false;
   stopLoop();
-  loopIntervalId = setInterval(loop, 0);
+  loopIntervalId = setInterval(loop, 1_00);
 }
 
 function load(data: Uint8Array) {
@@ -103,6 +142,7 @@ function load(data: Uint8Array) {
 async function fetchAndLoad(romName: string) {
   const data = await fetchRom(romName);
   load(data);
+  console.clear();
 }
 
 async function main() {
@@ -127,15 +167,19 @@ async function main() {
       case "o":
         const rom = await uploadRom();
         load(rom.data);
+        startLoop();
         break;
       case "n":
         currentRomIndex = (currentRomIndex + 1) % roms.length;
         await fetchAndLoad(roms[currentRomIndex]);
         startLoop();
         break;
+      case "s":
+        stopLoop();
+        loop();
+        break;
       case "enter":
         await fetchAndLoad(roms[currentRomIndex]);
-        startLoop();
         break;
     }
   });
