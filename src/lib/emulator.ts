@@ -103,7 +103,7 @@ type CPU = {
 export default class Emulator {
   private cpu!: CPU; // Emulator Control Unit state
   private ram!: Uint8Array;
-  private fb!: Uint8Array;
+
   private hires = true; // high resolution
 
   // input handling
@@ -115,15 +115,13 @@ export default class Emulator {
   // actively pressed key(s)
   private k = new Set();
 
+  public frameBuffer!: Uint8Array;
+
   constructor(
     private memSize: number = 4 * 1024,
     private onBeforeTick?: (op: number, cpu: CPU) => void,
   ) {
     this.reset();
-  }
-
-  get framebuffer() {
-    return this.fb;
   }
 
   get framebufferHeight() {
@@ -190,7 +188,9 @@ export default class Emulator {
   /* Private Methods */
 
   private clearFramebuffer() {
-    this.fb = new Uint8Array(this.framebufferHeight * this.framebufferWidth);
+    this.frameBuffer = new Uint8Array(
+      this.framebufferHeight * this.framebufferWidth,
+    );
   }
 
   private draw(x: number, y: number, len: number) {
@@ -208,11 +208,11 @@ export default class Emulator {
           continue;
         }
 
-        if (this.fb[target]) {
-          this.fb[target] = 0;
+        if (this.frameBuffer[target]) {
+          this.frameBuffer[target] = 0;
           this.cpu.v[0xf] = 0x1;
         } else {
-          this.fb[target] = 1;
+          this.frameBuffer[target] = 1;
         }
       }
     }
