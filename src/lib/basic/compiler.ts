@@ -72,7 +72,7 @@ function astToAsm(astNodes: any[]): string {
       case "goto_expression":
         asmLines.push(`${offsetStr} ${astNodeToAsm(node)}`);
         break;
-      case "line_comment":
+      case "comment":
         // ignore full line comments
         offset -= 2;
         break;

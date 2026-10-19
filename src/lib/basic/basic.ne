@@ -75,11 +75,8 @@ lines              -> lines newline line                    {% d => [...d[0], d[
                     | line                                  {% id %}
 
 line
-    -> line_comment
+    -> comment
     | statements                                {% d => d[0] %}
-    | statements _ comment                      {% d => d[0] %}
-
-line_comment -> comment                         {% d => ({...d[0], type: "line_comment"}) %}
 
 statements -> statement                         {% id %}
 
