@@ -1,4 +1,5 @@
 import nearley from "nearley";
+// @ts-ignore
 import asmGrm from "./asm";
 
 export function compileHex(data: string): Uint8Array {

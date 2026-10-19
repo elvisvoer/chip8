@@ -1,5 +1,6 @@
 import nearley from "nearley";
 import { compileAsm } from "../asm/assembler";
+// @ts-ignore
 import basicGrm from "./basic";
 
 function binaryExprToAsm(item: any) {
