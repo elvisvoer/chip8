@@ -172,7 +172,7 @@ async function main() {
         await fetchAndLoad(roms[currentRomIndex]);
         startLoop();
         break;
-      case "b":
+      case "t":
         stopLoop();
         loop();
         break;
