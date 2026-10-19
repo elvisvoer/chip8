@@ -1,5 +1,5 @@
 import nearley from "nearley";
-import { fromAsm } from "../asm/assembler";
+import { compileAsm } from "../asm/assembler";
 import basicGrm from "./basic";
 
 function binaryExprToAsm(item: any) {
@@ -97,7 +97,7 @@ function astToAsm(astNodes: any[]): string {
   return asmLines.join("\n");
 }
 
-export function fromBasic(data: string): Uint8Array {
+export function compileBasic(data: string): Uint8Array {
   const parser = new nearley.Parser(nearley.Grammar.fromCompiled(basicGrm));
   console.time();
   parser.feed(data);
@@ -111,7 +111,7 @@ export function fromBasic(data: string): Uint8Array {
   console.timeEnd();
 
   console.time();
-  const buffer = fromAsm(asmString);
+  const buffer = compileAsm(asmString);
   console.timeEnd();
 
   return buffer;

@@ -1,6 +1,6 @@
 import { opToAsm } from "./opToAsm";
 
-export function toHex(data: Uint8Array): string {
+export function bufferToHex(data: Uint8Array): string {
   const result: string[] = [];
 
   for (let i = 0; i < data.length; i += 2) {
@@ -15,7 +15,7 @@ export function toHex(data: Uint8Array): string {
   return result.join("\n");
 }
 
-export function toAsm(data: Uint8Array): string {
+export function bufferToAsm(data: Uint8Array): string {
   const result: string[] = [];
   const pc = 0x200;
 
