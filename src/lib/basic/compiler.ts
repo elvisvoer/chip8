@@ -24,7 +24,7 @@ function callExprToAsm(item: any) {
       return arg.value;
     }
 
-    if (arg.type === "binary_expr" || arg.type === "boolean_expr") {
+    if (arg.type === "var_assignment" || arg.type === "boolean_expr") {
       return binaryExprToAsm(arg);
     }
 
@@ -38,7 +38,7 @@ function astNodeToAsm(node: any): string {
   switch (node.type) {
     case "call_expression":
       return callExprToAsm(node);
-    case "binary_expr":
+    case "var_assignment":
       return binaryExprToAsm(node);
     case "hex_literal":
       return node.value;
@@ -61,7 +61,7 @@ function astToAsm(astNodes: any[]): string {
 
     switch (node.type) {
       case "call_expression":
-      case "binary_expr":
+      case "var_assignment":
       case "hex_literal":
         asmLines.push(`${offsetStr} ${astNodeToAsm(node)}`);
         break;

@@ -80,7 +80,7 @@ line
 
 statements -> statement                         {% id %}
 
-statement ->  hex __ executable_statements     {% d => d[2] %}
+statement ->  hex __ executable_statements      {% d => d[2] %}
             | label __ executable_statements
              {%
                 d => ({
@@ -91,12 +91,12 @@ statement ->  hex __ executable_statements     {% d => d[2] %}
                     end: d[0].end
                 })
              %}
-            | executable_statements            {% d => d[0] %}
+            | executable_statements             {% d => d[0] %}
 
 executable_statements
     -> call_expression
     |  goto_expression
-    |  binary_expr
+    |  var_assignment
     |  hex
 
 goto_expression
@@ -132,11 +132,11 @@ expression -> identifier
             |  hex
             |  boolean_expr
 
-binary_expr
-    -> identifier _ binary_op _ expression
+var_assignment
+    -> identifier _ assignment_op _ expression
       {%
           d => ({
-              type: "binary_expr",
+              type: "var_assignment",
               name: d[0],
               operator: d[2],
               value: d[4],
@@ -145,7 +145,7 @@ binary_expr
           })
       %}
 
-binary_op
+assignment_op
     -> ":="
     | "+="
     | "-="
@@ -155,8 +155,6 @@ binary_op
     | "^="
     | "<<"
     | ">>"
-    | "=="
-    | "!="
 
 boolean_expr
     -> identifier _ boolean_op _ expression

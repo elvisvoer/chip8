@@ -92,7 +92,7 @@ var grammar = {
     {"name": "statement", "symbols": ["executable_statements"], "postprocess": d => d[0]},
     {"name": "executable_statements", "symbols": ["call_expression"]},
     {"name": "executable_statements", "symbols": ["goto_expression"]},
-    {"name": "executable_statements", "symbols": ["binary_expr"]},
+    {"name": "executable_statements", "symbols": ["var_assignment"]},
     {"name": "executable_statements", "symbols": ["hex"]},
     {"name": "goto_expression", "symbols": [{"literal":"GOTO"}, "__", "label"], "postprocess": 
         d => ({
@@ -118,9 +118,9 @@ var grammar = {
     {"name": "expression", "symbols": ["identifier"]},
     {"name": "expression", "symbols": ["hex"]},
     {"name": "expression", "symbols": ["boolean_expr"]},
-    {"name": "binary_expr", "symbols": ["identifier", "_", "binary_op", "_", "expression"], "postprocess": 
+    {"name": "var_assignment", "symbols": ["identifier", "_", "assignment_op", "_", "expression"], "postprocess": 
         d => ({
-            type: "binary_expr",
+            type: "var_assignment",
             name: d[0],
             operator: d[2],
             value: d[4],
@@ -128,17 +128,15 @@ var grammar = {
             end: d[4].end
         })
               },
-    {"name": "binary_op", "symbols": [{"literal":":="}]},
-    {"name": "binary_op", "symbols": [{"literal":"+="}]},
-    {"name": "binary_op", "symbols": [{"literal":"-="}]},
-    {"name": "binary_op", "symbols": [{"literal":"~="}]},
-    {"name": "binary_op", "symbols": [{"literal":"&="}]},
-    {"name": "binary_op", "symbols": [{"literal":"|="}]},
-    {"name": "binary_op", "symbols": [{"literal":"^="}]},
-    {"name": "binary_op", "symbols": [{"literal":"<<"}]},
-    {"name": "binary_op", "symbols": [{"literal":">>"}]},
-    {"name": "binary_op", "symbols": [{"literal":"=="}]},
-    {"name": "binary_op", "symbols": [{"literal":"!="}]},
+    {"name": "assignment_op", "symbols": [{"literal":":="}]},
+    {"name": "assignment_op", "symbols": [{"literal":"+="}]},
+    {"name": "assignment_op", "symbols": [{"literal":"-="}]},
+    {"name": "assignment_op", "symbols": [{"literal":"~="}]},
+    {"name": "assignment_op", "symbols": [{"literal":"&="}]},
+    {"name": "assignment_op", "symbols": [{"literal":"|="}]},
+    {"name": "assignment_op", "symbols": [{"literal":"^="}]},
+    {"name": "assignment_op", "symbols": [{"literal":"<<"}]},
+    {"name": "assignment_op", "symbols": [{"literal":">>"}]},
     {"name": "boolean_expr", "symbols": ["identifier", "_", "boolean_op", "_", "expression"], "postprocess": 
         d => ({
             type: "boolean_expr",
