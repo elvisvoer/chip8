@@ -76,8 +76,9 @@ var grammar = {
     {"name": "lines", "symbols": ["lines", "newline", "line"], "postprocess": d => [...d[0], d[2]]},
     {"name": "lines", "symbols": ["lines", "newline"], "postprocess": d => d[0]},
     {"name": "lines", "symbols": ["line"], "postprocess": id},
-    {"name": "line", "symbols": ["comment"]},
-    {"name": "line", "symbols": ["statements"], "postprocess": d => d[0]},
+    {"name": "line", "symbols": ["_", "_line", "_"], "postprocess": d => d[1]},
+    {"name": "_line", "symbols": ["comment"]},
+    {"name": "_line", "symbols": ["statements"], "postprocess": d => d[0]},
     {"name": "statements", "symbols": ["statement"], "postprocess": id},
     {"name": "statement", "symbols": ["hex", "__", "executable_statements"], "postprocess": d => d[2]},
     {"name": "statement", "symbols": ["label", "__", "executable_statements"], "postprocess": 

@@ -74,7 +74,9 @@ lines              -> lines newline line                    {% d => [...d[0], d[
                     | lines newline                         {% d => d[0]        %}
                     | line                                  {% id %}
 
-line
+line -> _ _line _  {% d => d[1] %}
+
+_line
     -> comment
     | statements                                {% d => d[0] %}
 
