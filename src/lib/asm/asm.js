@@ -89,7 +89,7 @@ var grammar = {
     {"name": "timers", "symbols": ["timers$string$2", "_", "asg_op", "_", "varg"], "postprocess": (d) => "0xf" + d[4] + "15"},
     {"name": "timers$string$3", "symbols": [{"literal":"S"}, {"literal":"T"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "timers", "symbols": ["timers$string$3", "_", "asg_op", "_", "varg"], "postprocess": (d) => "0xf" + d[4] + "18"},
-    {"name": "varg", "symbols": [{"literal":"V"}, "hex"], "postprocess": (d) => d[1].toUpperCase()},
+    {"name": "varg", "symbols": [{"literal":"V"}, "hex"], "postprocess": (d) => d[1]},
     {"name": "arg$string$1", "symbols": [{"literal":"0"}, {"literal":"x"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "arg", "symbols": ["arg$string$1", "hex"], "postprocess": (d) => d[1]},
     {"name": "hex_literal$string$1", "symbols": [{"literal":"0"}, {"literal":"x"}], "postprocess": function joiner(d) {return d.join('');}},

@@ -76,7 +76,7 @@ timers             -> varg _ asg_op _ "DT"                  {% (d) => "0xf" + d[
                     | "ST" _ asg_op _ varg                  {% (d) => "0xf" + d[4] + "18" %}
 
 # Mist
-varg               -> "V" hex                               {% (d) => d[1].toUpperCase() %}
+varg               -> "V" hex                               {% (d) => d[1] %}
 arg                -> "0x" hex                              {% (d) => d[1] %}
 hex_literal        -> "0x" hex                              {% (d) => "0x" + d[1] %}
 hex                -> [0-9a-fA-F]:+                         {% (d) => d[0].join("") %}
