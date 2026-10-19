@@ -45,9 +45,7 @@ function cpuToDisplayText(cpu: CPU, op: number) {
     ` Return stack: ${cpu.r.reverse().map((rs) => ` ${rs.toString(16).padStart(4, "0")}`)}`,
   );
 
-  console.log(
-    `0x${cpu.pc.toString(16).padStart(4, "0")} ${opToAsm(op)}`,
-  );
+  console.log(`0x${cpu.pc.toString(16).padStart(4, "0")} ${opToAsm(op)}`);
 
   return result;
 }
@@ -174,9 +172,12 @@ async function main() {
         await fetchAndLoad(roms[currentRomIndex]);
         startLoop();
         break;
-      case "s":
+      case "b":
         stopLoop();
         loop();
+        break;
+      case "g":
+        startLoop();
         break;
       case "enter":
         await fetchAndLoad(roms[currentRomIndex]);
