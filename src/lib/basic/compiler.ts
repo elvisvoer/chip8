@@ -44,7 +44,7 @@ function astNodeToAsm(node: any): string {
     case "hex_literal":
       return node.value;
     case "goto_expression":
-        return `JUMP ${node.label.value}`;
+      return `JUMP ${node.label.value}`;
     default:
       console.log(node);
       throw new Error("Unknown node");
@@ -77,23 +77,30 @@ function astToAsm(astNodes: any[]): string {
         // ignore full line comments
         offset -= 2;
         break;
+      case "code_block":
+        node.statements.forEach((s: any) =>
+          asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`),
+        );
+        // length - 1 because we already added 2 to the offset
+        offset += 2 * (node.statements.length - 1);
+        break;
       default:
         console.log(node);
         throw new Error("Unknown command");
     }
   });
 
-  asmLines = asmLines.map(line => {
+  asmLines = asmLines.map((line) => {
     const labelList = Array.from(labelMapping.keys());
     for (let i = 0; i < labelList.length; i++) {
       const label = labelList[i];
       if (line.includes(label)) {
-        return line.replace(label, labelMapping.get(label)!)
+        return line.replace(label, labelMapping.get(label)!);
       }
     }
 
     return line;
-  })
+  });
 
   return asmLines.join("\n");
 }

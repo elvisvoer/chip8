@@ -15,6 +15,8 @@ const lexer = moo.compile({
     ">>": ">>",
     "==": "==",
     "!=": "!=",
+    "{": "{",
+    "}": "}",
     comment: {
         match: /#[^\n]*/,
         value: s => s.substring(1)
@@ -81,6 +83,18 @@ _line
     | statements                                {% d => d[0] %}
 
 statements -> statement                         {% id %}
+| code_block                        {% d => d[0] %}
+
+
+code_block -> "{" _ statement _ "}"
+    {%
+        (d) => ({
+            type: "code_block",
+            statements: d[2],
+            start: tokenStart(d[0]),
+            end: tokenEnd(d[4])
+        })
+    %}
 
 statement ->  hex __ executable_statements      {% d => d[2] %}
             | label __ executable_statements

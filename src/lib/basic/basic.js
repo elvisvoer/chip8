@@ -19,6 +19,8 @@ const lexer = moo.compile({
     ">>": ">>",
     "==": "==",
     "!=": "!=",
+    "{": "{",
+    "}": "}",
     comment: {
         match: /#[^\n]*/,
         value: s => s.substring(1)
@@ -80,6 +82,15 @@ var grammar = {
     {"name": "_line", "symbols": ["comment"]},
     {"name": "_line", "symbols": ["statements"], "postprocess": d => d[0]},
     {"name": "statements", "symbols": ["statement"], "postprocess": id},
+    {"name": "statements", "symbols": ["code_block"], "postprocess": d => d[0]},
+    {"name": "code_block", "symbols": [{"literal":"{"}, "_", "statement", "_", {"literal":"}"}], "postprocess": 
+        (d) => ({
+            type: "code_block",
+            statements: d[2],
+            start: tokenStart(d[0]),
+            end: tokenEnd(d[4])
+        })
+            },
     {"name": "statement", "symbols": ["hex", "__", "executable_statements"], "postprocess": d => d[2]},
     {"name": "statement", "symbols": ["label", "__", "executable_statements"], "postprocess": 
         d => ({
