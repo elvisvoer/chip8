@@ -82,10 +82,9 @@ var grammar = {
     {"name": "lines", "symbols": ["line"], "postprocess": id},
     {"name": "line", "symbols": ["_", "_line", "_"], "postprocess": d => d[1]},
     {"name": "_line", "symbols": ["comment"]},
-    {"name": "_line", "symbols": ["statements"], "postprocess": d => d[0]},
-    {"name": "statements", "symbols": ["statement"], "postprocess": id},
-    {"name": "statements", "symbols": ["code_block"], "postprocess": d => d[0]},
-    {"name": "code_block", "symbols": [{"literal":"{"}, "_", "statement", "_", {"literal":"}"}], "postprocess": 
+    {"name": "_line", "symbols": ["statement"], "postprocess": d => d[0]},
+    {"name": "_line", "symbols": ["code_block"], "postprocess": d => d[0]},
+    {"name": "code_block", "symbols": [{"literal":"{"}, "_", "statements", "_", {"literal":"}"}], "postprocess": 
         (d) => ({
             type: "code_block",
             statements: d[2],
@@ -93,8 +92,14 @@ var grammar = {
             end: tokenEnd(d[4])
         })
             },
-    {"name": "statement", "symbols": ["hex", "__", "executable_statements"], "postprocess": d => d[2]},
-    {"name": "statement", "symbols": ["label", "__", "executable_statements"], "postprocess": 
+    {"name": "statements", "symbols": ["_"], "postprocess": () => []},
+    {"name": "statements", "symbols": ["_", {"literal":"\n"}, "_", "statements"], "postprocess": (d) => d[3]},
+    {"name": "statements", "symbols": ["_", "statement", "_"], "postprocess": d => [d[1]]},
+    {"name": "statements", "symbols": ["statement", "_", {"literal":"\n"}, "_", "statements"], "postprocess": 
+        d => [d[0], ...d[4]]
+                      },
+    {"name": "statement", "symbols": ["hex", "__", "executable_statement"], "postprocess": d => d[2]},
+    {"name": "statement", "symbols": ["label", "__", "executable_statement"], "postprocess": 
         d => ({
             type: "label_expression",
             label: d[0],
@@ -103,12 +108,12 @@ var grammar = {
             end: d[0].end
         })
                      },
-    {"name": "statement", "symbols": ["executable_statements"], "postprocess": d => d[0]},
-    {"name": "executable_statements", "symbols": ["call_expression"]},
-    {"name": "executable_statements", "symbols": ["goto_expression"]},
-    {"name": "executable_statements", "symbols": ["repeat_loop"]},
-    {"name": "executable_statements", "symbols": ["var_assignment"]},
-    {"name": "executable_statements", "symbols": ["hex"]},
+    {"name": "statement", "symbols": ["executable_statement"], "postprocess": d => d[0]},
+    {"name": "executable_statement", "symbols": ["call_expression"]},
+    {"name": "executable_statement", "symbols": ["goto_expression"]},
+    {"name": "executable_statement", "symbols": ["repeat_loop"]},
+    {"name": "executable_statement", "symbols": ["var_assignment"]},
+    {"name": "executable_statement", "symbols": ["hex"]},
     {"name": "repeat_loop", "symbols": [{"literal":"repeat"}, "_", "code_block", "_", {"literal":"until"}, "_", "boolean_expr"], "postprocess": 
         d => ({
             type: "repeat_loop",

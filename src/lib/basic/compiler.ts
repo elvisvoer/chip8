@@ -46,7 +46,7 @@ function astNodeToAsm(node: any): string {
     case "goto_expression":
       return `JUMP ${node.label.value}`;
     default:
-      console.log(node);
+      console.log(JSON.stringify(node, undefined, 2));
       throw new Error("Unknown node");
   }
 }
@@ -86,7 +86,7 @@ function astToAsm(astNodes: any[]): string {
       case "repeat_loop":
         {
           const initialOffset = offset;
-          const { statements } = node.code;
+          const statements = node.code.statements.flat();
           statements.forEach((s: any) =>
             asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`),
           );

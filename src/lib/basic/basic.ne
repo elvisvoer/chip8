@@ -82,13 +82,10 @@ line -> _ _line _  {% d => d[1] %}
 
 _line
     -> comment
-    | statements                                {% d => d[0] %}
+    | statement                         {% d => d[0] %}
+    | code_block                        {% d => d[0] %}
 
-statements -> statement                         {% id %}
-| code_block                        {% d => d[0] %}
-
-
-code_block -> "{" _ statement _ "}"
+code_block -> "{" _ statements _ "}"
     {%
         (d) => ({
             type: "code_block",
@@ -98,8 +95,16 @@ code_block -> "{" _ statement _ "}"
         })
     %}
 
-statement ->  hex __ executable_statements      {% d => d[2] %}
-            | label __ executable_statements
+statements -> _  {% () => [] %}
+            | _ "\n" _ statements {% (d) => d[3] %}
+            | _ statement _ {% d => [d[1]] %}
+            | statement _ "\n" _ statements
+              {%
+                d => [d[0], ...d[4]]
+              %}
+
+statement ->  hex __ executable_statement      {% d => d[2] %}
+            | label __ executable_statement
              {%
                 d => ({
                     type: "label_expression",
@@ -109,9 +114,9 @@ statement ->  hex __ executable_statements      {% d => d[2] %}
                     end: d[0].end
                 })
              %}
-            | executable_statements             {% d => d[0] %}
+            | executable_statement             {% d => d[0] %}
 
-executable_statements
+executable_statement
     -> call_expression
     |  goto_expression
     |  repeat_loop

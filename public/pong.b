@@ -13,7 +13,9 @@
 0x216 V0 := 0x60
 0x218 DT := V0
 ## repeat
-  repeat {V0 := DT} until V0 == 0x00
+repeat {
+  V0 := DT
+} until V0 == 0x00
 ## end repeat
 0x220 RAND V7 0x17
 0x222 V7 += 0x08
