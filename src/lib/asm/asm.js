@@ -9,7 +9,7 @@ var grammar = {
     {"name": "lines", "symbols": ["lines", "newline", "line"], "postprocess": d => [...d[0], d[2]]},
     {"name": "lines", "symbols": ["lines", "newline"], "postprocess": d => d[0]},
     {"name": "lines", "symbols": ["line"], "postprocess": id},
-    {"name": "line", "symbols": ["hex_literal", "_", "command"], "postprocess": d => d[2]},
+    {"name": "line", "symbols": ["command"], "postprocess": d => d[0]},
     {"name": "command", "symbols": ["noop"]},
     {"name": "command", "symbols": ["clear"]},
     {"name": "command", "symbols": ["hires"]},

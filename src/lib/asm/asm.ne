@@ -3,7 +3,7 @@ lines              -> lines newline line                    {% d => [...d[0], d[
                     | lines newline                         {% d => d[0]        %}
                     | line                                  {% id %}
 
-line               -> hex_literal _ command                 {% d => d[2] %}
+line               -> command                               {% d => d[0] %}
 
 command            -> noop
                     | clear

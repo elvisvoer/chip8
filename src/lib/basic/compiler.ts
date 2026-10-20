@@ -36,21 +36,18 @@ function callExprToAsm(item: any) {
 }
 
 function astNodeToAsm(node: any, acc: string[]): void {
-  const offset = 0x200 + acc.length * 2;
-  const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
-
   switch (node.type) {
     case "call_expression":
-      acc.push(`${offsetStr} ${callExprToAsm(node)}`);
+      acc.push(`${callExprToAsm(node)}`);
       break;
     case "var_assignment":
-      acc.push(`${offsetStr} ${binaryExprToAsm(node)}`);
+      acc.push(`${binaryExprToAsm(node)}`);
       break;
     case "hex_literal":
-      acc.push(`${offsetStr} ${node.value}`);
+      acc.push(`${node.value}`);
       break;
     case "goto_expression":
-      acc.push(`${offsetStr} JUMP ${node.label.value}`);
+      acc.push(`JUMP ${node.label.value}`);
       break;
     default:
       console.log(JSON.stringify(node, undefined, 2));
@@ -93,25 +90,19 @@ function astToAsm(astNodes: any[]): string {
           const initialOffset = 0x200 + asmLines.length * 2;
           let offset = initialOffset;
           const statements = node.code.statements.flat();
+
           statements.forEach((s: any) => {
             astNodeToAsm(s, asmLines);
           });
-
-          // length - 1 because we already added 2 to the offset
-          offset += 2 * (statements.length - 1);
-          let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+          offset += 2 * (statements.length - 1); // length - 1 because we already added 2 to the offset
 
           asmLines.push(
-            `${offsetStr} JUMP IF ${binaryExprToAsm(node.condition)}`,
+            `JUMP IF ${binaryExprToAsm(node.condition)}`,
           );
-
           offset += 2;
-          offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
 
           const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
-          asmLines.push(`${offsetStr} JUMP ${initialOffsetStr}`);
-
-          offset += 2;
+          asmLines.push(`JUMP ${initialOffsetStr}`);
         }
         break;
       default:
