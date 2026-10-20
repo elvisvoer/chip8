@@ -28,9 +28,9 @@ const lexer = moo.compile({
       match: /0x[0-9a-fA-F]+/,
     },
     identifier: {
-      match: /[A-Z][A-Z0-9]*/,
+      match: /[A-Za-z][A-Za-z0-9]*/,
       type: moo.keywords({
-        "GOTO": "GOTO"
+        "goto": "goto"
       })
     }
 });
@@ -116,7 +116,7 @@ executable_statements
     |  hex
 
 goto_expression
-    -> "GOTO" __ label
+    -> "goto" __ label
       {%
         d => ({
             type: "goto_expression",

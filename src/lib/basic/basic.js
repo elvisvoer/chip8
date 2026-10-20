@@ -32,9 +32,9 @@ const lexer = moo.compile({
       match: /0x[0-9a-fA-F]+/,
     },
     identifier: {
-      match: /[A-Z][A-Z0-9]*/,
+      match: /[A-Za-z][A-Za-z0-9]*/,
       type: moo.keywords({
-        "GOTO": "GOTO"
+        "goto": "goto"
       })
     }
 });
@@ -106,7 +106,7 @@ var grammar = {
     {"name": "executable_statements", "symbols": ["goto_expression"]},
     {"name": "executable_statements", "symbols": ["var_assignment"]},
     {"name": "executable_statements", "symbols": ["hex"]},
-    {"name": "goto_expression", "symbols": [{"literal":"GOTO"}, "__", "label"], "postprocess": 
+    {"name": "goto_expression", "symbols": [{"literal":"goto"}, "__", "label"], "postprocess": 
         d => ({
             type: "goto_expression",
             name: d[0],

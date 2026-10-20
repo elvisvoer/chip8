@@ -18,7 +18,7 @@ DRAW V0 V1 0xf
 V0 += 0x08
 I := 0x275
 DRAW V0 V1 0xf
-@end GOTO @end
+@end goto @end
 # Data section
 0xff00
 0xff00
