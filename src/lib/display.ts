@@ -32,7 +32,7 @@ export class CanvasDisplay {
 
   public writeText(text: string[]) {
     let y = 10;
-    let x = 15;
+    let x = 20;
     let step = 20;
 
     this.ctx.reset();
