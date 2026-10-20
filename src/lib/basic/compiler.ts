@@ -35,6 +35,23 @@ function callExprToAsm(item: any) {
   return `${item.name.value} ${args.join(" ")}`;
 }
 
+function repeatLoopToAsm(node: any, acc: string[]): void {
+  const initialOffset = 0x200 + acc.length * 2;
+  let offset = initialOffset;
+  const statements = node.code.statements.flat();
+
+  statements.forEach((s: any) => {
+    astNodeToAsm(s, acc);
+  });
+  offset += 2 * (statements.length - 1); // length - 1 because we already added 2 to the offset
+
+  acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
+  offset += 2;
+
+  const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
+  acc.push(`JUMP ${initialOffsetStr}`);
+}
+
 function astNodeToAsm(node: any, acc: string[]): void {
   switch (node.type) {
     case "call_expression":
@@ -48,6 +65,9 @@ function astNodeToAsm(node: any, acc: string[]): void {
       break;
     case "goto_expression":
       acc.push(`JUMP ${node.label.value}`);
+      break;
+    case "repeat_loop":
+      repeatLoopToAsm(node, acc);
       break;
     default:
       console.log(JSON.stringify(node, undefined, 2));
@@ -65,6 +85,7 @@ function astToAsm(astNodes: any[]): string {
       case "var_assignment":
       case "hex_literal":
       case "goto_expression":
+      case "repeat_loop":
         astNodeToAsm(node, asmLines);
         break;
       case "label_expression":
@@ -83,26 +104,6 @@ function astToAsm(astNodes: any[]): string {
           statements.forEach((s: any) => {
             astNodeToAsm(s, asmLines);
           });
-        }
-        break;
-      case "repeat_loop":
-        {
-          const initialOffset = 0x200 + asmLines.length * 2;
-          let offset = initialOffset;
-          const statements = node.code.statements.flat();
-
-          statements.forEach((s: any) => {
-            astNodeToAsm(s, asmLines);
-          });
-          offset += 2 * (statements.length - 1); // length - 1 because we already added 2 to the offset
-
-          asmLines.push(
-            `JUMP IF ${binaryExprToAsm(node.condition)}`,
-          );
-          offset += 2;
-
-          const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
-          asmLines.push(`JUMP ${initialOffsetStr}`);
         }
         break;
       default:
