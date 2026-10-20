@@ -57,8 +57,7 @@ function astToAsm(astNodes: any[]): string {
   let offset = 0x200;
 
   astNodes.forEach((node) => {
-    const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
-    offset += 2;
+    let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
 
     switch (node.type) {
       case "call_expression":
@@ -74,20 +73,47 @@ function astToAsm(astNodes: any[]): string {
         asmLines.push(`${offsetStr} ${astNodeToAsm(node)}`);
         break;
       case "comment":
-        // ignore full line comments
-        offset -= 2;
-        break;
+        return;
       case "code_block":
-        node.statements.forEach((s: any) =>
-          asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`),
-        );
-        // length - 1 because we already added 2 to the offset
-        offset += 2 * (node.statements.length - 1);
+        {
+          const { statements } = node;
+          statements.forEach((s: any) =>
+            asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`),
+          );
+          offset += 2 * statements.length;
+        }
+        break;
+      case "repeat_loop":
+        {
+          const initialOffset = offset;
+          const { statements } = node.code;
+          statements.forEach((s: any) =>
+            asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`),
+          );
+
+          // length - 1 because we already added 2 to the offset
+          offset += 2 * (statements.length - 1);
+          offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+
+          asmLines.push(
+            `${offsetStr} JUMP IF ${binaryExprToAsm(node.condition)}`,
+          );
+
+          offset += 2;
+          offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+
+          const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
+          asmLines.push(`${offsetStr} JUMP ${initialOffsetStr}`);
+
+          offset += 2;
+        }
         break;
       default:
         console.log(node);
         throw new Error("Unknown command");
     }
+
+    offset += 2;
   });
 
   asmLines = asmLines.map((line) => {
@@ -117,6 +143,8 @@ export function compileBasic(data: string): Uint8Array {
   const results = parser.results[0].flat(3);
   const asmString = astToAsm(results);
   console.timeEnd();
+
+  // console.log(asmString);
 
   console.time();
   const buffer = compileAsm(asmString);

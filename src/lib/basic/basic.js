@@ -34,7 +34,9 @@ const lexer = moo.compile({
     identifier: {
       match: /[A-Za-z][A-Za-z0-9]*/,
       type: moo.keywords({
-        "goto": "goto"
+        "goto": "goto",
+        "repeat": "repeat",
+        "until": "until"
       })
     }
 });
@@ -104,8 +106,18 @@ var grammar = {
     {"name": "statement", "symbols": ["executable_statements"], "postprocess": d => d[0]},
     {"name": "executable_statements", "symbols": ["call_expression"]},
     {"name": "executable_statements", "symbols": ["goto_expression"]},
+    {"name": "executable_statements", "symbols": ["repeat_loop"]},
     {"name": "executable_statements", "symbols": ["var_assignment"]},
     {"name": "executable_statements", "symbols": ["hex"]},
+    {"name": "repeat_loop", "symbols": [{"literal":"repeat"}, "_", "code_block", "_", {"literal":"until"}, "_", "boolean_expr"], "postprocess": 
+        d => ({
+            type: "repeat_loop",
+            code: d[2],
+            condition: d[6],
+            start: d[0].start,
+            end: d[6].end
+        })
+              },
     {"name": "goto_expression", "symbols": [{"literal":"goto"}, "__", "label"], "postprocess": 
         d => ({
             type: "goto_expression",

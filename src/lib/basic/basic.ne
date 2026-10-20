@@ -30,7 +30,9 @@ const lexer = moo.compile({
     identifier: {
       match: /[A-Za-z][A-Za-z0-9]*/,
       type: moo.keywords({
-        "goto": "goto"
+        "goto": "goto",
+        "repeat": "repeat",
+        "until": "until"
       })
     }
 });
@@ -112,8 +114,21 @@ statement ->  hex __ executable_statements      {% d => d[2] %}
 executable_statements
     -> call_expression
     |  goto_expression
+    |  repeat_loop
     |  var_assignment
     |  hex
+
+repeat_loop
+    -> "repeat" _ code_block _ "until" _ boolean_expr
+      {%
+        d => ({
+            type: "repeat_loop",
+            code: d[2],
+            condition: d[6],
+            start: d[0].start,
+            end: d[6].end
+        })
+      %}
 
 goto_expression
     -> "goto" __ label
