@@ -81,9 +81,9 @@ lines              -> lines newline line                    {% d => [...d[0], d[
 line -> _ _line _  {% d => d[1] %}
 
 _line
-    -> comment
-    | statement                         {% d => d[0] %}
-    | code_block                        {% d => d[0] %}
+    -> line_comment
+    | statement
+    | code_block
 
 code_block -> "{" _ statements _ "}"
     {%
@@ -209,7 +209,7 @@ boolean_op
     -> "=="
     |  "!="
 
-comment -> %comment       {% convertTokenId %}
+line_comment -> %comment       {% convertTokenId %}
 label -> %label           {% convertTokenId %}
 hex -> %hex_literal       {% convertTokenId %}
 identifier -> %identifier {% convertTokenId %}

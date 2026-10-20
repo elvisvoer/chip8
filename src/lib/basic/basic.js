@@ -81,9 +81,9 @@ var grammar = {
     {"name": "lines", "symbols": ["lines", "newline"], "postprocess": d => d[0]},
     {"name": "lines", "symbols": ["line"], "postprocess": id},
     {"name": "line", "symbols": ["_", "_line", "_"], "postprocess": d => d[1]},
-    {"name": "_line", "symbols": ["comment"]},
-    {"name": "_line", "symbols": ["statement"], "postprocess": d => d[0]},
-    {"name": "_line", "symbols": ["code_block"], "postprocess": d => d[0]},
+    {"name": "_line", "symbols": ["line_comment"]},
+    {"name": "_line", "symbols": ["statement"]},
+    {"name": "_line", "symbols": ["code_block"]},
     {"name": "code_block", "symbols": [{"literal":"{"}, "_", "statements", "_", {"literal":"}"}], "postprocess": 
         (d) => ({
             type: "code_block",
@@ -178,7 +178,7 @@ var grammar = {
               },
     {"name": "boolean_op", "symbols": [{"literal":"=="}]},
     {"name": "boolean_op", "symbols": [{"literal":"!="}]},
-    {"name": "comment", "symbols": [(lexer.has("comment") ? {type: "comment"} : comment)], "postprocess": convertTokenId},
+    {"name": "line_comment", "symbols": [(lexer.has("comment") ? {type: "comment"} : comment)], "postprocess": convertTokenId},
     {"name": "label", "symbols": [(lexer.has("label") ? {type: "label"} : label)], "postprocess": convertTokenId},
     {"name": "hex", "symbols": [(lexer.has("hex_literal") ? {type: "hex_literal"} : hex_literal)], "postprocess": convertTokenId},
     {"name": "identifier", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": convertTokenId},

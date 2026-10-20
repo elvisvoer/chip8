@@ -76,10 +76,10 @@ function astToAsm(astNodes: any[]): string {
         return;
       case "code_block":
         {
-          const { statements } = node;
-          statements.forEach((s: any) =>
-            asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`),
-          );
+          const statements = node.statements.flat();
+          statements.forEach((s: any) => {
+            asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`);
+          });
           offset += 2 * statements.length;
         }
         break;
@@ -87,9 +87,9 @@ function astToAsm(astNodes: any[]): string {
         {
           const initialOffset = offset;
           const statements = node.code.statements.flat();
-          statements.forEach((s: any) =>
-            asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`),
-          );
+          statements.forEach((s: any) => {
+            asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`);
+          });
 
           // length - 1 because we already added 2 to the offset
           offset += 2 * (statements.length - 1);
