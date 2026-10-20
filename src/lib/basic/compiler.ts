@@ -35,16 +35,23 @@ function callExprToAsm(item: any) {
   return `${item.name.value} ${args.join(" ")}`;
 }
 
-function astNodeToAsm(node: any): string {
+function astNodeToAsm(node: any, acc: string[]): void {
+  const offset = 0x200 + acc.length * 2;
+  const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+
   switch (node.type) {
     case "call_expression":
-      return callExprToAsm(node);
+      acc.push(`${offsetStr} ${callExprToAsm(node)}`);
+      break;
     case "var_assignment":
-      return binaryExprToAsm(node);
+      acc.push(`${offsetStr} ${binaryExprToAsm(node)}`);
+      break;
     case "hex_literal":
-      return node.value;
+      acc.push(`${offsetStr} ${node.value}`);
+      break;
     case "goto_expression":
-      return `JUMP ${node.label.value}`;
+      acc.push(`${offsetStr} JUMP ${node.label.value}`);
+      break;
     default:
       console.log(JSON.stringify(node, undefined, 2));
       throw new Error("Unknown node");
@@ -54,23 +61,22 @@ function astNodeToAsm(node: any): string {
 function astToAsm(astNodes: any[]): string {
   let asmLines: string[] = [];
   const labelMapping = new Map<string, string>();
-  let offset = 0x200;
 
   astNodes.forEach((node) => {
-    let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
-
     switch (node.type) {
       case "call_expression":
       case "var_assignment":
       case "hex_literal":
-        asmLines.push(`${offsetStr} ${astNodeToAsm(node)}`);
+      case "goto_expression":
+        astNodeToAsm(node, asmLines);
         break;
       case "label_expression":
-        labelMapping.set(node.label.value, offsetStr);
-        asmLines.push(`${offsetStr} ${astNodeToAsm(node.arguments[0])}`);
-        break;
-      case "goto_expression":
-        asmLines.push(`${offsetStr} ${astNodeToAsm(node)}`);
+        {
+          const offset = 0x200 + asmLines.length * 2;
+          const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+          labelMapping.set(node.label.value, offsetStr);
+          astNodeToAsm(node.arguments[0], asmLines);
+        }
         break;
       case "comment":
         return;
@@ -78,22 +84,22 @@ function astToAsm(astNodes: any[]): string {
         {
           const statements = node.statements.flat();
           statements.forEach((s: any) => {
-            asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`);
+            astNodeToAsm(s, asmLines);
           });
-          offset += 2 * statements.length;
         }
         break;
       case "repeat_loop":
         {
-          const initialOffset = offset;
+          const initialOffset = 0x200 + asmLines.length * 2;
+          let offset = initialOffset;
           const statements = node.code.statements.flat();
           statements.forEach((s: any) => {
-            asmLines.push(`${offsetStr} ${astNodeToAsm(s)}`);
+            astNodeToAsm(s, asmLines);
           });
 
           // length - 1 because we already added 2 to the offset
           offset += 2 * (statements.length - 1);
-          offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+          let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
 
           asmLines.push(
             `${offsetStr} JUMP IF ${binaryExprToAsm(node.condition)}`,
@@ -112,8 +118,6 @@ function astToAsm(astNodes: any[]): string {
         console.log(node);
         throw new Error("Unknown command");
     }
-
-    offset += 2;
   });
 
   asmLines = asmLines.map((line) => {
