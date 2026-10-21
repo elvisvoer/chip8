@@ -8,6 +8,15 @@ const moo = require("moo");
 const lexer = moo.compile({
     ws: /[ \t]+/,
     nl: { match: "\n", lineBreaks: true },
+    ":=": ":=",
+    "+=": "+=",
+    "-=": "-=",
+    "~=": "~=",
+    "&=":   "&=",
+    "|=": "|=",
+    "^=": "^=",
+    "<<=": "<<=",
+    ">>=": ">>=",
     lte: "<=",
     lt: "<",
     gte: ">=",
@@ -20,7 +29,6 @@ const lexer = moo.compile({
     rbracket: "]",
     lbrace: "{",
     rbrace: "}",
-    assignment: ":=",
     plus: "+",
     minus: "-",
     multiply: "*",
@@ -203,15 +211,25 @@ var grammar = {
     {"name": "asm_cmd_args", "symbols": ["expression", "__", "asm_cmd_args"], "postprocess": 
         d => [d[0], ...d[2]]
                 },
-    {"name": "var_assignment", "symbols": ["identifier", "_", {"literal":":="}, "_", "expression"], "postprocess": 
+    {"name": "var_assignment", "symbols": ["identifier", "_", "assignment_op", "_", "expression"], "postprocess": 
         d => ({
             type: "var_assignment",
             var_name: d[0],
+            operator: d[2],
             value: d[4],
             start: d[0].start,
             end: d[4].end
         })
                 },
+    {"name": "assignment_op", "symbols": [{"literal":":="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":"+="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":"-="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":"~="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":"&="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":"|="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":"^="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":"<<="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":">>="}], "postprocess": d => d[0]},
     {"name": "call_statement", "symbols": ["call_expression"], "postprocess": id},
     {"name": "call_expression", "symbols": ["identifier", "_", {"literal":"("}, "argument_list", {"literal":")"}], "postprocess": 
         d => ({

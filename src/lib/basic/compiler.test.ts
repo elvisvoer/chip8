@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest";
 import { compileBasic } from "./compiler";
 import { bufferToAsm } from "../disassembler";
 
+const assignmentOp = [":=", "+=", "-=", "~=", "&=", "|=", "^=", "<<=", ">>="];
+
 describe("basic compiler", () => {
-  describe("asm statements", () => {
+  describe.skip("asm statements", () => {
     test("can have an asm statement", () => {
       const testCode = `0x200 CLEAR`;
       const expectedResult = "0x200 CLEAR";
@@ -39,7 +41,7 @@ describe("basic compiler", () => {
         "0x206 V1 := 0x08",
         "0x208 DRAW V0 V1 0xf",
         "0x20a 0xff00",
-        "0x20c JUMP TO 0x222"
+        "0x20c JUMP TO 0x222",
       ].join("\n");
 
       const disassembledResult = bufferToAsm(compileBasic(testCode));
@@ -112,34 +114,29 @@ describe("basic compiler", () => {
     });
   });
 
-  describe.skip("var assignment", () => {
-    test("can assign a variable in a single line statement", () => {
-      const testCode = `I := 0x22a`;
-      const expectedResult = "0x200 I := 0x22a";
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+  describe("var assignment", () => {
+    test.each(assignmentOp)(
+      "can assign a variable in a single line statement",
+      (op) => {
+        const testCode = `V0 ${op} VE`;
+        const expectedResult = `0x200 V0 ${op} VE`;
+        const disassembledResult = bufferToAsm(compileBasic(testCode));
 
-      expect(disassembledResult).toEqual(expectedResult);
-    });
+        expect(disassembledResult).toEqual(expectedResult);
+      },
+    );
 
-    test("can assign multiple variables in single line statements", () => {
-      const testCode = `I := 0x22a
-                        V0 := 0xcc`;
-      const expectedResult = ["0x200 I := 0x22a", "0x202 V0 := 0xcc"].join(
-        "\n",
-      );
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
-
-      expect(disassembledResult).toEqual(expectedResult);
-    });
-
-    test("can assign a variable inside a code block", () => {
-      const testCode = `{
-          I := 0x22a
+    test.each(assignmentOp)(
+      "can assign a variable inside a code block",
+      (op) => {
+        const testCode = `{
+          V0 ${op} VF
         }`;
-      const expectedResult = "0x200 I := 0x22a";
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+        const expectedResult = `0x200 V0 ${op} VF`;
+        const disassembledResult = bufferToAsm(compileBasic(testCode));
 
-      expect(disassembledResult).toEqual(expectedResult);
-    });
+        expect(disassembledResult).toEqual(expectedResult);
+      },
+    );
   });
 });

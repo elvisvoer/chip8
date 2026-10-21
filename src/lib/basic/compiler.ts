@@ -83,7 +83,7 @@ function astNodeToAsm(node: any, acc: string[]): void {
       acc.push(`${callExprToAsm(node)}`);
       break;
     case "var_assignment":
-      acc.push(`${node.var_name.value} := ${node.value.value}`);
+      acc.push(`${node.var_name.value} ${node.operator.value} ${node.value.var_name?.value ?? node.value.value}`);
       break;
     case "hex_literal":
       acc.push(`${node.value}`);

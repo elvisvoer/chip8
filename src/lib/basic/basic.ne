@@ -4,6 +4,15 @@ const moo = require("moo");
 const lexer = moo.compile({
     ws: /[ \t]+/,
     nl: { match: "\n", lineBreaks: true },
+    ":=": ":=",
+    "+=": "+=",
+    "-=": "-=",
+    "~=": "~=",
+    "&=":   "&=",
+    "|=": "|=",
+    "^=": "^=",
+    "<<=": "<<=",
+    ">>=": ">>=",
     lte: "<=",
     lt: "<",
     gte: ">=",
@@ -16,7 +25,6 @@ const lexer = moo.compile({
     rbracket: "]",
     lbrace: "{",
     rbrace: "}",
-    assignment: ":=",
     plus: "+",
     minus: "-",
     multiply: "*",
@@ -249,16 +257,28 @@ asm_cmd_args
 
 
 var_assignment
-    -> identifier _ ":=" _ expression
+    -> identifier _ assignment_op _ expression
         {%
             d => ({
                 type: "var_assignment",
                 var_name: d[0],
+                operator: d[2],
                 value: d[4],
                 start: d[0].start,
                 end: d[4].end
             })
         %}
+
+assignment_op
+    -> ":=" {% d => d[0] %}
+    | "+="  {% d => d[0] %}
+    | "-="  {% d => d[0] %}
+    | "~="  {% d => d[0] %}
+    | "&="  {% d => d[0] %}
+    | "|="  {% d => d[0] %}
+    | "^="  {% d => d[0] %}
+    | "<<=" {% d => d[0] %}
+    | ">>=" {% d => d[0] %}
 
 call_statement -> call_expression  {% id %}
 
