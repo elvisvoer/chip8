@@ -68,10 +68,10 @@ export function opToAsm(op: number) {
           return `V${xStr} ~= V${yStr}`;
         }
         case 0x6: {
-          return `V${xStr} >> V${yStr}`;
+          return `V${xStr} >>= V${yStr}`;
         }
         case 0xe: {
-          return `V${xStr} << V${yStr}`;
+          return `V${xStr} <<= V${yStr}`;
         }
       }
       break;
