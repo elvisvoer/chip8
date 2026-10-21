@@ -3,6 +3,10 @@ import nearley from "nearley";
 import asmGrm from "./asm";
 
 export function compileHex(data: string): Uint8Array {
+  if (data === "") {
+    return new Uint8Array();
+  }
+
   const lines = data.split("\n");
   const isOddSize = lines[lines.length - 1].length === 4;
   const size = lines.length * 2 - (isOddSize ? 1 : 0);
