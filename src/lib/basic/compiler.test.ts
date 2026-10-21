@@ -24,12 +24,24 @@ describe("basic compiler", () => {
 
     test("can compile all types of asm instructions", () => {
       const testCode = `{
-          0x200 NOOP
-          0x202 0xff00
+          0x200 CLEAR
+          0x202 I := 0x22a
+          0x204 V0 := 0x0c
+          0x206 V1 := 0x08
+          0x208 DRAW V0 V1 0xf
+          0x20a 0xff00
+          0x20c JUMP TO 0x222
         }`;
-      const expectedResult = ["0x200 NOOP", "0x202 0xff00"].join(
-        "\n",
-      );
+      const expectedResult = [
+        "0x200 CLEAR",
+        "0x202 I := 0x22a",
+        "0x204 V0 := 0x0c",
+        "0x206 V1 := 0x08",
+        "0x208 DRAW V0 V1 0xf",
+        "0x20a 0xff00",
+        "0x20c JUMP TO 0x222"
+      ].join("\n");
+
       const disassembledResult = bufferToAsm(compileBasic(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);

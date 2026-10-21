@@ -164,7 +164,7 @@ var grammar = {
         d => [d[1], ...d[4]]
                 },
     {"name": "executable_statement", "symbols": ["return_statement"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["asm_statement"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["asm_line"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
@@ -177,22 +177,32 @@ var grammar = {
             end: d[2].end
         })
                },
-    {"name": "asm_statement", "symbols": ["hex", "__", "identifier"], "postprocess": 
+    {"name": "asm_line", "symbols": ["hex", "__", "asm_code"], "postprocess": 
         d => ({
-            type: "asm_statement",
+            type: "asm_line",
             value: d[2],
             start: tokenStart(d[0]),
             end: d[2].end
         })
                },
-    {"name": "asm_statement", "symbols": ["hex", "__", "hex"], "postprocess": 
+    {"name": "asm_code", "symbols": ["identifier"], "postprocess": id},
+    {"name": "asm_code", "symbols": ["hex"], "postprocess": id},
+    {"name": "asm_code", "symbols": ["var_assignment"], "postprocess": id},
+    {"name": "asm_code", "symbols": ["asm_cmd"], "postprocess": id},
+    {"name": "asm_cmd", "symbols": ["identifier", "__", "asm_cmd_args"], "postprocess": 
         d => ({
-            type: "asm_statement",
-            value: d[2],
+            type: "asm_command",
+            value: d[0],
+            arguments: d[2],
             start: tokenStart(d[0]),
             end: d[2].end
         })
                },
+    {"name": "asm_cmd_args", "symbols": [], "postprocess": () => []},
+    {"name": "asm_cmd_args", "symbols": ["expression"], "postprocess": d => [d[0]]},
+    {"name": "asm_cmd_args", "symbols": ["expression", "__", "asm_cmd_args"], "postprocess": 
+        d => [d[0], ...d[2]]
+                },
     {"name": "var_assignment", "symbols": ["identifier", "_", {"literal":":="}, "_", "expression"], "postprocess": 
         d => ({
             type: "var_assignment",

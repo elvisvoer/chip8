@@ -190,7 +190,7 @@ executable_statements
 
 executable_statement
    -> return_statement     {% id %}
-   |  asm_statement        {% id %}
+   |  asm_line             {% id %}
    |  var_assignment       {% id %}
    |  call_statement       {% id %}
    |  line_comment         {% id %}
@@ -210,25 +210,43 @@ return_statement
            })
        %}
 
-asm_statement
-    -> hex __ identifier
+asm_line
+    -> hex __ asm_code
         {%
            d => ({
-               type: "asm_statement",
+               type: "asm_line",
                value: d[2],
                start: tokenStart(d[0]),
                end: d[2].end
            })
        %}
-    | hex __ hex
+
+asm_code
+    -> identifier       {% id %}
+    |  hex              {% id %}
+    |  var_assignment   {% id %}
+    |  asm_cmd          {% id %}
+
+asm_cmd
+    -> identifier __ asm_cmd_args
         {%
            d => ({
-               type: "asm_statement",
-               value: d[2],
+               type: "asm_command",
+               value: d[0],
+               arguments: d[2],
                start: tokenStart(d[0]),
                end: d[2].end
            })
        %}
+
+asm_cmd_args
+    -> null {% () => [] %}
+    |  expression  {% d => [d[0]] %}
+    |  expression __ asm_cmd_args
+        {%
+            d => [d[0], ...d[2]]
+        %}
+
 
 var_assignment
     -> identifier _ ":=" _ expression
