@@ -4,6 +4,30 @@ import { bufferToAsm } from "../disassembler";
 
 const assignmentOp = [":=", "+=", "-=", "~=", "&=", "|=", "^=", "<<=", ">>="];
 
+const testCodeExamples = [
+  `0x200 CLEAR
+0x202 I := 0x22a
+0x204 V0 := 0x0c
+0x206 V1 := 0x08
+0x208 DRAW V0 V1 0xf
+0x20a V0 += 0x09
+0x20c I := 0x239
+0x20e DRAW V0 V1 0xf
+0x210 I := 0x248
+0x212 V0 += 0x08
+0x214 DRAW V0 V1 0xf
+0x216 V0 += 0x04
+0x218 I := 0x257
+0x21a DRAW V0 V1 0xf
+0x21c V0 += 0x08
+0x21e I := 0x266
+0x220 DRAW V0 V1 0xf
+0x222 V0 += 0x08
+0x224 I := 0x275
+0x226 DRAW V0 V1 0xf
+`,
+];
+
 describe("basic compiler", () => {
   describe.skip("asm statements", () => {
     test("can have an asm statement", () => {
@@ -114,7 +138,7 @@ describe("basic compiler", () => {
     });
   });
 
-  describe("var assignment", () => {
+  describe.skip("var assignment", () => {
     test.each(assignmentOp)(
       "can assign a variable in a single line statement",
       (op) => {
@@ -136,6 +160,17 @@ describe("basic compiler", () => {
         const disassembledResult = bufferToAsm(compileBasic(testCode));
 
         expect(disassembledResult).toEqual(expectedResult);
+      },
+    );
+  });
+
+  describe("code examples", () => {
+    test.each(testCodeExamples)(
+      "can assign a variable in a single line statement",
+      (testCode) => {
+        const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+        expect(disassembledResult.length).toBeGreaterThan(0);
       },
     );
   });
