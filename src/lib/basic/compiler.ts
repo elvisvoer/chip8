@@ -54,11 +54,14 @@ function repeatLoopToAsm(node: any, acc: string[]): void {
 
 function astNodeToAsm(node: any, acc: string[]): void {
   switch (node.type) {
+    case "asm_statement":
+      acc.push(`${node.value.value}`);
+      break;
     case "call_expression":
       acc.push(`${callExprToAsm(node)}`);
       break;
     case "var_assignment":
-      acc.push(`${binaryExprToAsm(node)}`);
+      acc.push(`${node.var_name.value} := ${node.value.value}`);
       break;
     case "hex_literal":
       acc.push(`${node.value}`);
@@ -69,8 +72,10 @@ function astNodeToAsm(node: any, acc: string[]): void {
     case "repeat_loop":
       repeatLoopToAsm(node, acc);
       break;
+    case "comment":
+      break;
     default:
-      console.log(JSON.stringify(node, undefined, 2));
+      // console.log(JSON.stringify(node, undefined, 2));
       throw new Error("Unknown node");
   }
 }
@@ -81,6 +86,7 @@ function astToAsm(astNodes: any[]): string {
 
   astNodes.forEach((node) => {
     switch (node.type) {
+      case "asm_statement":
       case "call_expression":
       case "var_assignment":
       case "hex_literal":
@@ -133,7 +139,7 @@ export function compileBasic(data: string): Uint8Array {
   parser.feed(data);
   console.timeEnd();
 
-  // console.log(JSON.stringify(parser.results[0], undefined, 2));
+  console.log(JSON.stringify(parser.results, undefined, 2));
 
   console.time();
   const results = parser.results[0].flat(3);
