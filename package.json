@@ -17,7 +17,7 @@
   "devDependencies": {
     "@types/nearley": "^2.11.5",
     "@types/node": "^26.6.5",
-    "gh-pages": "^6.1.1",
+    "gh-pages": "^6.3.0",
     "typescript": "^5.2.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.5"
