@@ -117,7 +117,7 @@ let loopIntervalId: any = null;
 function loop() {
   // make CPU clock tick 2 times faster than timers and display update
   emulator.tick();
-  // emulator.tick();
+  emulator.tick();
   emulator.updateTimers();
 }
 
@@ -130,7 +130,7 @@ function startLoop() {
   (window as any).ead = [];
   loopDetected = false;
   stopLoop();
-  loopIntervalId = setInterval(loop, 10);
+  loopIntervalId = setInterval(loop, 0);
 }
 
 function load(data: Uint8Array) {
