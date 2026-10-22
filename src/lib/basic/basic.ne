@@ -130,6 +130,7 @@ top_level_statement
     |  proc_definition  {% id %}
     |  line_comment     {% id %}
     |  code_block       {% id %}
+    |  executable_statement {% id %}
 
 fun_definition
     -> "fun" __ identifier _ "(" _ parameter_list _ ")" _ code_block
@@ -172,15 +173,6 @@ code_block -> "{" executable_statements "}"
             statements: d[1],
             start: tokenStart(d[0]),
             end: tokenEnd(d[2])
-        })
-    %}
-    | _ executable_statements _
-    {%
-        (d) => ({
-            type: "code_block",
-            statements: [d[1]],
-            start: d[1].start,
-            end: d[1].end
         })
     %}
 

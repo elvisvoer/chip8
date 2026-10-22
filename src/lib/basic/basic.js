@@ -124,6 +124,7 @@ var grammar = {
     {"name": "top_level_statement", "symbols": ["proc_definition"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["code_block"], "postprocess": id},
+    {"name": "top_level_statement", "symbols": ["executable_statement"], "postprocess": id},
     {"name": "fun_definition", "symbols": [{"literal":"fun"}, "__", "identifier", "_", {"literal":"("}, "_", "parameter_list", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
         d => ({
             type: "fun_definition",
@@ -155,14 +156,6 @@ var grammar = {
             statements: d[1],
             start: tokenStart(d[0]),
             end: tokenEnd(d[2])
-        })
-            },
-    {"name": "code_block", "symbols": ["_", "executable_statements", "_"], "postprocess": 
-        (d) => ({
-            type: "code_block",
-            statements: [d[1]],
-            start: d[1].start,
-            end: d[1].end
         })
             },
     {"name": "executable_statements", "symbols": ["_"], "postprocess": () => []},

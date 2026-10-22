@@ -29,7 +29,7 @@ const testCodeExamples = [
 ];
 
 describe("basic compiler", () => {
-  describe.skip("asm statements", () => {
+  describe("asm statements", () => {
     test("can have an asm statement", () => {
       const testCode = `0x200 CLEAR`;
       const expectedResult = "0x200 CLEAR";
@@ -74,7 +74,7 @@ describe("basic compiler", () => {
     });
   });
 
-  describe.skip("code block", () => {
+  describe("code block", () => {
     test("can have an empty code block", () => {
       const testCode = `{}`;
       const expectedResult = ``;
@@ -138,7 +138,7 @@ describe("basic compiler", () => {
     });
   });
 
-  describe.skip("var assignment", () => {
+  describe("var assignment", () => {
     test.each(assignmentOp)(
       "can assign a variable in a single line statement",
       (op) => {
