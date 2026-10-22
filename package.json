@@ -20,7 +20,7 @@
     "gh-pages": "^6.1.1",
     "typescript": "^5.2.2",
     "vite": "^5.0.12",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "nearley": "^2.20.1"
