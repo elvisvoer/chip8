@@ -62,10 +62,10 @@ func               -> "CALL" _ arg                          {% (d) => "0x2" + d[
                     | "RETURN"                              {% () => "0x00ee" %}
 
 # Memory instructions
-memory             -> "SAVE" _ varg                         {% (d) => "0xf" + d[2] + "55" %}
-                    | "LOAD" _ varg                         {% (d) => "0xf" + d[2] + "65" %}
-                    | "POPF" _ varg                         {% (d) => "0xf" + d[2] + "85" %}
-                    | "PUSHF" _ varg                        {% (d) => "0xf" + d[2] + "75" %}
+memory             -> "SAVE" _ arg                         {% (d) => "0xf" + d[2] + "55" %}
+                    | "LOAD" _ arg                         {% (d) => "0xf" + d[2] + "65" %}
+                    | "POPF" _ arg                         {% (d) => "0xf" + d[2] + "85" %}
+                    | "PUSHF" _ arg                        {% (d) => "0xf" + d[2] + "75" %}
 
 # Registry
 registry           -> "INC" _ varg                          {% (d) => "0xf" + d[2] + "1e" %}

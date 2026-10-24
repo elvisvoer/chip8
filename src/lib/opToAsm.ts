@@ -112,13 +112,13 @@ export function opToAsm(op: number) {
         case 0x33:
           return `BCDC V${xStr}`;
         case 0x55:
-          return `SAVE V${xStr}`;
+          return `SAVE 0x${xStr}`;
         case 0x65:
-          return `LOAD V${xStr}`;
+          return `LOAD 0x${xStr}`;
         case 0x75:
-          return `PUSHF V${xStr}`;
+          return `PUSHF 0x${xStr}`;
         case 0x85:
-          return `POPF V${xStr}`;
+          return `POPF 0x${xStr}`;
       }
     }
   }
