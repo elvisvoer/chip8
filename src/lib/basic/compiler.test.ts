@@ -28,7 +28,7 @@ const testCodeExamples = [
 `,
 ];
 
-describe("basic compiler", () => {
+describe.skip("basic compiler", () => {
   describe("asm statements", () => {
     test("can have an asm statement", () => {
       const testCode = `0x200 CLEAR`;

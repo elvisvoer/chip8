@@ -13,11 +13,8 @@ const lexer = moo.compile({
     "^=": "^=",
     "<<=": "<<=",
     ">>=": ">>=",
-    lte: "<=",
-    lt: "<",
-    gte: ">=",
-    gt: ">",
-    eq: "==",
+    "==": "==",
+    "!=": "!=",
     lparan: "(",
     rparan: ")",
     comma: ",",
@@ -441,11 +438,8 @@ comparison_expression
         %}
 
 comparison_operator
-    -> ">"   {% convertTokenId %}
-    |  ">="  {% convertTokenId %}
-    |  "<"   {% convertTokenId %}
-    |  "<="  {% convertTokenId %}
-    |  "=="  {% convertTokenId %}
+    -> "=="  {% convertTokenId %}
+    |  "!="  {% convertTokenId %}
 
 additive_expression
     -> multiplicative_expression    {% id %}

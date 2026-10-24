@@ -17,11 +17,8 @@ const lexer = moo.compile({
     "^=": "^=",
     "<<=": "<<=",
     ">>=": ">>=",
-    lte: "<=",
-    lt: "<",
-    gte: ">=",
-    gt: ">",
-    eq: "==",
+    "==": "==",
+    "!=": "!=",
     lparan: "(",
     rparan: ")",
     comma: ",",
@@ -291,11 +288,8 @@ var grammar = {
             end: d[4].end
         })
                 },
-    {"name": "comparison_operator", "symbols": [{"literal":">"}], "postprocess": convertTokenId},
-    {"name": "comparison_operator", "symbols": [{"literal":">="}], "postprocess": convertTokenId},
-    {"name": "comparison_operator", "symbols": [{"literal":"<"}], "postprocess": convertTokenId},
-    {"name": "comparison_operator", "symbols": [{"literal":"<="}], "postprocess": convertTokenId},
     {"name": "comparison_operator", "symbols": [{"literal":"=="}], "postprocess": convertTokenId},
+    {"name": "comparison_operator", "symbols": [{"literal":"!="}], "postprocess": convertTokenId},
     {"name": "additive_expression", "symbols": ["multiplicative_expression"], "postprocess": id},
     {"name": "additive_expression", "symbols": ["multiplicative_expression", "_", /[+-]/, "_", "additive_expression"], "postprocess": 
         d => ({

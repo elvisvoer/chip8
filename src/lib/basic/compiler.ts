@@ -70,6 +70,11 @@ function astNodeToAsm(node: any, acc: string[]): void {
                 return arg.value;
               case "var_reference":
                 return arg.var_name.value;
+              case "binary_operation":
+                return binaryExprToAsm(arg);
+              default:
+                console.log(JSON.stringify(arg, undefined, 2));
+                throw new Error("Unknown arg");
             }
           })
           .join(" ");
