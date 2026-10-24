@@ -115,8 +115,6 @@ let loopIntervalId: any = null;
 
 // main loop
 function loop() {
-  // make CPU clock tick 2 times faster than timers and display update
-  emulator.tick();
   emulator.tick();
   emulator.updateTimers();
 }
