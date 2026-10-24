@@ -4,9 +4,9 @@ import { compileAsm } from "../asm/assembler";
 import basicGrm from "./basic";
 
 function binaryExprToAsm(item: any) {
-  const left = item.name.value;
-  const operator = item.operator[0].value;
-  const right = item.value[0].value;
+  const left = item.left.var_name?.value ?? item.left.value;
+  const operator = item.operator.value;
+  const right = item.right.var_name?.value ?? item.right.value;
 
   return `${left} ${operator} ${right}`;
 }
@@ -38,12 +38,10 @@ function callExprToAsm(item: any) {
 function repeatLoopToAsm(node: any, acc: string[]): void {
   const initialOffset = 0x200 + acc.length * 2;
   let offset = initialOffset;
-  const statements = node.code.statements.flat();
+  const statements = node.code;
 
-  statements.forEach((s: any) => {
-    astNodeToAsm(s, acc);
-  });
-  offset += 2 * (statements.length - 1); // length - 1 because we already added 2 to the offset
+  astNodeToAsm(statements, acc);
+  offset += 2;
 
   acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
   offset += 2;
@@ -83,13 +81,23 @@ function astNodeToAsm(node: any, acc: string[]): void {
       acc.push(`${callExprToAsm(node)}`);
       break;
     case "var_assignment":
-      acc.push(`${node.var_name.value} ${node.operator.value} ${node.value.var_name?.value ?? node.value.value}`);
+      acc.push(
+        `${node.var_name.value} ${node.operator.value} ${node.value.var_name?.value ?? node.value.value}`,
+      );
       break;
     case "hex_literal":
       acc.push(`${node.value}`);
       break;
     case "goto_expression":
       acc.push(`JUMP ${node.label.value}`);
+      break;
+    case "code_block":
+      {
+        const statements = node.statements.flat();
+        statements.forEach((s: any) => {
+          astNodeToAsm(s, acc);
+        });
+      }
       break;
     case "repeat_loop":
       repeatLoopToAsm(node, acc);
@@ -103,44 +111,21 @@ function astNodeToAsm(node: any, acc: string[]): void {
 }
 
 function astToAsm(astNodes: any[]): string {
-  let asmLines: string[] = [];
+  let result: string[] = [];
   const labelMapping = new Map<string, string>();
 
   astNodes.forEach((node) => {
-    switch (node.type) {
-      case "asm_line":
-      case "call_expression":
-      case "var_assignment":
-      case "hex_literal":
-      case "goto_expression":
-      case "repeat_loop":
-        astNodeToAsm(node, asmLines);
-        break;
-      case "label_expression":
-        {
-          const offset = 0x200 + asmLines.length * 2;
-          const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
-          labelMapping.set(node.label.value, offsetStr);
-          astNodeToAsm(node.arguments[0], asmLines);
-        }
-        break;
-      case "comment":
-        return;
-      case "code_block":
-        {
-          const statements = node.statements.flat();
-          statements.forEach((s: any) => {
-            astNodeToAsm(s, asmLines);
-          });
-        }
-        break;
-      default:
-        console.log(node);
-        throw new Error("Unknown command");
+    if (node.type === "label_expression") {
+      const offset = 0x200 + result.length * 2;
+      const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+      labelMapping.set(node.label.value, offsetStr);
+      astNodeToAsm(node.arguments[0], result);
+    } else {
+      astNodeToAsm(node, result);
     }
   });
 
-  asmLines = asmLines.map((line) => {
+  result = result.map((line) => {
     const labelList = Array.from(labelMapping.keys());
     for (let i = 0; i < labelList.length; i++) {
       const label = labelList[i];
@@ -152,7 +137,7 @@ function astToAsm(astNodes: any[]): string {
     return line;
   });
 
-  return asmLines.join("\n");
+  return result.join("\n");
 }
 
 export function compileBasic(data: string): Uint8Array {

@@ -53,6 +53,8 @@ const lexer = moo.compile({
             proc: "proc",
             while: "while",
             for: "for",
+            repeat: "repeat",
+            until: "until",
             else: "else",
             in: "in",
             if: "if",
@@ -192,10 +194,11 @@ executable_statement
    -> return_statement     {% id %}
    |  asm_line             {% id %}
    |  var_assignment       {% id %}
-   |  call_statement       {% id %}
+#    |  call_statement       {% id %}
    |  line_comment         {% id %}
 #    |  indexed_assignment   {% id %}
-   |  while_loop           {% id %}
+   |  repeat_loop          {% id %}
+#    |  while_loop           {% id %}
 #    |  if_statement         {% id %}
 #    |  for_loop             {% id %}
 
@@ -320,6 +323,28 @@ while_loop
                 body: d[4],
                 start: tokenStart(d[0]),
                 end: d[4].end
+            })
+        %}
+
+repeat_loop
+    -> "repeat" __ code_block __ "until" __ expression
+        {%
+            d => ({
+                type: "repeat_loop",
+                code: d[2],
+                condition: d[6],
+                start: tokenStart(d[0]),
+                end: d[6].end
+            })
+        %}
+    | "repeat" __ executable_statement __ "until" __ expression
+        {%
+            d => ({
+                type: "repeat_loop",
+                code: d[2],
+                condition: d[6],
+                start: tokenStart(d[0]),
+                end: d[6].end
             })
         %}
 

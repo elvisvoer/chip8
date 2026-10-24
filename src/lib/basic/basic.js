@@ -57,6 +57,8 @@ const lexer = moo.compile({
             proc: "proc",
             while: "while",
             for: "for",
+            repeat: "repeat",
+            until: "until",
             else: "else",
             in: "in",
             if: "if",
@@ -167,9 +169,8 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["return_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["asm_line"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["while_loop"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["repeat_loop"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
         d => ({
             type: "return_statement",
@@ -240,6 +241,24 @@ var grammar = {
             body: d[4],
             start: tokenStart(d[0]),
             end: d[4].end
+        })
+                },
+    {"name": "repeat_loop", "symbols": [{"literal":"repeat"}, "__", "code_block", "__", {"literal":"until"}, "__", "expression"], "postprocess": 
+        d => ({
+            type: "repeat_loop",
+            code: d[2],
+            condition: d[6],
+            start: tokenStart(d[0]),
+            end: d[6].end
+        })
+                },
+    {"name": "repeat_loop", "symbols": [{"literal":"repeat"}, "__", "executable_statement", "__", {"literal":"until"}, "__", "expression"], "postprocess": 
+        d => ({
+            type: "repeat_loop",
+            code: d[2],
+            condition: d[6],
+            start: tokenStart(d[0]),
+            end: d[6].end
         })
                 },
     {"name": "argument_list", "symbols": [], "postprocess": () => []},
