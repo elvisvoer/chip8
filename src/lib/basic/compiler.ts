@@ -11,30 +11,6 @@ function binaryExprToAsm(item: any) {
   return `${left} ${operator} ${right}`;
 }
 
-function callExprToAsm(item: any) {
-  if (item.arguments.length === 0) {
-    return `${item.name.value}`;
-  }
-
-  const args = item.arguments.flat().map((arg: any) => {
-    if (arg.type === "identifier") {
-      return arg.value;
-    }
-
-    if (arg.type === "hex_literal") {
-      return arg.value;
-    }
-
-    if (arg.type === "var_assignment" || arg.type === "boolean_expr") {
-      return binaryExprToAsm(arg);
-    }
-
-    throw new Error("wtf!?");
-  });
-
-  return `${item.name.value} ${args.join(" ")}`;
-}
-
 function repeatLoopToAsm(node: any, acc: string[]): void {
   const initialOffset = 0x200 + acc.length * 2;
   let offset = initialOffset;
@@ -82,9 +58,6 @@ function astNodeToAsm(node: any, acc: string[]): void {
         acc.push(`${command} ${args}`);
       }
       break;
-    case "call_expression":
-      acc.push(`${callExprToAsm(node)}`);
-      break;
     case "var_assignment":
       acc.push(
         `${node.var_name.value} ${node.operator.value} ${node.value.var_name?.value ?? node.value.value}`,
@@ -96,6 +69,9 @@ function astNodeToAsm(node: any, acc: string[]): void {
     case "goto_expression":
       acc.push(`JUMP ${node.label.value}`);
       break;
+    case "call_expression":
+      acc.push(`CALL ${node.fun_name.value}`);
+      break
     case "code_block":
       {
         const statements = node.statements.flat();
@@ -125,9 +101,18 @@ function astToAsm(astNodes: any[]): string {
       const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
       labelMapping.set(node.label.value, offsetStr);
       astNodeToAsm(node.arguments[0], result);
-    } else {
-      astNodeToAsm(node, result);
+      return;
     }
+
+    if (node.type === "fun_definition") {
+      const offset = 0x200 + result.length * 2;
+      const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+      labelMapping.set(node.name.value, offsetStr);
+      astNodeToAsm(node.body, result);
+      return;
+    }
+
+    astNodeToAsm(node, result);
   });
 
   result = result.map((line) => {

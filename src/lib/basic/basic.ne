@@ -47,7 +47,6 @@ const lexer = moo.compile({
         match: /[a-zA-Z_][a-zA-Z_0-9]*/,
         type: moo.keywords({
             fun: "fun",
-            proc: "proc",
             while: "while",
             for: "for",
             repeat: "repeat",
@@ -144,19 +143,6 @@ fun_definition
             })
         %}
 
-proc_definition
-    -> "proc" __ identifier _ "(" _ parameter_list _ ")" _ code_block
-        {%
-            d => ({
-                type: "proc_definition",
-                name: d[2],
-                parameters: d[6],
-                body: d[10],
-                start: tokenStart(d[0]),
-                end: d[10].end
-            })
-        %}
-
 parameter_list
     -> null        {% () => [] %}
     | identifier   {% d => [d[0]] %}
@@ -191,7 +177,7 @@ executable_statement
    -> return_statement     {% id %}
    |  asm_line             {% id %}
    |  var_assignment       {% id %}
-#    |  call_statement       {% id %}
+   |  call_statement       {% id %}
    |  line_comment         {% id %}
 #    |  indexed_assignment   {% id %}
    |  repeat_loop          {% id %}

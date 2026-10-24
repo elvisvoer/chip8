@@ -51,7 +51,6 @@ const lexer = moo.compile({
         match: /[a-zA-Z_][a-zA-Z_0-9]*/,
         type: moo.keywords({
             fun: "fun",
-            proc: "proc",
             while: "while",
             for: "for",
             repeat: "repeat",
@@ -134,16 +133,6 @@ var grammar = {
             end: d[10].end
         })
                 },
-    {"name": "proc_definition", "symbols": [{"literal":"proc"}, "__", "identifier", "_", {"literal":"("}, "_", "parameter_list", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
-        d => ({
-            type: "proc_definition",
-            name: d[2],
-            parameters: d[6],
-            body: d[10],
-            start: tokenStart(d[0]),
-            end: d[10].end
-        })
-                },
     {"name": "parameter_list", "symbols": [], "postprocess": () => []},
     {"name": "parameter_list", "symbols": ["identifier"], "postprocess": d => [d[0]]},
     {"name": "parameter_list", "symbols": ["identifier", "_", {"literal":","}, "_", "parameter_list"], "postprocess": 
@@ -166,6 +155,7 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["return_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["asm_line"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["repeat_loop"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
