@@ -60,6 +60,10 @@ export class CanvasDisplay {
       if (data[z]) {
         this.ctx.fillStyle = "green";
         this.ctx.fillRect(y * size, x * size, size, size);
+
+        this.ctx.strokeStyle = "#1a1a1a";
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(y * size, x * size, size, size);
       }
     }
   }
