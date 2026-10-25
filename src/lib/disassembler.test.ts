@@ -25,8 +25,8 @@ describe("Disassembler", () => {
     // "dt-test.ch8",
     // "ibm-logo.ch8",
     // "pong.ch8",
-    "snake.ch8",
-    // "sqrt-test.ch8",
+    // "snake.ch8",
+    "sqrt-test.ch8",
     // "zero-pong.ch8",
   ])("can correctly disassemble/assemble %1", (rom) => {
     const buffer = new Uint8Array(readFileSync(`public/${rom}`));
