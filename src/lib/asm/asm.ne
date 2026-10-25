@@ -31,8 +31,8 @@ jump               -> "JUMP" _ arg                          {% (d) => "1" + d[2]
                     | "JUMP IF"  _ varg _ eq_op _ arg       {% (d) => "3" + d[2] + d[6] %}
                     | "JUMP IF"  _ varg _ not_eq_op _ arg   {% (d) => "4" + d[2] + d[6] %}
                     | "JUMP TO" _ arg                       {% (d) => "b" + d[2] %}
-                    | "JEQ" _ varg _ varg _ arg             {% (d) => "5" + d[2] + d[4] + d[6] %}
-                    | "JNQ" _ varg _ varg _ arg             {% (d) => "9" + d[2] + d[4] + d[6] %}
+                    | "JUMP IF" _ varg _ eq_op _  varg      {% (d) => "5" + d[2] + d[6] + "0" %}
+                    | "JUMP IF" _ varg _ not_eq_op _  varg  {% (d) => "9" + d[2] + d[6] + "0" %}
                     | "SKIP IF KEY" _ eq_op _ varg          {% (d) => "e" + d[4] + "9e" %}
                     | "SKIP IF KEY" _ not_eq_op _ varg      {% (d) => "e" + d[4] + "a1" %}
 

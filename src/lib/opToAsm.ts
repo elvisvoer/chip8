@@ -41,9 +41,9 @@ export function opToAsm(op: number) {
     case 0x4:
       return `JUMP IF V${xStr} != 0x${nnStr}`;
     case 0x5:
-      return `JEQ V${xStr} V${yStr} 0x${nStr}`;
+      return `JUMP IF V${xStr} == V${yStr}`;
     case 0x9:
-      return `JNQ V${xStr} V${yStr} 0x${nStr}`;
+      return `JUMP IF V${xStr} != V${yStr}`;
     case 0x6:
       return `V${xStr} := 0x${nnStr}`;
     case 0x7:
