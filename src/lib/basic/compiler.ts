@@ -13,16 +13,12 @@ function binaryExprToAsm(item: any) {
 
 function repeatLoopToAsm(node: any, acc: string[]): void {
   const initialOffset = 0x200 + acc.length * 2;
-  let offset = initialOffset;
+  const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
   const statements = node.code;
 
   astNodeToAsm(statements, acc);
-  offset += 2;
 
   acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
-  offset += 2;
-
-  const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
   acc.push(`JUMP ${initialOffsetStr}`);
 }
 
@@ -66,9 +62,6 @@ function astNodeToAsm(node: any, acc: string[]): void {
     case "hex_literal":
       acc.push(`${node.value}`);
       break;
-    case "goto_expression":
-      acc.push(`JUMP ${node.label.value}`);
-      break;
     case "call_expression":
       acc.push(`CALL ${node.fun_name.value}`);
       break;
@@ -97,21 +90,13 @@ function astNodeToAsm(node: any, acc: string[]): void {
 
 function astToAsm(astNodes: any[]): string {
   let result: string[] = [];
-  const labelMapping = new Map<string, string>();
+  const symbols = new Map<string, string>();
 
   astNodes.forEach((node) => {
-    if (node.type === "label_expression") {
-      const offset = 0x200 + result.length * 2;
-      const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
-      labelMapping.set(node.label.value, offsetStr);
-      astNodeToAsm(node.arguments[0], result);
-      return;
-    }
-
     if (node.type === "fun_definition") {
       const offset = 0x200 + result.length * 2;
       const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
-      labelMapping.set(node.name.value, offsetStr);
+      symbols.set(node.name.value, offsetStr);
       astNodeToAsm(node.body, result);
       return;
     }
@@ -120,11 +105,11 @@ function astToAsm(astNodes: any[]): string {
   });
 
   result = result.map((line) => {
-    const labelList = Array.from(labelMapping.keys());
+    const labelList = Array.from(symbols.keys());
     for (let i = 0; i < labelList.length; i++) {
       const label = labelList[i];
       if (line.includes(label)) {
-        return line.replace(label, labelMapping.get(label)!);
+        return line.replace(label, symbols.get(label)!);
       }
     }
 
