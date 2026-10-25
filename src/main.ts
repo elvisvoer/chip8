@@ -143,14 +143,15 @@ async function fetchAndLoad(romName: string) {
 
 async function main() {
   const roms = [
-     // "ibm-logo.ch8",
+     "br8kout.ch8",
     // "chip8-picture.ch8",
     // "chipcross.ch8",
-    "dt-test.ch8",
+    // "dt-test.ch8",
+    // "ibm-logo.ch8",
     // "pong.ch8",
-    // "br8kout.ch8",
     // "snake.ch8",
     // "sqrt-test.ch8",
+    // "zero-pong.ch8",
   ];
   let currentRomIndex = 0;
 
