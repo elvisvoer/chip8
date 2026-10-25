@@ -1,4 +1,5 @@
 0x200 V6 := 0x01
+
 repeat {
   drawDisplay()
   0x204 READ V4
@@ -16,6 +17,7 @@ repeat {
 } until V3 == 0x00
 
 0x21c JUMP 0x202
+
 fun drawDisplay() {
   0x21e CLEAR
   0x222 I := 0x23a
