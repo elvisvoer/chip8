@@ -175,6 +175,7 @@ executable_statements
 executable_statement
    -> return_statement     {% id %}
    |  asm_line             {% id %}
+   |  code_block           {% id %}
    |  var_assignment       {% id %}
    |  call_statement       {% id %}
    |  line_comment         {% id %}

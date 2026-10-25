@@ -71,13 +71,17 @@ function astNodeToAsm(node: any, acc: string[]): void {
       break;
     case "call_expression":
       acc.push(`CALL ${node.fun_name.value}`);
-      break
+      break;
     case "code_block":
       {
-        const statements = node.statements.flat();
-        statements.forEach((s: any) => {
-          astNodeToAsm(s, acc);
-        });
+        const statements = node.statements;
+        if (Array.isArray(statements)) {
+          statements.flat().forEach((s: any) => {
+            astNodeToAsm(s, acc);
+          });
+        } else {
+          astNodeToAsm(statements, acc);
+        }
       }
       break;
     case "repeat_loop":

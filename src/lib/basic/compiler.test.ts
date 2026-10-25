@@ -28,7 +28,7 @@ const testCodeExamples = [
 `,
 ];
 
-describe.skip("basic compiler", () => {
+describe("basic compiler", () => {
   describe("asm statements", () => {
     test("can have an asm statement", () => {
       const testCode = `0x200 CLEAR`;
@@ -128,6 +128,22 @@ describe.skip("basic compiler", () => {
           I := 0x22a
           # some comment
           V0 := 0xed
+        }`;
+      const expectedResult = ["0x200 I := 0x22a", "0x202 V0 := 0xed"].join(
+        "\n",
+      );
+      const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+
+        test("can have nested code blocks", () => {
+      const testCode = `{
+          I := 0x22a
+          # some comment
+          {
+            V0 := 0xed
+          }
         }`;
       const expectedResult = ["0x200 I := 0x22a", "0x202 V0 := 0xed"].join(
         "\n",

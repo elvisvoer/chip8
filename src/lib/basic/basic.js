@@ -153,6 +153,7 @@ var grammar = {
                 },
     {"name": "executable_statement", "symbols": ["return_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["asm_line"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["code_block"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
