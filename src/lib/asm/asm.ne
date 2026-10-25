@@ -22,63 +22,63 @@ command            -> noop
                     | hex_literal
 
 # Simple instructions
-noop               -> "NOOP"                                {% () => "0x0000" %}
-clear              -> "CLEAR"                               {% () => "0x00e0" %}
-hires              -> "HIRES"                               {% () => "0x00ff" %}
+noop               -> "NOOP"                                {% () => "0000" %}
+clear              -> "CLEAR"                               {% () => "00e0" %}
+hires              -> "HIRES"                               {% () => "00ff" %}
 
 # Jump instructions
-jump               -> "JUMP" _ arg                          {% (d) => "0x1" + d[2] %}
-                    | "JUMP IF"  _ varg _ eq_op _ arg       {% (d) => "0x3" + d[2] + d[6] %}
-                    | "JUMP IF"  _ varg _ not_eq_op _ arg   {% (d) => "0x4" + d[2] + d[6] %}
-                    | "JUMP TO" _ arg                       {% (d) => "0xb" + d[2] %}
-                    | "JEQ" _ varg _ varg _ arg             {% (d) => "0x5" + d[2] + d[4] + d[6] %}
-                    | "JNQ" _ varg _ varg _ arg             {% (d) => "0x9" + d[2] + d[4] + d[6] %}
-                    | "SKIP IF KEY" _ eq_op _ varg          {% (d) => "0xe" + d[4] + "9e" %}
-                    | "SKIP IF KEY" _ not_eq_op _ varg      {% (d) => "0xe" + d[4] + "a1" %}
+jump               -> "JUMP" _ arg                          {% (d) => "1" + d[2] %}
+                    | "JUMP IF"  _ varg _ eq_op _ arg       {% (d) => "3" + d[2] + d[6] %}
+                    | "JUMP IF"  _ varg _ not_eq_op _ arg   {% (d) => "4" + d[2] + d[6] %}
+                    | "JUMP TO" _ arg                       {% (d) => "b" + d[2] %}
+                    | "JEQ" _ varg _ varg _ arg             {% (d) => "5" + d[2] + d[4] + d[6] %}
+                    | "JNQ" _ varg _ varg _ arg             {% (d) => "9" + d[2] + d[4] + d[6] %}
+                    | "SKIP IF KEY" _ eq_op _ varg          {% (d) => "e" + d[4] + "9e" %}
+                    | "SKIP IF KEY" _ not_eq_op _ varg      {% (d) => "e" + d[4] + "a1" %}
 
 # Expressions
-expr                -> "I" _ asg_op _ arg                   {% (d) => "0xa" + d[4] %}
-                    | varg _ asg_op _ arg                   {% (d) => "0x6" + d[0] + d[4] %}
-                    | varg _ asg_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "0"  %}
-                    | varg _ add_op _ arg                   {% (d) => "0x7" + d[0] + d[4] %}
-                    | varg _ add_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "4"  %}
-                    | varg _ sub_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "5"  %}
-                    | varg _ reverse_sub_op _ varg          {% (d) => "0x8" + d[0] + d[4]+ "7"  %}
-                    | varg _ and_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "2"  %}
-                    | varg _ or_op _ varg                   {% (d) => "0x8" + d[0] + d[4]+ "1"  %}
-                    | varg _ xor_op _ varg                  {% (d) => "0x8" + d[0] + d[4]+ "3"  %}
-                    | varg _ shift_right_op _ varg          {% (d) => "0x8" + d[0] + d[4]+ "6"  %}
-                    | varg _ shift_left_op _ varg           {% (d) => "0x8" + d[0] + d[4]+ "e"  %}
+expr                -> "I" _ asg_op _ arg                   {% (d) => "a" + d[4] %}
+                    | varg _ asg_op _ arg                   {% (d) => "6" + d[0] + d[4] %}
+                    | varg _ asg_op _ varg                  {% (d) => "8" + d[0] + d[4]+ "0"  %}
+                    | varg _ add_op _ arg                   {% (d) => "7" + d[0] + d[4] %}
+                    | varg _ add_op _ varg                  {% (d) => "8" + d[0] + d[4]+ "4"  %}
+                    | varg _ sub_op _ varg                  {% (d) => "8" + d[0] + d[4]+ "5"  %}
+                    | varg _ reverse_sub_op _ varg          {% (d) => "8" + d[0] + d[4]+ "7"  %}
+                    | varg _ and_op _ varg                  {% (d) => "8" + d[0] + d[4]+ "2"  %}
+                    | varg _ or_op _ varg                   {% (d) => "8" + d[0] + d[4]+ "1"  %}
+                    | varg _ xor_op _ varg                  {% (d) => "8" + d[0] + d[4]+ "3"  %}
+                    | varg _ shift_right_op _ varg          {% (d) => "8" + d[0] + d[4]+ "6"  %}
+                    | varg _ shift_left_op _ varg           {% (d) => "8" + d[0] + d[4]+ "e"  %}
 
 # Built-in instructions
-draw               -> "DRAW" _ varg _ varg _ arg            {% (d) => "0xd" + d[2] + d[4] + d[6] %}
-rand               -> "RAND" _ varg _ arg                   {% (d) => "0xc" + d[2] + d[4] %}
-font               -> "FONT" _ varg                         {% (d) => "0xf" + d[2] + "29" %}
-read               -> "READ" _ varg                         {% (d) => "0xf" + d[2] + "0a" %}
-bcdc               -> "BCDC" _ varg                         {% (d) => "0xf" + d[2] + "33" %}
+draw               -> "DRAW" _ varg _ varg _ arg            {% (d) => "d" + d[2] + d[4] + d[6] %}
+rand               -> "RAND" _ varg _ arg                   {% (d) => "c" + d[2] + d[4] %}
+font               -> "FONT" _ varg                         {% (d) => "f" + d[2] + "29" %}
+read               -> "READ" _ varg                         {% (d) => "f" + d[2] + "0a" %}
+bcdc               -> "BCDC" _ varg                         {% (d) => "f" + d[2] + "33" %}
 
 # Function instructions
-func               -> "CALL" _ arg                          {% (d) => "0x2" + d[2] %}
-                    | "RETURN"                              {% () => "0x00ee" %}
+func               -> "CALL" _ arg                          {% (d) => "2" + d[2] %}
+                    | "RETURN"                              {% () => "00ee" %}
 
 # Memory instructions
-memory             -> "SAVE" _ arg                         {% (d) => "0xf" + d[2] + "55" %}
-                    | "LOAD" _ arg                         {% (d) => "0xf" + d[2] + "65" %}
-                    | "POPF" _ arg                         {% (d) => "0xf" + d[2] + "85" %}
-                    | "PUSHF" _ arg                        {% (d) => "0xf" + d[2] + "75" %}
+memory             -> "SAVE" _ arg                         {% (d) => "f" + d[2] + "55" %}
+                    | "LOAD" _ arg                         {% (d) => "f" + d[2] + "65" %}
+                    | "POPF" _ arg                         {% (d) => "f" + d[2] + "85" %}
+                    | "PUSHF" _ arg                        {% (d) => "f" + d[2] + "75" %}
 
 # Registry
-registry           -> "INC" _ varg                          {% (d) => "0xf" + d[2] + "1e" %}
+registry           -> "INC" _ varg                          {% (d) => "f" + d[2] + "1e" %}
 
 # Timers
-timers             -> varg _ asg_op _ "DT"                  {% (d) => "0xf" + d[0] + "07" %}
-                    | "DT" _ asg_op _ varg                  {% (d) => "0xf" + d[4] + "15" %}
-                    | "ST" _ asg_op _ varg                  {% (d) => "0xf" + d[4] + "18" %}
+timers             -> varg _ asg_op _ "DT"                  {% (d) => "f" + d[0] + "07" %}
+                    | "DT" _ asg_op _ varg                  {% (d) => "f" + d[4] + "15" %}
+                    | "ST" _ asg_op _ varg                  {% (d) => "f" + d[4] + "18" %}
 
 # Mist
 varg               -> "V" hex                               {% (d) => d[1] %}
 arg                -> "0x" hex                              {% (d) => d[1] %}
-hex_literal        -> "0x" hex                              {% (d) => "0x" + d[1] %}
+hex_literal        -> "0x" hex                              {% (d) => d[1] %}
 hex                -> [0-9a-fA-F]:+                         {% (d) => d[0].join("") %}
 
 asg_op             -> ":="

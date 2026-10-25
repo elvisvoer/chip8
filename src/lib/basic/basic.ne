@@ -125,7 +125,6 @@ top_level_statements
 
 top_level_statement
     -> fun_definition   {% id %}
-    |  proc_definition  {% id %}
     |  line_comment     {% id %}
     |  code_block       {% id %}
     |  executable_statement {% id %}

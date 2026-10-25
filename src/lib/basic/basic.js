@@ -119,7 +119,6 @@ var grammar = {
         d => []
                 },
     {"name": "top_level_statement", "symbols": ["fun_definition"], "postprocess": id},
-    {"name": "top_level_statement", "symbols": ["proc_definition"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["code_block"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["executable_statement"], "postprocess": id},
