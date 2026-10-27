@@ -29,7 +29,7 @@ const resize = () => {
 function cpuToDisplayText(cpu: CPU, op: number) {
   const result = [];
   result.push(
-    "     0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  6 |  9 |  a |  b |  c |  d |  e |  f ",
+    "     0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 |  a |  b |  c |  d |  e |  f ",
   );
   result.push(
     ` V: ${cpu.v.map((v) => v.toString(16).padStart(2, " ")).join(" | ")}`,
