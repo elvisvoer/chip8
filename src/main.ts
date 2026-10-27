@@ -89,6 +89,7 @@ const qKeyboardMapping: any = {
 (window as any).ead = [];
 let loopDetected = false;
 let loopItems: number[] = [];
+let mainLoopId: any = null;
 
 const emulator = new Emulator(4 * 1024, (op, cpu) => {
   display.write(
@@ -120,10 +121,16 @@ const emulator = new Emulator(4 * 1024, (op, cpu) => {
 
   codeElement.innerHTML = executedCode.join("\n");
 
+  if (mainLoopId === null) {
+    codeElement.querySelector(".current-op")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "center",
+    });
+  }
+
   debug.writeText(cpuToDisplayText(cpu, op));
 });
-
-let loopIntervalId: any = null;
 
 // main loop
 function loop() {
@@ -132,15 +139,15 @@ function loop() {
 }
 
 function stopLoop() {
-  loopIntervalId && clearInterval(loopIntervalId);
-  loopIntervalId = null;
+  mainLoopId && clearInterval(mainLoopId);
+  mainLoopId = null;
 }
 
 function startLoop() {
   (window as any).ead = [];
   loopDetected = false;
   stopLoop();
-  loopIntervalId = setInterval(loop, 0);
+  mainLoopId = setInterval(loop, 0);
 }
 
 function load(data: Uint8Array) {
