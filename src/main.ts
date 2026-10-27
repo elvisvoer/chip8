@@ -189,7 +189,6 @@ async function main() {
       case "n":
         currentRomIndex = (currentRomIndex + 1) % roms.length;
         await fetchAndLoad(roms[currentRomIndex]);
-        startLoop();
         break;
       case "t":
         stopLoop();
