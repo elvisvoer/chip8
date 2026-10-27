@@ -3,7 +3,6 @@ import Emulator, { CPU } from "./lib/emulator.ts";
 import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom, uploadRom } from "./utils.ts";
 import { opToAsm } from "./lib/opToAsm.ts";
-import { bufferToAsm } from "./lib/disassembler.ts";
 
 const displayElement = document.getElementById("display")! as HTMLCanvasElement;
 const display = new CanvasDisplay(displayElement);
@@ -12,6 +11,7 @@ const debugElement = document.getElementById("debug")! as HTMLCanvasElement;
 const debug = new CanvasDisplay(debugElement, false);
 
 const codeElement = document.getElementById("code")! as HTMLCanvasElement;
+let executedCode: string[] = [];
 
 const resize = () => {
   // needs to be a multiple of 64 to avoid gaps in fillRect drawing
@@ -100,14 +100,28 @@ const emulator = new Emulator(4 * 1024, (op, cpu) => {
     emulator.framebufferHeight,
   );
 
+  const offsetStr = `0x${cpu.pc.toString(16).padStart(3, "0")}`;
+  const opStr = `${offsetStr} ${opToAsm(op)}`;
+
   if (!loopDetected) {
-    const opStr = `0x${cpu.pc.toString(16).padStart(3, "0")} ${opToAsm(op)}`;
     (window as any).ead.length < 200 && (window as any).ead.push(opStr);
 
     loopDetected = loopItems.length === 10 && loopItems.every((i) => i === op);
     loopItems.unshift(op);
     loopItems.splice(10);
   }
+
+  const index = Math.floor((cpu.pc - 0x200) / 2);
+  executedCode[index] = `<span class="current-op">${opStr}</span>`;
+  for (let i = 0; i < Math.max(index, executedCode.length); i++) {
+    if (i === index) {
+      continue;
+    }
+    executedCode[i] ??= "";
+    executedCode[i] = executedCode[i].replace(' class="current-op"', "");
+  }
+
+  codeElement.innerHTML = executedCode.join("\n");
 
   debug.writeText(cpuToDisplayText(cpu, op));
 });
@@ -140,12 +154,13 @@ async function fetchAndLoad(romName: string) {
   const data = await fetchRom(romName);
   load(data);
   console.clear();
-  codeElement.innerText = bufferToAsm(data);
+  codeElement.innerText = "";
+  executedCode = [];
 }
 
 async function main() {
   const roms = [
-     "br8kout.ch8",
+    "br8kout.ch8",
     "chip8-picture.ch8",
     "chipcross.ch8",
     "dt-test.ch8",

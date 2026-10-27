@@ -59,3 +59,7 @@ pre {
   overflow: scroll;
   max-height: 100%;
 }
+
+.current-op {
+  color: red;
+}
