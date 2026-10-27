@@ -3,6 +3,7 @@ import Emulator, { CPU } from "./lib/emulator.ts";
 import { CanvasDisplay } from "./lib/display.ts";
 import { fetchRom, uploadRom } from "./utils.ts";
 import { opToAsm } from "./lib/opToAsm.ts";
+import { bufferToAsm } from "./lib/disassembler.ts";
 
 const displayElement = document.getElementById("display")! as HTMLCanvasElement;
 const display = new CanvasDisplay(displayElement);
@@ -10,11 +11,13 @@ const display = new CanvasDisplay(displayElement);
 const debugElement = document.getElementById("debug")! as HTMLCanvasElement;
 const debug = new CanvasDisplay(debugElement, false);
 
+const codeElement = document.getElementById("code")! as HTMLCanvasElement;
+
 const resize = () => {
   // needs to be a multiple of 64 to avoid gaps in fillRect drawing
   const width = Math.min(
     64 * Math.floor(displayElement.parentElement!.offsetWidth / 64),
-    1152,
+    1024,
   );
 
   const heightRatio = 0.5;
@@ -44,8 +47,6 @@ function cpuToDisplayText(cpu: CPU, op: number) {
   result.push(
     ` Return stack: ${cpu.r.reverse().map((rs) => ` ${rs.toString(16).padStart(4, "0")}`)}`,
   );
-
-  console.log(`0x${cpu.pc.toString(16).padStart(3, "0")} ${opToAsm(op)}`);
 
   return result;
 }
@@ -139,19 +140,20 @@ async function fetchAndLoad(romName: string) {
   const data = await fetchRom(romName);
   load(data);
   console.clear();
+  codeElement.innerText = bufferToAsm(data);
 }
 
 async function main() {
   const roms = [
      "br8kout.ch8",
-    // "chip8-picture.ch8",
-    // "chipcross.ch8",
-    // "dt-test.ch8",
-    // "ibm-logo.ch8",
-    // "pong.ch8",
-    // "snake.ch8",
-    // "sqrt-test.ch8",
-    // "zero-pong.ch8",
+    "chip8-picture.ch8",
+    "chipcross.ch8",
+    "dt-test.ch8",
+    "ibm-logo.ch8",
+    "pong.ch8",
+    "snake.ch8",
+    "sqrt-test.ch8",
+    "zero-pong.ch8",
   ];
   let currentRomIndex = 0;
 

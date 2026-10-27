@@ -11,9 +11,16 @@
 </head>
 
 <body>
-  <canvas id="display"></canvas>
-  <canvas id="debug"></canvas>
+  <div class="page">
+    <div class="microlight" id="code"></div>
+    <div class="displays">
+      <canvas id="display"></canvas>
+      <canvas id="debug"></canvas>
+    </div>
+  </div>
+
   <script type="module" src="/src/main.ts"></script>
+  <script>import "microlight";</script>
 </body>
 
 </html>
