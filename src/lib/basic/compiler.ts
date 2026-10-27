@@ -94,10 +94,14 @@ function astToAsm(astNodes: any[]): string {
 
   astNodes.forEach((node) => {
     if (node.type === "fun_definition") {
-      const offset = 0x200 + result.length * 2;
-      const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+      let offset = 0x200 + result.length * 2;
+      let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
       symbols.set(node.name.value, offsetStr);
       astNodeToAsm(node.body, result);
+
+      offset = 0x200 + result.length * 2;
+      offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
+      result.push("RETURN");
       return;
     }
 
