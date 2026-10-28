@@ -154,12 +154,16 @@ function load(data: Uint8Array) {
   emulator.load(data);
 }
 
-async function fetchAndLoad(romName: string) {
-  const data = await fetchRom(romName);
-  load(data);
+function clear() {
   console.clear();
   codeElement.innerText = "";
   executedCode = [];
+}
+
+async function fetchAndLoad(romName: string) {
+  const data = await fetchRom(romName);
+  load(data);
+  clear();
 }
 
 async function main() {
@@ -188,7 +192,7 @@ async function main() {
       case "o":
         const rom = await uploadRom();
         load(rom.data);
-        startLoop();
+        clear();
         break;
       case "n":
         currentRomIndex = (currentRomIndex + 1) % roms.length;

@@ -37,6 +37,9 @@ describe("Disassembler", () => {
       readFileSync(`public/${rom.replace("ch8", "b")}`, "utf-8"),
     );
 
+     const eBuffer = compileBasic(readFileSync(`public/elvis.b`, "utf-8"))
+     writeFileSync("public/elvis.ch8", eBuffer);
+
     // writeFileSync(`public/${rom.replace("ch8", "b.ch8")}`, newBuffer);
 
     expect(areBuffersEqual(buffer, newBuffer)).toBeTruthy();
