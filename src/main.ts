@@ -138,16 +138,25 @@ function loop() {
   emulator.updateTimers();
 }
 
-function stopLoop() {
-  mainLoopId && clearInterval(mainLoopId);
+function startLoop() {
+  mainLoopId = requestAnimationFrame(startLoop);
+  loop();
+}
+
+function stopLoop(loopId: number) {
+  cancelAnimationFrame(loopId);
+}
+
+function stop() {
+  mainLoopId && stopLoop(mainLoopId);
   mainLoopId = null;
 }
 
-function startLoop() {
+function start() {
   (window as any).ead = [];
   loopDetected = false;
-  stopLoop();
-  mainLoopId = setInterval(loop, 0);
+  stop();
+  mainLoopId = startLoop();
 }
 
 function load(data: Uint8Array) {
@@ -199,11 +208,11 @@ async function main() {
         await fetchAndLoad(roms[currentRomIndex]);
         break;
       case "t":
-        stopLoop();
+        stop();
         loop();
         break;
       case "g":
-        startLoop();
+        start();
         break;
       case "enter":
         await fetchAndLoad(roms[currentRomIndex]);
@@ -220,7 +229,7 @@ async function main() {
 
   // initial ROM load
   await fetchAndLoad(roms[currentRomIndex]);
-  startLoop();
+  start();
 }
 
 main();
