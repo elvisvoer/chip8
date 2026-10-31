@@ -51,18 +51,10 @@ const lexer = moo.compile({
         match: /[a-zA-Z_][a-zA-Z_0-9]*/,
         type: moo.keywords({
             fun: "fun",
+            do: "do",
             while: "while",
-            for: "for",
             repeat: "repeat",
             until: "until",
-            else: "else",
-            in: "in",
-            if: "if",
-            return: "return",
-            and: "and",
-            or: "or",
-            true: "true",
-            false: "false"
         })
     }
 });
@@ -158,6 +150,7 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["repeat_loop"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
         d => ({
             type: "return_statement",
@@ -242,6 +235,24 @@ var grammar = {
     {"name": "repeat_loop", "symbols": [{"literal":"repeat"}, "__", "executable_statement", "__", {"literal":"until"}, "__", "expression"], "postprocess": 
         d => ({
             type: "repeat_loop",
+            code: d[2],
+            condition: d[6],
+            start: tokenStart(d[0]),
+            end: d[6].end
+        })
+                },
+    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "__", "code_block", "__", {"literal":"while"}, "__", "expression"], "postprocess": 
+        d => ({
+            type: "do_while_loop",
+            code: d[2],
+            condition: d[6],
+            start: tokenStart(d[0]),
+            end: d[6].end
+        })
+                },
+    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "__", "executable_statement", "__", {"literal":"while"}, "__", "expression"], "postprocess": 
+        d => ({
+            type: "do_while_loop",
             code: d[2],
             condition: d[6],
             start: tokenStart(d[0]),

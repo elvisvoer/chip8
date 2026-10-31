@@ -3,22 +3,29 @@ import { compileAsm } from "../asm/assembler";
 // @ts-ignore
 import basicGrm from "./basic";
 
-function binaryExprToAsm(item: any) {
+const oppositeOperator = {
+  "==": "!=",
+  "!=": "==",
+};
+
+function binaryExprToAsm(item: any, useOppositeOperator = false) {
   const left = item.left.var_name?.value ?? item.left.value;
-  const operator = item.operator.value;
+  const operator = useOppositeOperator
+    ? (oppositeOperator as any)[item.operator.value]
+    : item.operator.value;
   const right = item.right.var_name?.value ?? item.right.value;
 
   return `${left} ${operator} ${right}`;
 }
 
-function repeatLoopToAsm(node: any, acc: string[]): void {
+function uncontrolledLoopToAsm(node: any, acc: string[], useOppositeOperator = false): void {
   const initialOffset = 0x200 + acc.length * 2;
   const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
   const statements = node.code;
 
   astNodeToAsm(statements, acc);
 
-  acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
+  acc.push(`JUMP IF ${binaryExprToAsm(node.condition, useOppositeOperator)}`);
   acc.push(`JUMP ${initialOffsetStr}`);
 }
 
@@ -78,7 +85,10 @@ function astNodeToAsm(node: any, acc: string[]): void {
       }
       break;
     case "repeat_loop":
-      repeatLoopToAsm(node, acc);
+      uncontrolledLoopToAsm(node, acc);
+      break;
+    case "do_while_loop":
+      uncontrolledLoopToAsm(node, acc, true);
       break;
     case "comment":
       break;

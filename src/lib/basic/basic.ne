@@ -47,18 +47,10 @@ const lexer = moo.compile({
         match: /[a-zA-Z_][a-zA-Z_0-9]*/,
         type: moo.keywords({
             fun: "fun",
+            do: "do",
             while: "while",
-            for: "for",
             repeat: "repeat",
             until: "until",
-            else: "else",
-            in: "in",
-            if: "if",
-            return: "return",
-            and: "and",
-            or: "or",
-            true: "true",
-            false: "false"
         })
     }
 });
@@ -181,6 +173,7 @@ executable_statement
    |  line_comment         {% id %}
 #    |  indexed_assignment   {% id %}
    |  repeat_loop          {% id %}
+   |  do_while_loop        {% id %}
 #    |  while_loop           {% id %}
 #    |  if_statement         {% id %}
 #    |  for_loop             {% id %}
@@ -324,6 +317,28 @@ repeat_loop
         {%
             d => ({
                 type: "repeat_loop",
+                code: d[2],
+                condition: d[6],
+                start: tokenStart(d[0]),
+                end: d[6].end
+            })
+        %}
+
+do_while_loop
+    -> "do" __ code_block __ "while" __ expression
+        {%
+            d => ({
+                type: "do_while_loop",
+                code: d[2],
+                condition: d[6],
+                start: tokenStart(d[0]),
+                end: d[6].end
+            })
+        %}
+    | "do" __ executable_statement __ "while" __ expression
+        {%
+            d => ({
+                type: "do_while_loop",
                 code: d[2],
                 condition: d[6],
                 start: tokenStart(d[0]),
