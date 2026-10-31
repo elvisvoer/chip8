@@ -18,7 +18,11 @@ function binaryExprToAsm(item: any, useOppositeOperator = false) {
   return `${left} ${operator} ${right}`;
 }
 
-function uncontrolledLoopToAsm(node: any, acc: string[], useOppositeOperator = false): void {
+function uncontrolledLoopToAsm(
+  node: any,
+  acc: string[],
+  useOppositeOperator = false,
+): void {
   const initialOffset = 0x200 + acc.length * 2;
   const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
   const statements = node.code;
@@ -27,6 +31,15 @@ function uncontrolledLoopToAsm(node: any, acc: string[], useOppositeOperator = f
 
   acc.push(`JUMP IF ${binaryExprToAsm(node.condition, useOppositeOperator)}`);
   acc.push(`JUMP ${initialOffsetStr}`);
+}
+
+function ifStatementToAsm(node: any, acc: string[]) {
+  const body: any[] = [];
+  const statements = node.code;
+  astNodeToAsm(statements, body);
+
+  acc.push(`JUMP IF ${binaryExprToAsm(node.condition, true)}`);
+  acc.push(...body);
 }
 
 function astNodeToAsm(node: any, acc: string[]): void {
@@ -83,6 +96,9 @@ function astNodeToAsm(node: any, acc: string[]): void {
           astNodeToAsm(statements, acc);
         }
       }
+      break;
+    case "if_statement":
+      ifStatementToAsm(node, acc);
       break;
     case "repeat_loop":
       uncontrolledLoopToAsm(node, acc);

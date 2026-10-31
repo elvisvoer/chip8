@@ -174,8 +174,7 @@ executable_statement
 #    |  indexed_assignment   {% id %}
    |  repeat_loop          {% id %}
    |  do_while_loop        {% id %}
-#    |  while_loop           {% id %}
-#    |  if_statement         {% id %}
+   |  if_statement         {% id %}
 #    |  for_loop             {% id %}
 
 return_statement
@@ -290,18 +289,6 @@ call_expression
 #             })
 #         %}
 
-while_loop
-    -> "while" __ expression __ code_block
-        {%
-            d => ({
-                type: "while_loop",
-                condition: d[2],
-                body: d[4],
-                start: tokenStart(d[0]),
-                end: d[4].end
-            })
-        %}
-
 repeat_loop
     -> "repeat" __ code_block __ "until" __ expression
         {%
@@ -346,17 +333,17 @@ do_while_loop
             })
         %}
 
-# if_statement
-#     -> "if" __ expression __ code_block
-#         {%
-#             d => ({
-#                 type: "if_statement",
-#                 condition: d[2],
-#                 consequent: d[4],
-#                 start: tokenStart(d[0]),
-#                 end: d[4].end
-#             })
-#         %}
+if_statement
+    -> "if" __ expression __ code_block
+        {%
+            d => ({
+                type: "if_statement",
+                condition: d[2],
+                code: d[4],
+                start: tokenStart(d[0]),
+                end: d[4].end
+            })
+        %}
 #     |  "if" __ expression _ code_block _
 #        "else" __ code_block
 #         {%

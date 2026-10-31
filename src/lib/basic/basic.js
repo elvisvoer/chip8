@@ -151,6 +151,7 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["repeat_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
         d => ({
             type: "return_statement",
@@ -214,15 +215,6 @@ var grammar = {
             end: tokenEnd(d[4])
         })
                 },
-    {"name": "while_loop", "symbols": [{"literal":"while"}, "__", "expression", "__", "code_block"], "postprocess": 
-        d => ({
-            type: "while_loop",
-            condition: d[2],
-            body: d[4],
-            start: tokenStart(d[0]),
-            end: d[4].end
-        })
-                },
     {"name": "repeat_loop", "symbols": [{"literal":"repeat"}, "__", "code_block", "__", {"literal":"until"}, "__", "expression"], "postprocess": 
         d => ({
             type: "repeat_loop",
@@ -257,6 +249,15 @@ var grammar = {
             condition: d[6],
             start: tokenStart(d[0]),
             end: d[6].end
+        })
+                },
+    {"name": "if_statement", "symbols": [{"literal":"if"}, "__", "expression", "__", "code_block"], "postprocess": 
+        d => ({
+            type: "if_statement",
+            condition: d[2],
+            code: d[4],
+            start: tokenStart(d[0]),
+            end: d[4].end
         })
                 },
     {"name": "argument_list", "symbols": [], "postprocess": () => []},
