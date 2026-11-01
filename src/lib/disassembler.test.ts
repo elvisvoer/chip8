@@ -20,11 +20,11 @@ function areBuffersEqual(left: Uint8Array, right: Uint8Array): boolean {
 describe("Disassembler", () => {
   test.each([
     // "br8kout.ch8",
-    // "chip8-picture.ch8",
+    "chip8-picture.ch8",
     // "chipcross.ch8",
     // "dt-test.ch8",
     // "ibm-logo.ch8",
-    "pong.ch8",
+    // "pong.ch8",
     // "snake.ch8",
     // "sqrt-test.ch8",
     // "zero-pong.ch8",
