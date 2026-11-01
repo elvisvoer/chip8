@@ -34,7 +34,9 @@ function uncontrolledLoopToAsm(
 }
 
 function forLoopToAsm(node: any, acc: string[]) {
-  astNodeToAsm(node.init, acc);
+  if(node.init) {
+    astNodeToAsm(node.init, acc);
+  }
 
   const offset = 0x200 + acc.length * 2;
   const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;

@@ -301,7 +301,7 @@ do_while_loop
         %}
 
 for_loop
-    -> "for" _ "(" _ var_assignment _ ";" _ expression _ ";" _ expression _ ")" _ code_block
+    -> "for" _ "(" _ for_loop_init _ ";" _ expression _ ";" _ expression _ ")" _ code_block
         {%
             d => ({
                 type: "for_loop",
@@ -313,6 +313,10 @@ for_loop
                 end: d[16].end
             })
         %}
+
+for_loop_init
+    ->  var_assignment {% id %}
+    |   null           {% () => null %}
 
 if_statement
     -> "if" _ "(" _ expression _ ")" _ code_block

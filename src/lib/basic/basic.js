@@ -224,7 +224,7 @@ var grammar = {
             end: tokenEnd(d[10])
         })
                 },
-    {"name": "for_loop", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "var_assignment", "_", {"literal":";"}, "_", "expression", "_", {"literal":";"}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
+    {"name": "for_loop", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "for_loop_init", "_", {"literal":";"}, "_", "expression", "_", {"literal":";"}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
         d => ({
             type: "for_loop",
             body: d[16],
@@ -235,6 +235,8 @@ var grammar = {
             end: d[16].end
         })
                 },
+    {"name": "for_loop_init", "symbols": ["var_assignment"], "postprocess": id},
+    {"name": "for_loop_init", "symbols": [], "postprocess": () => null},
     {"name": "if_statement", "symbols": [{"literal":"if"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
         d => ({
             type: "if_statement",
