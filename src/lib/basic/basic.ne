@@ -28,6 +28,7 @@ const lexer = moo.compile({
     divide: "/",
     modulo: "%",
     colon: ":",
+    semicolon: ";",
     comment: {
         match: /#[^\n]*/,
         value: s => s.substring(1)
@@ -49,6 +50,7 @@ const lexer = moo.compile({
             fun: "fun",
             do: "do",
             while: "while",
+            for: "for",
         })
     }
 });
@@ -172,7 +174,7 @@ executable_statement
 #    |  indexed_assignment   {% id %}
    |  do_while_loop        {% id %}
    |  if_statement         {% id %}
-#    |  for_loop             {% id %}
+   |  for_loop             {% id %}
 
 return_statement
    -> "return" __ expression
@@ -298,6 +300,20 @@ do_while_loop
             })
         %}
 
+for_loop
+    -> "for" _ "(" _ var_assignment _ ";" _ expression _ ";" _ expression _ ")" _ code_block
+        {%
+            d => ({
+                type: "for_loop",
+                body: d[16],
+                init: d[4],
+                condition: d[8],
+                increment: d[12],
+                start: tokenStart(d[0]),
+                end: d[16].end
+            })
+        %}
+
 if_statement
     -> "if" _ "(" _ expression _ ")" _ code_block
         {%
@@ -333,20 +349,6 @@ if_statement
 #                 end: d[8].end
 #             })
 #        %}
-
-
-# for_loop
-#     -> "for" __ identifier __ "in" __ expression _ code_block
-#         {%
-#             d => ({
-#                 type: "for_loop",
-#                 loop_variable: d[2],
-#                 iterable: d[6],
-#                 body: d[8],
-#                 start: tokenStart(d[0]),
-#                 end: d[8].end
-#             })
-#         %}
 
 argument_list
     -> null {% () => [] %}

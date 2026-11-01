@@ -32,6 +32,7 @@ const lexer = moo.compile({
     divide: "/",
     modulo: "%",
     colon: ":",
+    semicolon: ";",
     comment: {
         match: /#[^\n]*/,
         value: s => s.substring(1)
@@ -53,6 +54,7 @@ const lexer = moo.compile({
             fun: "fun",
             do: "do",
             while: "while",
+            for: "for",
         })
     }
 });
@@ -149,6 +151,7 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["for_loop"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
         d => ({
             type: "return_statement",
@@ -219,6 +222,17 @@ var grammar = {
             condition: d[8],
             start: tokenStart(d[0]),
             end: tokenEnd(d[10])
+        })
+                },
+    {"name": "for_loop", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "var_assignment", "_", {"literal":";"}, "_", "expression", "_", {"literal":";"}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
+        d => ({
+            type: "for_loop",
+            body: d[16],
+            init: d[4],
+            condition: d[8],
+            increment: d[12],
+            start: tokenStart(d[0]),
+            end: d[16].end
         })
                 },
     {"name": "if_statement", "symbols": [{"literal":"if"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
