@@ -287,14 +287,14 @@ call_expression
 #         %}
 
 do_while_loop
-    -> "do" __ code_block __ "while" __ expression
+    -> "do" _ code_block _ "while" _ "(" _ expression _ ")"
         {%
             d => ({
                 type: "do_while_loop",
                 code: d[2],
-                condition: d[6],
+                condition: d[8],
                 start: tokenStart(d[0]),
-                end: d[6].end
+                end: tokenEnd(d[10])
             })
         %}
 

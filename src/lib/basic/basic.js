@@ -212,13 +212,13 @@ var grammar = {
             end: tokenEnd(d[4])
         })
                 },
-    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "__", "code_block", "__", {"literal":"while"}, "__", "expression"], "postprocess": 
+    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "_", "code_block", "_", {"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}], "postprocess": 
         d => ({
             type: "do_while_loop",
             code: d[2],
-            condition: d[6],
+            condition: d[8],
             start: tokenStart(d[0]),
-            end: d[6].end
+            end: tokenEnd(d[10])
         })
                 },
     {"name": "if_statement", "symbols": [{"literal":"if"}, "__", "expression", "__", "code_block"], "postprocess": 
