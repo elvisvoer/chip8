@@ -300,29 +300,9 @@ repeat_loop
                 end: d[6].end
             })
         %}
-    | "repeat" __ executable_statement __ "until" __ expression
-        {%
-            d => ({
-                type: "repeat_loop",
-                code: d[2],
-                condition: d[6],
-                start: tokenStart(d[0]),
-                end: d[6].end
-            })
-        %}
 
 do_while_loop
     -> "do" __ code_block __ "while" __ expression
-        {%
-            d => ({
-                type: "do_while_loop",
-                code: d[2],
-                condition: d[6],
-                start: tokenStart(d[0]),
-                end: d[6].end
-            })
-        %}
-    | "do" __ executable_statement __ "while" __ expression
         {%
             d => ({
                 type: "do_while_loop",
