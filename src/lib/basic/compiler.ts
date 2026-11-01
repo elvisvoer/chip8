@@ -25,7 +25,7 @@ function uncontrolledLoopToAsm(
 ): void {
   const initialOffset = 0x200 + acc.length * 2;
   const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
-  const statements = node.code;
+  const statements = node.body;
 
   astNodeToAsm(statements, acc);
 
@@ -35,7 +35,7 @@ function uncontrolledLoopToAsm(
 
 function ifStatementToAsm(node: any, acc: string[]) {
   const body: any[] = [];
-  const statements = node.code;
+  const statements = node.body;
   astNodeToAsm(statements, body);
 
   acc.push(`JUMP IF ${binaryExprToAsm(node.condition, true)}`);

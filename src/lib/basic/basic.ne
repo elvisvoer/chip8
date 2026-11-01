@@ -291,7 +291,7 @@ do_while_loop
         {%
             d => ({
                 type: "do_while_loop",
-                code: d[2],
+                body: d[2],
                 condition: d[8],
                 start: tokenStart(d[0]),
                 end: tokenEnd(d[10])
@@ -304,7 +304,7 @@ if_statement
             d => ({
                 type: "if_statement",
                 condition: d[2],
-                code: d[4],
+                body: d[4],
                 start: tokenStart(d[0]),
                 end: d[4].end
             })
