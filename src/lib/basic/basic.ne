@@ -299,14 +299,14 @@ do_while_loop
         %}
 
 if_statement
-    -> "if" __ expression __ code_block
+    -> "if" _ "(" _ expression _ ")" _ code_block
         {%
             d => ({
                 type: "if_statement",
-                condition: d[2],
-                body: d[4],
+                condition: d[4],
+                body: d[8],
                 start: tokenStart(d[0]),
-                end: d[4].end
+                end: d[8].end
             })
         %}
 #     |  "if" __ expression _ code_block _
