@@ -53,8 +53,6 @@ const lexer = moo.compile({
             fun: "fun",
             do: "do",
             while: "while",
-            repeat: "repeat",
-            until: "until",
         })
     }
 });
@@ -149,7 +147,6 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["repeat_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
@@ -215,34 +212,7 @@ var grammar = {
             end: tokenEnd(d[4])
         })
                 },
-    {"name": "repeat_loop", "symbols": [{"literal":"repeat"}, "__", "code_block", "__", {"literal":"until"}, "__", "expression"], "postprocess": 
-        d => ({
-            type: "repeat_loop",
-            code: d[2],
-            condition: d[6],
-            start: tokenStart(d[0]),
-            end: d[6].end
-        })
-                },
-    {"name": "repeat_loop", "symbols": [{"literal":"repeat"}, "__", "executable_statement", "__", {"literal":"until"}, "__", "expression"], "postprocess": 
-        d => ({
-            type: "repeat_loop",
-            code: d[2],
-            condition: d[6],
-            start: tokenStart(d[0]),
-            end: d[6].end
-        })
-                },
     {"name": "do_while_loop", "symbols": [{"literal":"do"}, "__", "code_block", "__", {"literal":"while"}, "__", "expression"], "postprocess": 
-        d => ({
-            type: "do_while_loop",
-            code: d[2],
-            condition: d[6],
-            start: tokenStart(d[0]),
-            end: d[6].end
-        })
-                },
-    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "__", "executable_statement", "__", {"literal":"while"}, "__", "expression"], "postprocess": 
         d => ({
             type: "do_while_loop",
             code: d[2],

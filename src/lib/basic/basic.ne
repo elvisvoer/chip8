@@ -49,8 +49,6 @@ const lexer = moo.compile({
             fun: "fun",
             do: "do",
             while: "while",
-            repeat: "repeat",
-            until: "until",
         })
     }
 });
@@ -172,7 +170,6 @@ executable_statement
    |  call_statement       {% id %}
    |  line_comment         {% id %}
 #    |  indexed_assignment   {% id %}
-   |  repeat_loop          {% id %}
    |  do_while_loop        {% id %}
    |  if_statement         {% id %}
 #    |  for_loop             {% id %}
@@ -288,18 +285,6 @@ call_expression
 #                 end: d[10].end
 #             })
 #         %}
-
-repeat_loop
-    -> "repeat" __ code_block __ "until" __ expression
-        {%
-            d => ({
-                type: "repeat_loop",
-                code: d[2],
-                condition: d[6],
-                start: tokenStart(d[0]),
-                end: d[6].end
-            })
-        %}
 
 do_while_loop
     -> "do" __ code_block __ "while" __ expression

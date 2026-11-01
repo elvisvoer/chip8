@@ -100,9 +100,6 @@ function astNodeToAsm(node: any, acc: string[]): void {
     case "if_statement":
       ifStatementToAsm(node, acc);
       break;
-    case "repeat_loop":
-      uncontrolledLoopToAsm(node, acc);
-      break;
     case "do_while_loop":
       uncontrolledLoopToAsm(node, acc, true);
       break;
