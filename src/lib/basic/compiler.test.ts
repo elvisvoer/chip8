@@ -28,7 +28,7 @@ const testCodeExamples = [
 `,
 ];
 
-describe.skip("basic compiler", () => {
+describe("basic compiler", () => {
   describe.skip("asm statements", () => {
     test("can have an asm statement", () => {
       const testCode = `0x200 CLEAR`;
@@ -154,7 +154,7 @@ describe.skip("basic compiler", () => {
     });
   });
 
-  describe.skip("var assignment", () => {
+  describe("var assignment", () => {
     test.each(assignmentOp)(
       "can assign a variable in a single line statement",
       (op) => {
@@ -180,9 +180,9 @@ describe.skip("basic compiler", () => {
     );
   });
 
-  describe("repeat...until loop", () => {
-    test("can have single-instruction repeat...until loop", () => {
-      const testCode = `repeat V0 := DT until V0 == 0x00`;
+  describe("do...while loop", () => {
+    test("can have single-instruction do...while loop", () => {
+      const testCode = `do {V0 := DT} while (V0 != 0x00)`;
       const expectedResult = [
         `0x200 V0 := DT`,
         `0x202 JUMP IF V0 == 0x00`,
@@ -193,23 +193,11 @@ describe.skip("basic compiler", () => {
       expect(disassembledResult).toEqual(expectedResult);
     });
 
-    test("can have repeat...until loop with a code block", () => {
-      const testCode = `repeat {V0 := DT} until V0 == 0x00`;
-      const expectedResult = [
-        `0x200 V0 := DT`,
-        `0x202 JUMP IF V0 == 0x00`,
-        `0x204 JUMP 0x200`,
-      ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
-
-      expect(disassembledResult).toEqual(expectedResult);
-    });
-
-    test("can have repeat...until loop with a code block having multiple instructions", () => {
-      const testCode = `repeat {
+    test("can have do...while loop with a code block having multiple instructions", () => {
+      const testCode = `do {
         V0 := DT
         ST := V1
-      } until V0 == 0x00`;
+      } while (V0 != 0x00)`;
       const expectedResult = [
         `0x200 V0 := DT`,
         `0x202 ST := V1`,
@@ -221,8 +209,8 @@ describe.skip("basic compiler", () => {
       expect(disassembledResult).toEqual(expectedResult);
     });
 
-    test("can have repeat...until loop with negative condition", () => {
-      const testCode = `repeat {V0 := DT} until V0 != 0x00`;
+    test("can have do...while loop with opposite condition", () => {
+      const testCode = `do {V0 := DT} while (V0 == 0x00)`;
       const expectedResult = [
         `0x200 V0 := DT`,
         `0x202 JUMP IF V0 != 0x00`,
