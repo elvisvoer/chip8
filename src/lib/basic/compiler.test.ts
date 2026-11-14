@@ -137,7 +137,7 @@ describe("basic compiler", () => {
       expect(disassembledResult).toEqual(expectedResult);
     });
 
-        test("can have nested code blocks", () => {
+    test("can have nested code blocks", () => {
       const testCode = `{
           I := 0x22a
           # some comment
@@ -215,6 +215,54 @@ describe("basic compiler", () => {
         `0x200 V0 := DT`,
         `0x202 JUMP IF V0 != 0x00`,
         `0x204 JUMP 0x200`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+  });
+
+  describe("for loop", () => {
+    test("can have an empty infinite loop", () => {
+      const testCode = `for(;;){}`;
+      const expectedResult = [
+        `0x200 JUMP 0x200`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+
+    test("can have a loop only with initializer", () => {
+      const testCode = `for(V0 := 0xff;;){}`;
+      const expectedResult = [
+        `0x200 V0 := 0xff`,
+        `0x202 JUMP 0x202`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+
+    test("can have a loop only with initializer and step", () => {
+      const testCode = `for(V0 := 0xff;; V0 += V1){}`;
+      const expectedResult = [
+        `0x200 V0 := 0xff`,
+        `0x202 V0 += V1`,
+        `0x204 JUMP 0x202`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+
+    test("can have a loop only with initializer, condition, and step", () => {
+      const testCode = `for(V0 := 0x0f; V0 != 0xff; V0 += V1){}`;
+      const expectedResult = [
+        `0x200 V0 := 0x0f`,
+        `0x202 V0 += V1`,
+        `0x204 JUMP IF V0 == 0xff`,
+        `0x206 JUMP 0x202`,
       ].join("\n");
       const disassembledResult = bufferToAsm(compileBasic(testCode));
 
