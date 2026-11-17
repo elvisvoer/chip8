@@ -387,10 +387,10 @@ clear()`;
   describe("key condition", () => {
     test.each(["==", "!="])("supports if (KEY %s V0)", (operator) => {
       const source = `if (KEY ${operator} V0) { V1 = 0x01 }`;
+      const oppositeOperator = operator === "==" ? "!=" : "==";
       const expected = [
-        `0x200 SKIP IF KEY ${operator} V0`,
-        `0x202 JUMP 0x206`,
-        `0x204 V1 := 0x01`,
+        `0x200 SKIP IF KEY ${oppositeOperator} V0`,
+        `0x202 V1 := 0x01`,
       ].join("\n");
 
       expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
@@ -435,10 +435,9 @@ clear()`;
         `0x200 SKIP IF KEY == V0`,
         `0x202 JUMP 0x208`,
         `0x204 V1 := 0x01`,
-        `0x206 JUMP 0x20e`,
-        `0x208 SKIP IF KEY == V2`,
-        `0x20a JUMP 0x20e`,
-        `0x20c V1 := 0x02`,
+        `0x206 JUMP 0x20c`,
+        `0x208 SKIP IF KEY != V2`,
+        `0x20a V1 := 0x02`,
       ].join("\n");
 
       expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);

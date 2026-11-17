@@ -331,6 +331,17 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
   if (!node.alternate) {
     astNodeToAsm(statements, body, start + (hasKeyCondition ? 4 : 2));
     if (hasKeyCondition) {
+      const keyBodyStatements = node.body.statements.flat(3);
+      if (
+        keyBodyStatements.length === 1 &&
+        ["var_assignment", "postfix_update"].includes(
+          keyBodyStatements[0].type,
+        )
+      ) {
+        acc.push(conditionInstruction(node.condition, true), ...body);
+        return;
+      }
+
       const end = start + (instructionCount(body) + 2) * 2;
       acc.push(conditionInstruction(node.condition));
       acc.push(`JUMP ${addressString(end)}`);
