@@ -29,6 +29,12 @@ function isDrawCall(node: any): boolean {
   );
 }
 
+function isRandCall(node: any): boolean {
+  return (
+    node?.type === "call_expression" && node.fun_name.value === "rand"
+  );
+}
+
 function drawCallToAsm(node: any): string {
   const [x, y, height] = node.arguments;
   if (
@@ -43,8 +49,21 @@ function drawCallToAsm(node: any): string {
   return `DRAW ${x.var_name.value} ${y.var_name.value} ${height.value}`;
 }
 
+function randCallToAsm(node: any, target = "VF"): string {
+  const [mask] = node.arguments;
+  if (
+    node.arguments.length !== 1 ||
+    mask?.type !== "hex_literal" ||
+    !/^V[0-9a-f]$/i.test(target)
+  ) {
+    throw new Error("rand() expects a hexadecimal mask and a V-register target");
+  }
+
+  return `RAND ${target} ${mask.value}`;
+}
+
 function expressionValueToAsm(node: any): string {
-  if (isDrawCall(node)) {
+  if (isDrawCall(node) || isRandCall(node)) {
     return "VF";
   }
   if (node.type === "call_expression") {
@@ -54,25 +73,28 @@ function expressionValueToAsm(node: any): string {
   return node.var_name?.value ?? node.value;
 }
 
-function drawCallCount(node: any): number {
-  if (isDrawCall(node)) {
+function builtinCallCount(node: any): number {
+  if (isDrawCall(node) || isRandCall(node)) {
     return 1;
   }
   if (node.type === "binary_operation") {
-    return drawCallCount(node.left) + drawCallCount(node.right);
+    return builtinCallCount(node.left) + builtinCallCount(node.right);
   }
 
   return 0;
 }
 
-function drawInstructions(node: any): string[] {
+function builtinInstructions(node: any): string[] {
   if (isDrawCall(node)) {
     return [drawCallToAsm(node)];
   }
+  if (isRandCall(node)) {
+    return [randCallToAsm(node)];
+  }
   if (node.type === "binary_operation") {
     return [
-      ...drawInstructions(node.left),
-      ...drawInstructions(node.right),
+      ...builtinInstructions(node.left),
+      ...builtinInstructions(node.right),
     ];
   }
 
@@ -95,7 +117,7 @@ function binaryExprToAsm(item: any, useOppositeOperator = false) {
 }
 
 function conditionInstruction(item: any, useOppositeOperator = false): string {
-  if (isDrawCall(item)) {
+  if (isDrawCall(item) || isRandCall(item)) {
     return `JUMP IF VF ${useOppositeOperator ? "==" : "!="} 0x00`;
   }
   if (item.type === "call_expression") {
@@ -128,12 +150,12 @@ function isLogicalCondition(item: any): boolean {
 }
 
 function requiresBranchCondition(item: any): boolean {
-  return isLogicalCondition(item) || drawCallCount(item) > 0;
+  return isLogicalCondition(item) || builtinCallCount(item) > 0;
 }
 
 function conditionInstructionCount(item: any): number {
   if (!isLogicalCondition(item)) {
-    return 3 + drawCallCount(item);
+    return 3 + builtinCallCount(item);
   }
 
   return (
@@ -150,7 +172,7 @@ function conditionBranchLines(
 ): string[] {
   if (!isLogicalCondition(item)) {
     return [
-      ...drawInstructions(item),
+      ...builtinInstructions(item),
       conditionInstruction(item),
       `JUMP ${addressString(falseTarget)}`,
       `JUMP ${addressString(trueTarget)}`,
@@ -282,9 +304,9 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
   if (
     !node.alternate &&
     !isLogicalCondition(node.condition) &&
-    drawCallCount(node.condition) > 0
+    builtinCallCount(node.condition) > 0
   ) {
-    const drawLines = drawInstructions(node.condition);
+    const drawLines = builtinInstructions(node.condition);
     const body: any[] = [];
     astNodeToAsm(node.body, body, start + (drawLines.length + 1) * 2);
     if (body.length === 1 && body[0].startsWith("GOTO ")) {
@@ -425,7 +447,12 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
     case "var_assignment": {
       const operator =
         node.operator.value === "=" ? ":=" : node.operator.value;
-      if (isDrawCall(node.value)) {
+      if (isRandCall(node.value)) {
+        if (node.operator.value !== "=") {
+          throw new Error("rand() can only be used with = assignment");
+        }
+        acc.push(randCallToAsm(node.value, node.var_name.value));
+      } else if (isDrawCall(node.value)) {
         acc.push(
           drawCallToAsm(node.value),
           `${node.var_name.value} ${operator} VF`,
@@ -458,6 +485,8 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
         acc.push("CLEAR");
       } else if (node.fun_name.value === "draw") {
         acc.push(drawCallToAsm(node));
+      } else if (node.fun_name.value === "rand") {
+        acc.push(randCallToAsm(node));
       } else {
         acc.push(`CALL ${node.fun_name.value}`);
       }

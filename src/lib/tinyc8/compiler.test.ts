@@ -267,6 +267,38 @@ clear()`;
         "draw() expects two registers and a hexadecimal height",
       );
     });
+
+    test("compiles rand() assignment to RAND with the destination register", () => {
+      expect(bufferToAsm(compileTinyC8("V7 = rand(0x17)"))).toEqual(
+        "0x200 RAND V7 0x17",
+      );
+    });
+
+    test("uses VF as rand()'s result when used as a condition", () => {
+      const source = `if (rand(0x0a)) { V2 = 0x01 }`;
+      const expected = [
+        `0x200 RAND VF 0x0a`,
+        `0x202 JUMP IF VF != 0x00`,
+        `0x204 JUMP 0x20a`,
+        `0x206 JUMP 0x208`,
+        `0x208 V2 := 0x01`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("rejects invalid rand() arguments and targets", () => {
+      for (const source of [
+        "rand()",
+        "rand(0x01, 0x02)",
+        "rand(V0)",
+        "I = rand(0x01)",
+      ]) {
+        expect(() => compileTinyC8(source)).toThrow(
+          "rand() expects a hexadecimal mask and a V-register target",
+        );
+      }
+    });
   });
 
   describe("postfix operators", () => {
