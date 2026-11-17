@@ -35,7 +35,7 @@ if (KEY == V0) {
 
 I = ballSprite;
 draw(V3, V4, 0x1);
-ballUpdate:
+for (;;) {
 V3 += V5;
 V4 += V6;
 if (V3 == 0x00) {
@@ -62,7 +62,7 @@ if (V3 == 0x3e) {
 draw(V3, V4, 0x1);
 V0 = 0xc8;
 ST = V0;
-goto ballUpdate;
+}
 
 gameOver:
 V0 = 0x0f;
@@ -79,13 +79,13 @@ VA = 0x0a;
 resetBall:
 V3 = 0x20;
 V4 = 0x10;
-0x27e RAND V5 0x01;
+V5 = rand(0x01);
 if (V5 != 0x00) {
     V5 = 0xff;
 } else {
     V5 = 0x01;
 }
-0x28a RAND V6 0x01;
+V6 = rand(0x01);
 if (V6 != 0x00) {
     V6 = 0xff;
 } else {

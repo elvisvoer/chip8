@@ -2,7 +2,7 @@ VA = 0x02;
 VB = 0x0c;
 VC = 0x3f;
 VD = 0x0c;
-I = 0x2ea;
+I = paddleSprite;
 draw(VA, VB, 0x6);
 draw(VC, VD, 0x6);
 VE = 0x00;
@@ -22,60 +22,60 @@ do {
 V7 = rand(0x17);
 V7 += 0x08;
 V9 = 0xff;
-I = 0x2f0;
+I = ballSprite;
 draw(V6, V7, 0x1);
-controlPaddles:
-I = 0x2ea;
-draw(VA, VB, 0x6);
-draw(VC, VD, 0x6);
-V0 = 0x01;
-if (KEY == V0) {
-  VB += 0xfe;
-}
-V0 = 0x04;
-if (KEY == V0) {
-  VB += 0x02;
-}
-V0 = 0x1f;
-VB &= V0;
-draw(VA, VB, 0x6);
-VD = V7;
-V0 = rand(0x0a);
-VD += 0xfe;
+for (;;) {
+  I = paddleSprite;
+  draw(VA, VB, 0x6);
+  draw(VC, VD, 0x6);
+  V0 = 0x01;
+  if (KEY == V0) {
+    VB += 0xfe;
+  }
+  V0 = 0x04;
+  if (KEY == V0) {
+    VB += 0x02;
+  }
+  V0 = 0x1f;
+  VB &= V0;
+  draw(VA, VB, 0x6);
+  VD = V7;
+  V0 = rand(0x0a);
+  VD += 0xfe;
 
-if (V0 == 0x00) {
-  VD += 0x02;
-}
+  if (V0 == 0x00) {
+    VD += 0x02;
+  }
 
-V0 = 0x00;
-V0 = 0x1f;
-VD &= V0;
-draw(VC, VD, 0x6);
-I = 0x2f0;
-draw(V6, V7, 0x1);
-V6 += V8;
-V7 += V9;
-V0 = 0x3f;
-V6 &= V0;
-V1 = 0x1f;
-V7 &= V1;
-if (V6 == 0x02) {
-  goto leftPaddle;
-}
-if (V6 == 0x3f) {
-  goto rightPaddle;
-}
-ballUpdate:
-if (V7 == 0x1f) {
-  V9 = 0xff;
-}
+  V0 = 0x00;
+  V0 = 0x1f;
+  VD &= V0;
+  draw(VC, VD, 0x6);
+  I = ballSprite;
+  draw(V6, V7, 0x1);
+  V6 += V8;
+  V7 += V9;
+  V0 = 0x3f;
+  V6 &= V0;
+  V1 = 0x1f;
+  V7 &= V1;
+  if (V6 == 0x02) {
+    goto leftPaddle;
+  }
+  if (V6 == 0x3f) {
+    goto rightPaddle;
+  }
+  ballUpdate:
+  if (V7 == 0x1f) {
+    V9 = 0xff;
+  }
 
-if (V7 == 0x00) {
-  V9 = 0x01;
-}
+  if (V7 == 0x00) {
+    V9 = 0x01;
+  }
 
-draw(V6, V7, 0x1);
-goto controlPaddles;
+  draw(V6, V7, 0x1);
+}
 
 leftPaddle:
 V8 = 0x02;
@@ -151,23 +151,25 @@ if (V6 == 0x40) {
   V6 += 0xfe;
 }
 goto ballUpdate;
-// start updateScore
 void updateScore() {
-  I = 0x2f2;
-  0x2d6 BCDC VE;
-  0x2d8 LOAD 0x2;
-  0x2da FONT V1;
+  I = scoreDigits;
+  bcd(VE);
+  load(V2);
+  font(V1);
   V4 = 0x14;
   V5 = 0x00;
   draw(V4, V5, 0x5);
   V4 += 0x15;
-  0x2e4 FONT V2;
+  font(V2);
   draw(V4, V5, 0x5);
 }
-// end updateScore
-0x2ea 0x8080;
-0x2ec 0x8080;
-0x2ee 0x8080;
-0x2f0 0x8000;
-0x2f2 0x0000;
-0x2f4 0x0000;
+
+static const byte paddleSprite[] = {
+  0x80, 0x80, 0x80, 0x80, 0x80, 0x80
+};
+
+static const byte ballSprite[] = { 0x80, 0x00 };
+
+static const byte scoreDigits[] = {
+  0x00, 0x00, 0x00, 0x00
+};
