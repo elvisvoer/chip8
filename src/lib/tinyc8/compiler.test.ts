@@ -192,6 +192,18 @@ describe("TinyC8 compiler", () => {
       expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
     });
 
+    test.each(["==", "!="])("supports while (KEY %s V0)", (operator) => {
+      const source = `while (KEY ${operator} V0) { V1 := 0x01 }`;
+      const expected = [
+        `0x200 SKIP IF KEY ${operator} V0`,
+        `0x202 JUMP 0x208`,
+        `0x204 V1 := 0x01`,
+        `0x206 JUMP 0x200`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
     test("supports a key condition with an else branch", () => {
       const source = `if (KEY == V0) {
   V1 := 0x01

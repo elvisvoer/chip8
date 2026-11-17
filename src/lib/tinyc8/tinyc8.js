@@ -171,7 +171,7 @@ var grammar = {
             end: d[2].end
         })
                },
-    {"name": "label_statement", "symbols": ["identifier", {"literal":":"}], "postprocess":
+    {"name": "label_statement", "symbols": ["identifier", {"literal":":"}], "postprocess": 
         d => ({
             type: "label_statement",
             name: d[0].value,
@@ -179,7 +179,7 @@ var grammar = {
             end: tokenEnd(d[1])
         })
                 },
-    {"name": "goto_statement", "symbols": [{"literal":"goto"}, "__", "identifier"], "postprocess":
+    {"name": "goto_statement", "symbols": [{"literal":"goto"}, "__", "identifier"], "postprocess": 
         d => ({
             type: "goto_statement",
             target: d[2].value,
@@ -187,7 +187,7 @@ var grammar = {
             end: d[2].end
         })
                 },
-    {"name": "break_statement", "symbols": [{"literal":"break"}], "postprocess":
+    {"name": "break_statement", "symbols": [{"literal":"break"}], "postprocess": 
         d => ({
             type: "break_statement",
             start: tokenStart(d[0]),
@@ -207,7 +207,7 @@ var grammar = {
     {"name": "asm_code", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "asm_code", "symbols": ["asm_cmd"], "postprocess": id},
     {"name": "asm_code", "symbols": ["key_skip_statement"], "postprocess": id},
-    {"name": "key_skip_statement", "symbols": [{"literal":"SKIP"}, "__", "identifier", "__", {"literal":"KEY"}, "_", "comparison_operator", "_", "identifier"], "postprocess":
+    {"name": "key_skip_statement", "symbols": [{"literal":"SKIP"}, "__", "identifier", "__", {"literal":"KEY"}, "_", "comparison_operator", "_", "identifier"], "postprocess": 
         d => {
             if (d[2].value !== "IF") {
                 throw new Error("Expected IF in key skip instruction");
@@ -273,7 +273,7 @@ var grammar = {
             end: tokenEnd(d[10])
         })
                 },
-    {"name": "while_loop", "symbols": [{"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess":
+    {"name": "while_loop", "symbols": [{"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
         d => ({
             type: "while_loop",
             condition: d[4],
@@ -366,7 +366,7 @@ var grammar = {
                 },
     {"name": "unary_expression", "symbols": ["number"], "postprocess": id},
     {"name": "unary_expression", "symbols": ["hex"], "postprocess": id},
-    {"name": "unary_expression", "symbols": [{"literal":"KEY"}], "postprocess":
+    {"name": "unary_expression", "symbols": [{"literal":"KEY"}], "postprocess": 
         d => ({
             type: "key_reference",
             value: d[0].value,
