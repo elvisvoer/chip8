@@ -143,6 +143,16 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
   const elseStart = start + (3 + instructionCount(body)) * 2;
   astNodeToAsm(node.alternate, alternate, elseStart);
 
+  if (
+    body.length === 1 &&
+    alternate.length === 1 &&
+    body[0].startsWith("GOTO ") &&
+    alternate[0].startsWith("GOTO ")
+  ) {
+    acc.push(conditionInstruction(node.condition), alternate[0], body[0]);
+    return;
+  }
+
   const endTarget = elseStart + instructionCount(alternate) * 2;
 
   acc.push(conditionInstruction(node.condition));

@@ -98,13 +98,19 @@ I := 0x2b0
 0x29c DRAW V9 VA 0x6
 I := 0x2b6
 0x2a0 DRAW V3 V4 0x1
+
+waitForPress:
 V0 := 0x0f
-0x2a4 SKIP IF KEY != V0
-0x2a6 JUMP 0x2aa
-0x2a8 JUMP 0x2a2
-0x2aa SKIP IF KEY == V0
-0x2ac JUMP 0x202
-0x2ae JUMP 0x2aa
+if (KEY != V0) {
+    goto waitForPress
+}
+
+waitForRelease:
+if (KEY == V0) {
+    goto waitForRelease
+} else {
+    goto mainLoop
+}
 
 paddleSprite:
 0x2b0 0x8080

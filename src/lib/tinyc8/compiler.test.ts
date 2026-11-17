@@ -327,6 +327,27 @@ V1 := 0x02`;
       expect(disassembledResult).toEqual(expectedResult);
     });
 
+    test("emits compact branches when both if branches jump", () => {
+      const source = `if (KEY == V0) {
+  goto pressed
+} else {
+  goto released
+}
+pressed:
+V1 := 0x01
+released:
+V2 := 0x02`;
+      const expected = [
+        `0x200 SKIP IF KEY == V0`,
+        `0x202 JUMP 0x208`,
+        `0x204 JUMP 0x206`,
+        `0x206 V1 := 0x01`,
+        `0x208 V2 := 0x02`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
     test("resolves labels after generated control flow", () => {
       const testCode = `if (V0 == 0x00) {
   inside:
