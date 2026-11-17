@@ -61,6 +61,7 @@ const lexer = moo.compile({
             const: "const",
             byte: "byte",
             void: "void",
+            noreturn: "noreturn",
             do: "do",
             while: "while",
             for: "for",
@@ -130,22 +131,25 @@ var grammar = {
     {"name": "byte_array_value", "symbols": ["hex"], "postprocess": id},
     {"name": "byte_array_value", "symbols": ["binary"], "postprocess": id},
     {"name": "byte_array_value", "symbols": ["number"], "postprocess": id},
-    {"name": "fun_definition", "symbols": [{"literal":"void"}, "__", "identifier", "_", {"literal":"("}, "_", "parameter_list", "_", {"literal":")"}, "_", "code_block"], "postprocess":
+    {"name": "fun_definition", "symbols": [{"literal":"void"}, "__", "identifier", "_", {"literal":"("}, "_", "parameter_list", "_", {"literal":")"}, "_", "function_modifier", "code_block"], "postprocess": 
         d => ({
             type: "fun_definition",
             name: d[2],
             parameters: d[6],
-            body: d[10],
+            noreturn: d[10],
+            body: d[11],
             start: tokenStart(d[0]),
-            end: d[10].end
+            end: d[11].end
         })
                 },
+    {"name": "function_modifier", "symbols": [], "postprocess": () => false},
+    {"name": "function_modifier", "symbols": [{"literal":"noreturn"}, "_"], "postprocess": () => true},
     {"name": "parameter_list", "symbols": [], "postprocess": () => []},
     {"name": "parameter_list", "symbols": ["identifier"], "postprocess": d => [d[0]]},
     {"name": "parameter_list", "symbols": ["identifier", "_", {"literal":","}, "_", "parameter_list"], "postprocess": 
         d => [d[0], ...d[4]]
                 },
-    {"name": "code_block", "symbols": [{"literal":"{"}, "_ml", "executable_statements", {"literal":"}"}], "postprocess":
+    {"name": "code_block", "symbols": [{"literal":"{"}, "_ml", "executable_statements", {"literal":"}"}], "postprocess": 
         (d) => ({
             type: "code_block",
             statements: d[2],
@@ -284,7 +288,7 @@ var grammar = {
             end: tokenEnd(d[4])
         })
                 },
-    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "_", "code_block", "_", {"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, {"literal":";"}], "postprocess":
+    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "_", "code_block", "_", {"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, {"literal":";"}], "postprocess": 
         d => ({
             type: "do_while_loop",
             body: d[2],

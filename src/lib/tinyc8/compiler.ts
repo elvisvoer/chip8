@@ -46,6 +46,10 @@ function isRandCall(node: any): boolean {
   );
 }
 
+function isReadCall(node: any): boolean {
+  return node?.type === "call_expression" && node.fun_name.value === "read";
+}
+
 function isSaveLoadCall(node: any): boolean {
   return (
     node?.type === "call_expression" &&
@@ -94,6 +98,51 @@ function saveLoadCallToAsm(node: any): string {
   }
 
   return `${node.fun_name.value.toUpperCase()} 0x${match[1].toLowerCase()}`;
+}
+
+function registerCallToAsm(
+  node: any,
+  name: string,
+  opcode: string,
+  registerAsIndex = false,
+): string {
+  const [register] = node.arguments;
+  const match =
+    register?.type === "var_reference" &&
+    /^V([0-9a-f])$/i.exec(register.var_name.value);
+  if (
+    node.arguments.length !== 1 ||
+    !match
+  ) {
+    throw new Error(`${name}() expects one V-register`);
+  }
+
+  const operand = registerAsIndex
+    ? `0x${match[1].toLowerCase()}`
+    : register.var_name.value;
+  return `${opcode} ${operand}`;
+}
+
+function noArgumentCallToAsm(node: any, name: string, opcode: string): string {
+  if (node.arguments.length !== 0) {
+    throw new Error(`${name}() does not accept arguments`);
+  }
+
+  return opcode;
+}
+
+function keySkipCallToAsm(node: any): string {
+  const [condition] = node.arguments;
+  if (
+    node.arguments.length !== 1 ||
+    condition?.type !== "binary_operation" ||
+    (condition.left.type !== "key_reference" &&
+      condition.right.type !== "key_reference")
+  ) {
+    throw new Error("skipKey() expects a key comparison");
+  }
+
+  return conditionInstruction(condition);
 }
 
 function binaryLiteralToAsm(node: any, padToByte = false): string {
@@ -422,10 +471,10 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
     if (hasKeyCondition) {
       const keyBodyStatements = node.body.statements.flat(3);
       if (
-        keyBodyStatements.length === 1 &&
-        ["var_assignment", "postfix_update"].includes(
-          keyBodyStatements[0].type,
-        )
+          keyBodyStatements.length === 1 &&
+          ["var_assignment", "postfix_update", "call_expression"].includes(
+            keyBodyStatements[0].type,
+          )
       ) {
         acc.push(conditionInstruction(node.condition, true), ...body);
         return;
@@ -526,6 +575,14 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
           drawCallToAsm(node.value),
           `${node.var_name.value} ${operator} VF`,
         );
+      } else if (isReadCall(node.value)) {
+        if (node.operator.value !== "=" || !/^V[0-9a-f]$/i.test(node.var_name.value)) {
+          throw new Error("read() can only be assigned to a V-register");
+        }
+        if (node.value.arguments.length !== 0) {
+          throw new Error("read() does not accept arguments");
+        }
+        acc.push(`READ ${node.var_name.value}`);
       } else if (isSaveLoadCall(node.value)) {
         throw new Error(`${node.value.fun_name.value}() does not return a value`);
       } else if (
@@ -539,6 +596,13 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
           throw new Error("I += expects a V-register");
         }
         acc.push(`INC ${node.value.var_name.value}`);
+      } else if (
+        node.var_name.value === "I" &&
+        node.operator.value === "=" &&
+        node.value.type === "binary_operation" &&
+        node.value.operator.value === "+"
+      ) {
+        acc.push(`I := ${binaryExprToAsm(node.value)}`);
       } else {
         acc.push(
           `${node.var_name.value} ${operator} ${expressionValueToAsm(node.value)}`,
@@ -574,6 +638,20 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
         acc.push(randCallToAsm(node));
       } else if (isSaveLoadCall(node)) {
         acc.push(saveLoadCallToAsm(node));
+      } else if (node.fun_name.value === "font") {
+        acc.push(registerCallToAsm(node, "font", "FONT"));
+      } else if (node.fun_name.value === "bcd") {
+        acc.push(registerCallToAsm(node, "bcd", "BCDC"));
+      } else if (node.fun_name.value === "saveFlags") {
+        acc.push(registerCallToAsm(node, "saveFlags", "PUSHF", true));
+      } else if (node.fun_name.value === "loadFlags") {
+        acc.push(registerCallToAsm(node, "loadFlags", "POPF", true));
+      } else if (node.fun_name.value === "hires") {
+        acc.push(noArgumentCallToAsm(node, "hires", "HIRES"));
+      } else if (node.fun_name.value === "noop") {
+        acc.push(noArgumentCallToAsm(node, "noop", "NOOP"));
+      } else if (node.fun_name.value === "skipKey") {
+        acc.push(keySkipCallToAsm(node));
       } else {
         acc.push(`CALL ${node.fun_name.value}`);
       }
@@ -614,6 +692,7 @@ function astToAsm(astNodes: any[]): string {
   const staticArrays = astNodes.filter(
     (node) => node.type === "static_array_declaration",
   );
+  const staticArrayLengths = new Map<string, number>();
   const arrayNames = new Set<string>();
   const functionNames = new Set(
     astNodes
@@ -630,10 +709,15 @@ function astToAsm(astNodes: any[]): string {
       throw new Error(`TinyC8 static array '${name}' conflicts with a function`);
     }
     arrayNames.add(name);
+    staticArrayLengths.set(name, array.values.length);
   });
 
   astNodes.forEach((node) => {
     if (node.type === "static_array_declaration") {
+      result.push(`${labelMarker}${node.name.value}`);
+      node.values.forEach((value: any) => {
+        result.push(byteArrayValueToAsm(value, node.name.value));
+      });
       return;
     }
 
@@ -643,18 +727,13 @@ function astToAsm(astNodes: any[]): string {
       symbols.set(node.name.value, offsetStr);
       astNodeToAsm(node.body, result, offset);
 
-      result.push("RETURN");
+      if (!node.noreturn) {
+        result.push("RETURN");
+      }
       return;
     }
 
     astNodeToAsm(node, result);
-  });
-
-  staticArrays.forEach((array) => {
-    result.push(`${labelMarker}${array.name.value}`);
-    array.values.forEach((value: any) => {
-      result.push(byteArrayValueToAsm(value, array.name.value));
-    });
   });
 
   if (result.includes(breakMarker)) {
@@ -689,16 +768,29 @@ function astToAsm(astNodes: any[]): string {
       return `JUMP ${address}`;
     }
 
-    const arrayReference = /^I := ([a-zA-Z_][a-zA-Z_0-9]*)$/.exec(line);
+    const arrayReference =
+      /^I := ([a-zA-Z_][a-zA-Z_0-9]*)(?: \+ (0x[0-9a-f]+))?$/i.exec(line);
     if (arrayReference && arrayNames.has(arrayReference[1])) {
-      const address = labels.get(arrayReference[1]);
-      if (!address) {
+      const baseAddress = labels.get(arrayReference[1]);
+      if (!baseAddress) {
         throw new Error(
           `Unknown TinyC8 static array '${arrayReference[1]}'`,
         );
       }
 
-      return `I := ${address}`;
+      const relativeOffset = arrayReference[2]
+        ? Number.parseInt(arrayReference[2].slice(2), 16)
+        : 0;
+      const arrayLength = staticArrayLengths.get(arrayReference[1]);
+      if (arrayLength === undefined || relativeOffset >= arrayLength) {
+        throw new Error(
+          `TinyC8 static array offset is out of bounds for '${arrayReference[1]}'`,
+        );
+      }
+
+      const address =
+        Number.parseInt(baseAddress.slice(2), 16) + relativeOffset;
+      return `I := ${addressString(address)}`;
     }
 
     const labelList = Array.from(symbols.keys());

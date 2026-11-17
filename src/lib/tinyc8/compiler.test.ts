@@ -266,6 +266,30 @@ static const byte sprite[] = {
       );
     });
 
+    test("emits static byte arrays at their declaration location", () => {
+      const source = `goto main;
+static const byte sprite[] = { 0x80 };
+main:
+I = sprite;`;
+
+      expect(compileTinyC8(source)).toEqual(Uint8Array.fromHex("120380a202"));
+    });
+
+    test("resolves byte offsets within static arrays", () => {
+      const source = `I = sprite + 0x01;
+static const byte sprite[] = { 0x80, 0x00 };`;
+
+      expect(compileTinyC8(source)).toEqual(Uint8Array.fromHex("a2038000"));
+    });
+
+    test("rejects static array offsets past the end of the array", () => {
+      expect(() =>
+        compileTinyC8(
+          "I = sprite + 0x02; static const byte sprite[] = { 0x80, 0x00 };",
+        ),
+      ).toThrow("TinyC8 static array offset is out of bounds for 'sprite'");
+    });
+
     test("rejects values outside the byte range in static arrays", () => {
       expect(() =>
         compileTinyC8("static const byte sprite[] = { 0x100 };"),
@@ -321,6 +345,31 @@ static const byte sprite[] = {
       expect(() => compileTinyC8("V0 = load(V1);")).toThrow(
         "load() does not return a value",
       );
+    });
+
+    test("compiles read() assignment to READ", () => {
+      expect(bufferToAsm(compileTinyC8("V2 = read();"))).toEqual(
+        "0x200 READ V2",
+      );
+    });
+
+    test.each(["V0 = read(V1);", "I = read();", "V0 += read();"])(
+      "rejects invalid read() usage: %s",
+      (source) => {
+        expect(() => compileTinyC8(source)).toThrow();
+      },
+    );
+
+    test.each([
+      ["font(V0);", "FONT V0"],
+      ["bcd(VF);", "BCDC VF"],
+      ["saveFlags(V7);", "PUSHF 0x7"],
+      ["loadFlags(V0);", "POPF 0x0"],
+      ["hires();", "HIRES"],
+      ["noop();", "NOOP"],
+      ["skipKey(KEY != VF);", "SKIP IF KEY != VF"],
+    ])("compiles %s to the corresponding CHIP-8 instruction", (source, asm) => {
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(`0x200 ${asm}`);
     });
 
     test("compiles draw() to DRAW", () => {
@@ -670,6 +719,21 @@ V1 = 0x01;`,
   describe("goto statement", () => {
     test("rejects the old fun declaration keyword", () => {
       expect(() => compileTinyC8("fun helper() {}")).toThrow();
+    });
+
+    test("does not append a return to a noreturn procedure", () => {
+      const source = `goto main;
+void exit() noreturn {
+  goto main;
+}
+main:
+V0 = 0x01;`;
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(
+        ["0x200 JUMP 0x204", "0x202 JUMP 0x204", "0x204 V0 := 0x01"].join(
+          "\n",
+        ),
+      );
     });
 
     test("resolves function calls and labels after one-byte data", () => {

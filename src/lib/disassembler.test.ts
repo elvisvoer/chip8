@@ -38,13 +38,12 @@ describe("Disassembler", () => {
   });
 
   test.each([
-    // "br8kout.ch8",
+    "br8kout.ch8",
     "chip8-picture.ch8",
-    // "chipcross.ch8",
-    // "dt-test.ch8",
+    "dt-test.ch8",
     "ibm-logo.ch8",
     "pong.ch8",
-    // "snake.ch8",
+    "snake.ch8",
     "sqrt-test.ch8",
     "zero-pong.ch8",
   ])("can correctly disassemble/assemble %1", (rom) => {
@@ -57,9 +56,29 @@ describe("Disassembler", () => {
     );
     const disassembledBuffer = assembleDisassembly(asm);
 
-    expect(areBuffersEqual(buffer, newBuffer)).toBeTruthy();
+    expect(newBuffer, rom).toEqual(buffer);
     expect(areBuffersEqual(buffer, disassembledBuffer)).toBeTruthy();
   });
+
+  test("compiles the high-level Chipcross source to its original ROM", () => {
+    const rom = new Uint8Array(readFileSync("public/chipcross.ch8"));
+    const source = readFileSync("public/chipcross.tc8", "utf-8");
+
+    expect(compileTinyC8(source)).toEqual(rom);
+  });
+
+  test.each(["elvis.ch8", "snake.ch8"])(
+    "compiles the high-level %s source to its original ROM",
+    (romFile) => {
+      const rom = new Uint8Array(readFileSync(`public/${romFile}`));
+      const source = readFileSync(
+        `public/${romFile.replace("ch8", "tc8")}`,
+        "utf-8",
+      );
+
+      expect(compileTinyC8(source)).toEqual(rom);
+    },
+  );
 });
 
 
