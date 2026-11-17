@@ -23,22 +23,85 @@ function resolveBreaks(lines: string[], exitAddress: number): string[] {
   return lines.map((line) => (line === breakMarker ? `JUMP ${target}` : line));
 }
 
+function isDrawCall(node: any): boolean {
+  return (
+    node?.type === "call_expression" && node.fun_name.value === "draw"
+  );
+}
+
+function drawCallToAsm(node: any): string {
+  const [x, y, height] = node.arguments;
+  if (
+    node.arguments.length !== 3 ||
+    x?.type !== "var_reference" ||
+    y?.type !== "var_reference" ||
+    height?.type !== "hex_literal"
+  ) {
+    throw new Error("draw() expects two registers and a hexadecimal height");
+  }
+
+  return `DRAW ${x.var_name.value} ${y.var_name.value} ${height.value}`;
+}
+
+function expressionValueToAsm(node: any): string {
+  if (isDrawCall(node)) {
+    return "VF";
+  }
+  if (node.type === "call_expression") {
+    throw new Error(`${node.fun_name.value}() does not return a value`);
+  }
+
+  return node.var_name?.value ?? node.value;
+}
+
+function drawCallCount(node: any): number {
+  if (isDrawCall(node)) {
+    return 1;
+  }
+  if (node.type === "binary_operation") {
+    return drawCallCount(node.left) + drawCallCount(node.right);
+  }
+
+  return 0;
+}
+
+function drawInstructions(node: any): string[] {
+  if (isDrawCall(node)) {
+    return [drawCallToAsm(node)];
+  }
+  if (node.type === "binary_operation") {
+    return [
+      ...drawInstructions(node.left),
+      ...drawInstructions(node.right),
+    ];
+  }
+
+  return [];
+}
+
 const oppositeOperator = {
   "==": "!=",
   "!=": "==",
 };
 
 function binaryExprToAsm(item: any, useOppositeOperator = false) {
-  const left = item.left.var_name?.value ?? item.left.value;
+  const left = expressionValueToAsm(item.left);
   const operator = useOppositeOperator
     ? (oppositeOperator as any)[item.operator.value]
     : item.operator.value;
-  const right = item.right.var_name?.value ?? item.right.value;
+  const right = expressionValueToAsm(item.right);
 
   return `${left} ${operator} ${right}`;
 }
 
 function conditionInstruction(item: any, useOppositeOperator = false): string {
+  if (isDrawCall(item)) {
+    return `JUMP IF VF ${useOppositeOperator ? "==" : "!="} 0x00`;
+  }
+  if (item.type === "call_expression") {
+    throw new Error(`${item.fun_name.value}() does not return a value`);
+  }
+
   const keyOperand =
     item.left.type === "key_reference"
       ? item.right
@@ -64,9 +127,13 @@ function isLogicalCondition(item: any): boolean {
   );
 }
 
+function requiresBranchCondition(item: any): boolean {
+  return isLogicalCondition(item) || drawCallCount(item) > 0;
+}
+
 function conditionInstructionCount(item: any): number {
   if (!isLogicalCondition(item)) {
-    return 3;
+    return 3 + drawCallCount(item);
   }
 
   return (
@@ -83,6 +150,7 @@ function conditionBranchLines(
 ): string[] {
   if (!isLogicalCondition(item)) {
     return [
+      ...drawInstructions(item),
       conditionInstruction(item),
       `JUMP ${addressString(falseTarget)}`,
       `JUMP ${addressString(trueTarget)}`,
@@ -114,15 +182,15 @@ function uncontrolledLoopToAsm(
   const initialOffset = addressAt(acc, baseAddress);
   const body: string[] = [];
   astNodeToAsm(node.body, body, initialOffset);
-  const logicalCondition = isLogicalCondition(node.condition);
-  const conditionCount = logicalCondition
+  const branchCondition = requiresBranchCondition(node.condition);
+  const conditionCount = branchCondition
     ? conditionInstructionCount(node.condition)
     : 2;
   const endOffset =
     initialOffset + (instructionCount(body) + conditionCount) * 2;
 
   acc.push(...resolveBreaks(body, endOffset));
-  if (logicalCondition) {
+  if (branchCondition) {
     const conditionStart = initialOffset + instructionCount(body) * 2;
     acc.push(
       ...conditionBranchLines(
@@ -140,7 +208,7 @@ function uncontrolledLoopToAsm(
 
 function whileLoopToAsm(node: any, acc: string[], baseAddress: number) {
   const start = addressAt(acc, baseAddress);
-  if (isLogicalCondition(node.condition)) {
+  if (requiresBranchCondition(node.condition)) {
     const conditionCount = conditionInstructionCount(node.condition);
     const bodyStart = start + conditionCount * 2;
     const body: any[] = [];
@@ -180,7 +248,7 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
     astNodeToAsm(node.increment, increment, start + instructionCount(body) * 2);
   }
 
-  if (node.condition && isLogicalCondition(node.condition)) {
+  if (node.condition && requiresBranchCondition(node.condition)) {
     const conditionStart =
       start + (instructionCount(body) + instructionCount(increment)) * 2;
     const end =
@@ -211,7 +279,21 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
 
 function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
   const start = addressAt(acc, baseAddress);
-  if (isLogicalCondition(node.condition)) {
+  if (
+    !node.alternate &&
+    !isLogicalCondition(node.condition) &&
+    drawCallCount(node.condition) > 0
+  ) {
+    const drawLines = drawInstructions(node.condition);
+    const body: any[] = [];
+    astNodeToAsm(node.body, body, start + (drawLines.length + 1) * 2);
+    if (body.length === 1 && body[0].startsWith("GOTO ")) {
+      acc.push(...drawLines, conditionInstruction(node.condition, true), ...body);
+      return;
+    }
+  }
+
+  if (requiresBranchCondition(node.condition)) {
     const conditionCount = conditionInstructionCount(node.condition);
     const bodyStart = start + conditionCount * 2;
     const body: any[] = [];
@@ -332,9 +414,16 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
     case "var_assignment": {
       const operator =
         node.operator.value === "=" ? ":=" : node.operator.value;
-      acc.push(
-        `${node.var_name.value} ${operator} ${node.value.var_name?.value ?? node.value.value}`,
-      );
+      if (isDrawCall(node.value)) {
+        acc.push(
+          drawCallToAsm(node.value),
+          `${node.var_name.value} ${operator} VF`,
+        );
+      } else {
+        acc.push(
+          `${node.var_name.value} ${operator} ${node.value.var_name?.value ?? node.value.value}`,
+        );
+      }
       break;
     }
     case "postfix_update":
@@ -356,6 +445,8 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
           throw new Error("clear() does not accept arguments");
         }
         acc.push("CLEAR");
+      } else if (node.fun_name.value === "draw") {
+        acc.push(drawCallToAsm(node));
       } else {
         acc.push(`CALL ${node.fun_name.value}`);
       }

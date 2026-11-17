@@ -207,6 +207,66 @@ describe("TinyC8 compiler", () => {
         "clear() does not accept arguments",
       );
     });
+
+    test("compiles draw() to DRAW", () => {
+      expect(bufferToAsm(compileTinyC8("draw(V0, V1, 0x6)"))).toEqual(
+        "0x200 DRAW V0 V1 0x6",
+      );
+    });
+
+    test("uses draw()'s collision flag as a condition value", () => {
+      const source = `if (draw(V0, V1, 0x6)) { V2 = 0x01 }`;
+      const expected = [
+        `0x200 DRAW V0 V1 0x6`,
+        `0x202 JUMP IF VF != 0x00`,
+        `0x204 JUMP 0x20a`,
+        `0x206 JUMP 0x208`,
+        `0x208 V2 := 0x01`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("can compare draw()'s collision flag", () => {
+      const source = `if (draw(V0, V1, 0x6) == 0x00) { V2 = 0x01 }`;
+      const expected = [
+        `0x200 DRAW V0 V1 0x6`,
+        `0x202 JUMP IF VF == 0x00`,
+        `0x204 JUMP 0x20a`,
+        `0x206 JUMP 0x208`,
+        `0x208 V2 := 0x01`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("can branch on draw()'s collision flag", () => {
+      const source = `if (draw(V0, V1, 0x1) != 0x01) { goto done }
+done:
+clear()`;
+      const expected = [
+        `0x200 DRAW V0 V1 0x1`,
+        `0x202 JUMP IF VF == 0x01`,
+        `0x204 JUMP 0x206`,
+        `0x206 CLEAR`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("can assign draw()'s collision flag to a register", () => {
+      const expected = ["0x200 DRAW V0 V1 0x6", "0x202 V2 := VF"].join("\n");
+
+      expect(bufferToAsm(compileTinyC8("V2 = draw(V0, V1, 0x6)"))).toEqual(
+        expected,
+      );
+    });
+
+    test("rejects invalid draw() arguments", () => {
+      expect(() => compileTinyC8("draw(V0, V1)")).toThrow(
+        "draw() expects two registers and a hexadecimal height",
+      );
+    });
   });
 
   describe("postfix operators", () => {
