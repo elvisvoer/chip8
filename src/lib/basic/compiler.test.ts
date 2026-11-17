@@ -180,6 +180,22 @@ describe("basic compiler", () => {
     );
   });
 
+  describe("if statement", () => {
+    test("can have an if statement with an else branch", () => {
+      const testCode = `if (V0 == 0x00) { V1 := 0x01 } else { V1 := 0x02 }`;
+      const expectedResult = [
+        `0x200 JUMP IF V0 == 0x00`,
+        `0x202 JUMP 0x208`,
+        `0x204 V1 := 0x01`,
+        `0x206 JUMP 0x20a`,
+        `0x208 V1 := 0x02`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+  });
+
   describe("do...while loop", () => {
     test("can have single-instruction do...while loop", () => {
       const testCode = `do {V0 := DT} while (V0 != 0x00)`;

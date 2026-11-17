@@ -51,6 +51,8 @@ const lexer = moo.compile({
             do: "do",
             while: "while",
             for: "for",
+            if: "if",
+            else: "else",
         })
     }
 });
@@ -323,40 +325,25 @@ for_loop_expr
     |   null           {% () => null %}
 
 if_statement
-    -> "if" _ "(" _ expression _ ")" _ code_block
+    -> "if" _ "(" _ expression _ ")" _ code_block _ else_clause
         {%
             d => ({
                 type: "if_statement",
                 condition: d[4],
                 body: d[8],
+                alternate: d[10] ?? null,
                 start: tokenStart(d[0]),
-                end: d[8].end
+                end: d[10] ? d[10].end : d[8].end
             })
         %}
-#     |  "if" __ expression _ code_block _
-#        "else" __ code_block
-#         {%
-#             d => ({
-#                 type: "if_statement",
-#                 condition: d[2],
-#                 consequent: d[4],
-#                 alternate: d[8],
-#                 start: tokenStart(d[0]),
-#                 end: d[8].end
-#             })
-#         %}
-#     |  "if" __ expression _ code_block _
-#        "else" __ if_statement
-#        {%
-#             d => ({
-#                 type: "if_statement",
-#                 condition: d[2],
-#                 consequent: d[4],
-#                 alternate: d[8],
-#                 start: tokenStart(d[0]),
-#                 end: d[8].end
-#             })
-#        %}
+
+else_clause
+    -> null
+        {% () => null %}
+    |  "else" _ code_block
+        {% d => d[2] %}
+    |  "else" _ if_statement
+        {% d => d[2] %}
 
 argument_list
     -> null {% () => [] %}

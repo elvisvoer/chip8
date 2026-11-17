@@ -55,6 +55,8 @@ const lexer = moo.compile({
             do: "do",
             while: "while",
             for: "for",
+            if: "if",
+            else: "else",
         })
     }
 });
@@ -239,15 +241,19 @@ var grammar = {
     {"name": "for_loop_init", "symbols": [], "postprocess": () => null},
     {"name": "for_loop_expr", "symbols": ["expression"], "postprocess": id},
     {"name": "for_loop_expr", "symbols": [], "postprocess": () => null},
-    {"name": "if_statement", "symbols": [{"literal":"if"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
+    {"name": "if_statement", "symbols": [{"literal":"if"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block", "_", "else_clause"], "postprocess": 
         d => ({
             type: "if_statement",
             condition: d[4],
             body: d[8],
+            alternate: d[10] ?? null,
             start: tokenStart(d[0]),
-            end: d[8].end
+            end: d[10] ? d[10].end : d[8].end
         })
                 },
+    {"name": "else_clause", "symbols": [], "postprocess": () => null},
+    {"name": "else_clause", "symbols": [{"literal":"else"}, "_", "code_block"], "postprocess": d => d[2]},
+    {"name": "else_clause", "symbols": [{"literal":"else"}, "_", "if_statement"], "postprocess": d => d[2]},
     {"name": "argument_list", "symbols": [], "postprocess": () => []},
     {"name": "argument_list", "symbols": ["_", "expression", "_"], "postprocess": d => [d[1]]},
     {"name": "argument_list", "symbols": ["_", "expression", "_", {"literal":","}, "argument_list"], "postprocess": 

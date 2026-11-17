@@ -61,8 +61,25 @@ function ifStatementToAsm(node: any, acc: string[]) {
   const statements = node.body;
   astNodeToAsm(statements, body);
 
-  acc.push(`JUMP IF ${binaryExprToAsm(node.condition, true)}`);
+  if (!node.alternate) {
+    acc.push(`JUMP IF ${binaryExprToAsm(node.condition, true)}`);
+    acc.push(...body);
+    return;
+  }
+
+  const alternate: any[] = [];
+  astNodeToAsm(node.alternate, alternate);
+
+  const elseStart = 0x200 + (acc.length + 3 + body.length) * 2;
+  const elseTarget = `0x${elseStart.toString(16).padStart(3, "0")}`;
+  const endTarget = 0x200 + (acc.length + 3 + body.length + alternate.length) * 2;
+  const endTargetStr = `0x${endTarget.toString(16).padStart(3, "0")}`;
+
+  acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
+  acc.push(`JUMP ${elseTarget}`);
   acc.push(...body);
+  acc.push(`JUMP ${endTargetStr}`);
+  acc.push(...alternate);
 }
 
 function astNodeToAsm(node: any, acc: string[]): void {
