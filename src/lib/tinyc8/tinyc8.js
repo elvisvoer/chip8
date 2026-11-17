@@ -167,7 +167,6 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["for_loop"], "postprocess": id},
-    {"name": "simple_statement", "symbols": ["return_statement"], "postprocess": id},
     {"name": "simple_statement", "symbols": ["asm_line"], "postprocess": id},
     {"name": "simple_statement", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "simple_statement", "symbols": ["postfix_update"], "postprocess": id},
@@ -176,14 +175,6 @@ var grammar = {
     {"name": "simple_statement", "symbols": ["break_statement"], "postprocess": id},
     {"name": "simple_statement", "symbols": ["continue_statement"], "postprocess": id},
     {"name": "simple_statement", "symbols": ["key_skip_statement"], "postprocess": id},
-    {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
-        d => ({
-            type: "return_statement",
-            value: d[2],
-            start: tokenStart(d[0]),
-            end: d[2].end
-        })
-               },
     {"name": "label_statement", "symbols": ["identifier", {"literal":":"}], "postprocess": 
         d => ({
             type: "label_statement",

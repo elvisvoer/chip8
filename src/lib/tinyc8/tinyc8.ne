@@ -197,8 +197,7 @@ executable_statement
    |  for_loop             {% id %}
 
 simple_statement
-   -> return_statement     {% id %}
-   |  asm_line             {% id %}
+   -> asm_line             {% id %}
    |  var_assignment       {% id %}
    |  postfix_update       {% id %}
    |  call_statement       {% id %}
@@ -206,17 +205,6 @@ simple_statement
    |  break_statement      {% id %}
    |  continue_statement   {% id %}
    |  key_skip_statement   {% id %}
-
-return_statement
-   -> "return" __ expression
-       {%
-           d => ({
-               type: "return_statement",
-               value: d[2],
-               start: tokenStart(d[0]),
-               end: d[2].end
-           })
-       %}
 
 label_statement
     -> identifier ":"
@@ -371,31 +359,6 @@ call_expression
                 end: tokenEnd(d[4])
             })
         %}
-
-# indexed_access
-#     -> unary_expression _ "[" _ expression _ "]"
-#         {%
-#             d => ({
-#                 type: "indexed_access",
-#                 subject: d[0],
-#                 index: d[4],
-#                 start: d[0].start,
-#                 end: tokenEnd(d[6])
-#             })
-#         %}
-
-# indexed_assignment
-#     -> unary_expression _ "[" _ expression _ "]" _ "=" _ expression
-#         {%
-#             d => ({
-#                 type: "indexed_assignment",
-#                 subject: d[0],
-#                 index: d[4],
-#                 value: d[10],
-#                 start: d[0].start,
-#                 end: d[10].end
-#             })
-#         %}
 
 do_while_loop
     -> "do" _ code_block _ "while" _ "(" _ expression _ ")" ";"
@@ -577,71 +540,10 @@ unary_expression
         %}
     |  call_expression      {% id %}
     |  string_literal       {% id %}
-    # |  list_literal         {% id %}
-    # |  boolean_literal      {% id %}
-    # |  indexed_access       {% id %}
-    # |  fun_expression       {% id %}
     |  "(" expression ")"
         {%
             data => data[1]
         %}
-
-# list_literal
-#     -> "[" list_items "]"
-#         {%
-#             d => ({
-#                 type: "list_literal",
-#                 items: d[1],
-#                 start: tokenStart(d[0]),
-#                 end: tokenEnd(d[2])
-#             })
-#         %}
-
-# list_items
-#     -> null
-#         {% () => [] %}
-#     |  _ml expression _ml
-#         {% d => [d[1]] %}
-#     |  _ml expression _ml "," list_items
-#         {%
-#             d => [
-#                 d[1],
-#                 ...d[4]
-#             ]
-#         %}
-
-
-# boolean_literal
-#     -> "true"
-#         {%
-#             d => ({
-#                 type: "boolean_literal",
-#                 value: true,
-#                 start: tokenStart(d[0]),
-#                 end: tokenEnd(d[0])
-#             })
-#         %}
-#     |  "false"
-#         {%
-#             d => ({
-#                 type: "boolean_literal",
-#                 value: false,
-#                 start: tokenStart(d[0]),
-#                 end: tokenEnd(d[0])
-#             })
-#         %}
-
-# fun_expression
-#     -> "void" _ "(" _ parameter_list _ ")" _ code_block
-#         {%
-#             d => ({
-#                 type: "fun_expression",
-#                 parameters: d[4],
-#                 body: d[8],
-#                 start: tokenStart(d[0]),
-#                 end: d[8].end
-#             })
-#         %}
 
 string_literal -> %string_literal {% convertTokenId %}
 binary -> %binary_literal {% convertTokenId %}
