@@ -105,6 +105,23 @@ function binaryLiteralToAsm(node: any, padToByte = false): string {
   return `0x${hex}`;
 }
 
+function byteArrayValueToAsm(node: any, arrayName: string): string {
+  const value =
+    node.type === "binary_literal"
+      ? Number.parseInt(node.value.slice(2), 2)
+      : node.type === "hex_literal"
+        ? Number.parseInt(node.value.slice(2), 16)
+        : node.value;
+
+  if (!Number.isInteger(value) || value < 0 || value > 0xff) {
+    throw new Error(
+      `Static byte array '${arrayName}' values must be integers from 0 to 255`,
+    );
+  }
+
+  return `0x${value.toString(16).padStart(2, "0")}`;
+}
+
 function literalToAsm(node: any): string {
   return node.type === "binary_literal"
     ? binaryLiteralToAsm(node)
@@ -594,7 +611,32 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
 function astToAsm(astNodes: any[]): string {
   let result: string[] = [];
   const symbols = new Map<string, string>();
+  const staticArrays = astNodes.filter(
+    (node) => node.type === "static_array_declaration",
+  );
+  const arrayNames = new Set<string>();
+  const functionNames = new Set(
+    astNodes
+      .filter((node) => node.type === "fun_definition")
+      .map((node) => node.name.value),
+  );
+
+  staticArrays.forEach((array) => {
+    const name = array.name.value;
+    if (arrayNames.has(name)) {
+      throw new Error(`Duplicate TinyC8 static array '${name}'`);
+    }
+    if (functionNames.has(name)) {
+      throw new Error(`TinyC8 static array '${name}' conflicts with a function`);
+    }
+    arrayNames.add(name);
+  });
+
   astNodes.forEach((node) => {
+    if (node.type === "static_array_declaration") {
+      return;
+    }
+
     if (node.type === "fun_definition") {
       const offset = addressAt(result, 0x200);
       let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
@@ -606,6 +648,13 @@ function astToAsm(astNodes: any[]): string {
     }
 
     astNodeToAsm(node, result);
+  });
+
+  staticArrays.forEach((array) => {
+    result.push(`${labelMarker}${array.name.value}`);
+    array.values.forEach((value: any) => {
+      result.push(byteArrayValueToAsm(value, array.name.value));
+    });
   });
 
   if (result.includes(breakMarker)) {
@@ -638,6 +687,18 @@ function astToAsm(astNodes: any[]): string {
       }
 
       return `JUMP ${address}`;
+    }
+
+    const arrayReference = /^I := ([a-zA-Z_][a-zA-Z_0-9]*)$/.exec(line);
+    if (arrayReference && arrayNames.has(arrayReference[1])) {
+      const address = labels.get(arrayReference[1]);
+      if (!address) {
+        throw new Error(
+          `Unknown TinyC8 static array '${arrayReference[1]}'`,
+        );
+      }
+
+      return `I := ${address}`;
     }
 
     const labelList = Array.from(symbols.keys());

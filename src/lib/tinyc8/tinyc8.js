@@ -57,6 +57,9 @@ const lexer = moo.compile({
     identifier: {
         match: /[a-zA-Z_][a-zA-Z_0-9]*/,
         type: moo.keywords({
+            static: "static",
+            const: "const",
+            byte: "byte",
             fun: "fun",
             do: "do",
             while: "while",
@@ -107,7 +110,7 @@ var grammar = {
     Lexer: lexer,
     ParserRules: [
     {"name": "input", "symbols": ["top_level_statements"], "postprocess": id},
-    {"name": "top_level_statements", "symbols": ["top_level_statement", "_"], "postprocess":
+    {"name": "top_level_statements", "symbols": ["top_level_statement", "_"], "postprocess": 
         d => [d[0]]
                 },
     {"name": "top_level_statements", "symbols": ["top_level_statement", "_", {"literal":"\n"}, "_", "top_level_statements"], "postprocess": 
@@ -123,8 +126,23 @@ var grammar = {
         d => []
                 },
     {"name": "top_level_statement", "symbols": ["fun_definition"], "postprocess": id},
+    {"name": "top_level_statement", "symbols": ["static_array_declaration"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["code_block"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["executable_statement"], "postprocess": id},
+    {"name": "static_array_declaration", "symbols": [{"literal":"static"}, "__", {"literal":"const"}, "__", {"literal":"byte"}, "__", "identifier", "_", {"literal":"["}, "_", {"literal":"]"}, "_", {"literal":"="}, "_", {"literal":"{"}, "_ml", "byte_array_values", "_ml", {"literal":"}"}, "_", {"literal":";"}], "postprocess": 
+        d => ({
+            type: "static_array_declaration",
+            name: d[6],
+            values: d[16],
+            start: tokenStart(d[0]),
+            end: tokenEnd(d[20])
+        })
+                },
+    {"name": "byte_array_values", "symbols": ["byte_array_value"], "postprocess": d => [d[0]]},
+    {"name": "byte_array_values", "symbols": ["byte_array_value", "_ml", {"literal":","}, "_ml", "byte_array_values"], "postprocess": d => [d[0], ...d[4]]},
+    {"name": "byte_array_value", "symbols": ["hex"], "postprocess": id},
+    {"name": "byte_array_value", "symbols": ["binary"], "postprocess": id},
+    {"name": "byte_array_value", "symbols": ["number"], "postprocess": id},
     {"name": "fun_definition", "symbols": [{"literal":"fun"}, "__", "identifier", "_", {"literal":"("}, "_", "parameter_list", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
         d => ({
             type: "fun_definition",

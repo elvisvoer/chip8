@@ -3,7 +3,7 @@ goto gameInit
 mainLoop:
 V0 = 0x03
 DT = V0
-I = 0x2b0
+I = paddleSprite
 
 V0 = 0x0a
 if (KEY == V0) {
@@ -33,7 +33,7 @@ if (KEY == V0) {
     }
 }
 
-I = 0x2b6
+I = ballSprite
 draw(V3, V4, 0x1)
 ballUpdate:
 V3 += V5
@@ -92,10 +92,10 @@ if (V6 != 0x00) {
     V6 = 0x01
 }
 clear()
-I = 0x2b0
+I = paddleSprite
 draw(V7, V8, 0x6)
 draw(V9, VA, 0x6)
-I = 0x2b6
+I = ballSprite
 draw(V3, V4, 0x1)
 
 waitForPress:
@@ -111,10 +111,8 @@ if (KEY == V0) {
     goto mainLoop
 }
 
-paddleSprite:
-0x2b0 0x8080
-0x2b2 0x8080
-0x2b4 0x8080
+static const byte paddleSprite[] = {
+    0x80, 0x80, 0x80, 0x80, 0x80, 0x80
+};
 
-ballSprite:
-0x2b6 0x8000
+static const byte ballSprite[] = { 0x80, 0x00 };

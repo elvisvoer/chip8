@@ -235,6 +235,28 @@ V1 = 0x02 /* trailing block comment */`;
       ).toEqual("0x200 RAND V0 0xaa");
     });
 
+    test("emits static byte arrays and resolves their address in I", () => {
+      const source = `I = sprite
+draw(V0, V1, 0x2)
+static const byte sprite[] = {
+  0x80,
+  0b11110000,
+  255
+};`;
+
+      expect(compileTinyC8(source)).toEqual(
+        Uint8Array.fromHex("a204d01280f0ff"),
+      );
+    });
+
+    test("rejects values outside the byte range in static arrays", () => {
+      expect(() =>
+        compileTinyC8("static const byte sprite[] = { 0x100 };"),
+      ).toThrow(
+        "Static byte array 'sprite' values must be integers from 0 to 255",
+      );
+    });
+
     test("compiles I += Vx to CHIP-8 INC Vx", () => {
       expect(bufferToAsm(compileTinyC8("I += V0"))).toEqual("0x200 INC V0");
       expect(bufferToAsm(compileTinyC8("I += VF"))).toEqual("0x200 INC VF");

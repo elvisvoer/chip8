@@ -53,6 +53,9 @@ const lexer = moo.compile({
     identifier: {
         match: /[a-zA-Z_][a-zA-Z_0-9]*/,
         type: moo.keywords({
+            static: "static",
+            const: "const",
+            byte: "byte",
             fun: "fun",
             do: "do",
             while: "while",
@@ -129,8 +132,32 @@ top_level_statements
 
 top_level_statement
     -> fun_definition   {% id %}
+    |  static_array_declaration {% id %}
     |  code_block       {% id %}
     |  executable_statement {% id %}
+
+static_array_declaration
+    -> "static" __ "const" __ "byte" __ identifier _ "[" _ "]" _ "=" _ "{" _ml byte_array_values _ml "}" _ ";"
+        {%
+            d => ({
+                type: "static_array_declaration",
+                name: d[6],
+                values: d[16],
+                start: tokenStart(d[0]),
+                end: tokenEnd(d[20])
+            })
+        %}
+
+byte_array_values
+    -> byte_array_value
+        {% d => [d[0]] %}
+    |  byte_array_value _ml "," _ml byte_array_values
+        {% d => [d[0], ...d[4]] %}
+
+byte_array_value
+    -> hex     {% id %}
+    |  binary  {% id %}
+    |  number  {% id %}
 
 fun_definition
     -> "fun" __ identifier _ "(" _ parameter_list _ ")" _ code_block
