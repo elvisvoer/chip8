@@ -206,11 +206,14 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
         acc.push(`${command} ${args}`);
       }
       break;
-    case "var_assignment":
+    case "var_assignment": {
+      const operator =
+        node.operator.value === "=" ? ":=" : node.operator.value;
       acc.push(
-        `${node.var_name.value} ${node.operator.value} ${node.value.var_name?.value ?? node.value.value}`,
+        `${node.var_name.value} ${operator} ${node.value.var_name?.value ?? node.value.value}`,
       );
       break;
+    }
     case "binary_operation":
       acc.push(binaryExprToAsm(node));
       break;

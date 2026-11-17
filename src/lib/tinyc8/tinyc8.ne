@@ -4,7 +4,9 @@ const moo = require("moo");
 const lexer = moo.compile({
     ws: /[ \t]+/,
     nl: { match: "\n", lineBreaks: true },
-    ":=": ":=",
+    "==": "==",
+    "!=": "!=",
+    "=": "=",
     "+=": "+=",
     "-=": "-=",
     "~=": "~=",
@@ -13,8 +15,6 @@ const lexer = moo.compile({
     "^=": "^=",
     "<<=": "<<=",
     ">>=": ">>=",
-    "==": "==",
-    "!=": "!=",
     lparan: "(",
     rparan: ")",
     comma: ",",
@@ -300,7 +300,7 @@ var_assignment
         %}
 
 assignment_op
-    -> ":=" {% d => d[0] %}
+    -> "="   {% d => d[0] %}
     | "+="  {% d => d[0] %}
     | "-="  {% d => d[0] %}
     | "~="  {% d => d[0] %}

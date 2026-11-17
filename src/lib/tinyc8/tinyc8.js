@@ -8,7 +8,9 @@ const moo = require("moo");
 const lexer = moo.compile({
     ws: /[ \t]+/,
     nl: { match: "\n", lineBreaks: true },
-    ":=": ":=",
+    "==": "==",
+    "!=": "!=",
+    "=": "=",
     "+=": "+=",
     "-=": "-=",
     "~=": "~=",
@@ -17,8 +19,6 @@ const lexer = moo.compile({
     "^=": "^=",
     "<<=": "<<=",
     ">>=": ">>=",
-    "==": "==",
-    "!=": "!=",
     lparan: "(",
     rparan: ")",
     comma: ",",
@@ -245,7 +245,7 @@ var grammar = {
             end: d[4].end
         })
                 },
-    {"name": "assignment_op", "symbols": [{"literal":":="}], "postprocess": d => d[0]},
+    {"name": "assignment_op", "symbols": [{"literal":"="}], "postprocess": d => d[0]},
     {"name": "assignment_op", "symbols": [{"literal":"+="}], "postprocess": d => d[0]},
     {"name": "assignment_op", "symbols": [{"literal":"-="}], "postprocess": d => d[0]},
     {"name": "assignment_op", "symbols": [{"literal":"~="}], "postprocess": d => d[0]},
