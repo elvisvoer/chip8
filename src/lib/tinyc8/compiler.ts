@@ -57,6 +57,54 @@ function conditionInstruction(item: any, useOppositeOperator = false): string {
   return `JUMP IF ${binaryExprToAsm(item, useOppositeOperator)}`;
 }
 
+function isLogicalCondition(item: any): boolean {
+  return (
+    item.type === "binary_operation" &&
+    (item.operator.value === "&&" || item.operator.value === "||")
+  );
+}
+
+function conditionInstructionCount(item: any): number {
+  if (!isLogicalCondition(item)) {
+    return 3;
+  }
+
+  return (
+    conditionInstructionCount(item.left) +
+    conditionInstructionCount(item.right)
+  );
+}
+
+function conditionBranchLines(
+  item: any,
+  trueTarget: number,
+  falseTarget: number,
+  start: number,
+): string[] {
+  if (!isLogicalCondition(item)) {
+    return [
+      conditionInstruction(item),
+      `JUMP ${addressString(falseTarget)}`,
+      `JUMP ${addressString(trueTarget)}`,
+    ];
+  }
+
+  const rightStart =
+    start + conditionInstructionCount(item.left) * 2;
+  const leftLines =
+    item.operator.value === "&&"
+      ? conditionBranchLines(item.left, rightStart, falseTarget, start)
+      : conditionBranchLines(item.left, trueTarget, rightStart, start);
+  const rightLines = conditionBranchLines(
+    item.right,
+    trueTarget,
+    falseTarget,
+    rightStart,
+  );
+
+  return [...leftLines, ...rightLines];
+}
+
 function uncontrolledLoopToAsm(
   node: any,
   acc: string[],
@@ -66,15 +114,48 @@ function uncontrolledLoopToAsm(
   const initialOffset = addressAt(acc, baseAddress);
   const body: string[] = [];
   astNodeToAsm(node.body, body, initialOffset);
-  const endOffset = initialOffset + (instructionCount(body) + 2) * 2;
+  const logicalCondition = isLogicalCondition(node.condition);
+  const conditionCount = logicalCondition
+    ? conditionInstructionCount(node.condition)
+    : 2;
+  const endOffset =
+    initialOffset + (instructionCount(body) + conditionCount) * 2;
 
   acc.push(...resolveBreaks(body, endOffset));
-  acc.push(conditionInstruction(node.condition, useOppositeOperator));
-  acc.push(`JUMP ${addressString(initialOffset)}`);
+  if (logicalCondition) {
+    const conditionStart = initialOffset + instructionCount(body) * 2;
+    acc.push(
+      ...conditionBranchLines(
+        node.condition,
+        initialOffset,
+        endOffset,
+        conditionStart,
+      ),
+    );
+  } else {
+    acc.push(conditionInstruction(node.condition, useOppositeOperator));
+    acc.push(`JUMP ${addressString(initialOffset)}`);
+  }
 }
 
 function whileLoopToAsm(node: any, acc: string[], baseAddress: number) {
   const start = addressAt(acc, baseAddress);
+  if (isLogicalCondition(node.condition)) {
+    const conditionCount = conditionInstructionCount(node.condition);
+    const bodyStart = start + conditionCount * 2;
+    const body: any[] = [];
+    astNodeToAsm(node.body, body, bodyStart);
+    const end =
+      start + (conditionCount + instructionCount(body) + 1) * 2;
+
+    acc.push(
+      ...conditionBranchLines(node.condition, bodyStart, end, start),
+      ...resolveBreaks(body, end),
+      `JUMP ${addressString(start)}`,
+    );
+    return;
+  }
+
   const body: any[] = [];
   astNodeToAsm(node.body, body, start + 4);
 
@@ -99,6 +180,19 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
     astNodeToAsm(node.increment, increment, start + instructionCount(body) * 2);
   }
 
+  if (node.condition && isLogicalCondition(node.condition)) {
+    const conditionStart =
+      start + (instructionCount(body) + instructionCount(increment)) * 2;
+    const end =
+      conditionStart + conditionInstructionCount(node.condition) * 2;
+    acc.push(
+      ...resolveBreaks(body, end),
+      ...increment,
+      ...conditionBranchLines(node.condition, start, end, conditionStart),
+    );
+    return;
+  }
+
   const end =
     start +
     (instructionCount(body) +
@@ -117,6 +211,35 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
 
 function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
   const start = addressAt(acc, baseAddress);
+  if (isLogicalCondition(node.condition)) {
+    const conditionCount = conditionInstructionCount(node.condition);
+    const bodyStart = start + conditionCount * 2;
+    const body: any[] = [];
+    astNodeToAsm(node.body, body, bodyStart);
+
+    if (!node.alternate) {
+      const end = bodyStart + instructionCount(body) * 2;
+      acc.push(
+        ...conditionBranchLines(node.condition, bodyStart, end, start),
+        ...body,
+      );
+      return;
+    }
+
+    const elseStart =
+      bodyStart + (instructionCount(body) + 1) * 2;
+    const alternate: any[] = [];
+    astNodeToAsm(node.alternate, alternate, elseStart);
+    const end = elseStart + instructionCount(alternate) * 2;
+    acc.push(
+      ...conditionBranchLines(node.condition, bodyStart, elseStart, start),
+      ...body,
+      `JUMP ${addressString(end)}`,
+      ...alternate,
+    );
+    return;
+  }
+
   const body: any[] = [];
   const statements = node.body;
   const hasKeyCondition =

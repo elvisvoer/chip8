@@ -10,6 +10,8 @@ const lexer = moo.compile({
     nl: { match: "\n", lineBreaks: true },
     "==": "==",
     "!=": "!=",
+    "&&": "&&",
+    "||": "||",
     "=": "=",
     "+=": "+=",
     "-=": "-=",
@@ -248,7 +250,7 @@ var grammar = {
             end: d[4].end
         })
                 },
-    {"name": "postfix_update", "symbols": ["identifier", "_", "postfix_op"], "postprocess":
+    {"name": "postfix_update", "symbols": ["identifier", "_", "postfix_op"], "postprocess": 
         d => ({
             type: "postfix_update",
             var_name: d[0],
@@ -296,7 +298,7 @@ var grammar = {
             end: d[8].end
         })
                 },
-    {"name": "for_loop", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "for_loop_init", "_", {"literal":";"}, "_", "for_loop_expr", "_", {"literal":";"}, "_", "for_loop_increment", "_", {"literal":")"}, "_", "code_block"], "postprocess":
+    {"name": "for_loop", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "for_loop_init", "_", {"literal":";"}, "_", "for_loop_expr", "_", {"literal":";"}, "_", "for_loop_increment", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
         d => ({
             type: "for_loop",
             body: d[16],
@@ -332,9 +334,9 @@ var grammar = {
     {"name": "argument_list", "symbols": ["_", "expression", "_", {"literal":","}, "argument_list"], "postprocess": 
         d => [d[1], ...d[4]]
                 },
-    {"name": "expression", "symbols": ["boolean_expression"], "postprocess": id},
-    {"name": "boolean_expression", "symbols": ["comparison_expression"], "postprocess": id},
-    {"name": "boolean_expression", "symbols": ["comparison_expression", "_", "boolean_operator", "_", "boolean_expression"], "postprocess": 
+    {"name": "expression", "symbols": ["logical_or_expression"], "postprocess": id},
+    {"name": "logical_or_expression", "symbols": ["logical_and_expression"], "postprocess": id},
+    {"name": "logical_or_expression", "symbols": ["logical_and_expression", "_", {"literal":"||"}, "_", "logical_or_expression"], "postprocess": 
         d => ({
             type: "binary_operation",
             operator: convertToken(d[2]),
@@ -344,8 +346,17 @@ var grammar = {
             end: d[4].end
         })
                 },
-    {"name": "boolean_operator", "symbols": [{"literal":"and"}], "postprocess": id},
-    {"name": "boolean_operator", "symbols": [{"literal":"or"}], "postprocess": id},
+    {"name": "logical_and_expression", "symbols": ["comparison_expression"], "postprocess": id},
+    {"name": "logical_and_expression", "symbols": ["comparison_expression", "_", {"literal":"&&"}, "_", "logical_and_expression"], "postprocess": 
+        d => ({
+            type: "binary_operation",
+            operator: convertToken(d[2]),
+            left: d[0],
+            right: d[4],
+            start: d[0].start,
+            end: d[4].end
+        })
+                },
     {"name": "comparison_expression", "symbols": ["additive_expression"], "postprocess": id},
     {"name": "comparison_expression", "symbols": ["additive_expression", "_", "comparison_operator", "_", "comparison_expression"], "postprocess": 
         d => ({

@@ -205,6 +205,110 @@ describe("TinyC8 compiler", () => {
     });
   });
 
+  describe("logical operators", () => {
+    test("short-circuits && in an if condition", () => {
+      const source = `if (V0 == 0x00 && V1 != 0x00) { V2 = 0x01 }`;
+      const expected = [
+        `0x200 JUMP IF V0 == 0x00`,
+        `0x202 JUMP 0x20e`,
+        `0x204 JUMP 0x206`,
+        `0x206 JUMP IF V1 != 0x00`,
+        `0x208 JUMP 0x20e`,
+        `0x20a JUMP 0x20c`,
+        `0x20c V2 := 0x01`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("short-circuits || across if and else branches", () => {
+      const source = `if (V0 == 0x00 || V1 != 0x00) {
+  V2 = 0x01
+} else {
+  V2 = 0x02
+}`;
+      const expected = [
+        `0x200 JUMP IF V0 == 0x00`,
+        `0x202 JUMP 0x206`,
+        `0x204 JUMP 0x20c`,
+        `0x206 JUMP IF V1 != 0x00`,
+        `0x208 JUMP 0x210`,
+        `0x20a JUMP 0x20c`,
+        `0x20c V2 := 0x01`,
+        `0x20e JUMP 0x212`,
+        `0x210 V2 := 0x02`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("gives && higher precedence than ||", () => {
+      const source = `if (V0 == 0x00 || V1 == 0x01 && V2 == 0x02) { V3 = 0x01 }`;
+      const expected = [
+        `0x200 JUMP IF V0 == 0x00`,
+        `0x202 JUMP 0x206`,
+        `0x204 JUMP 0x212`,
+        `0x206 JUMP IF V1 == 0x01`,
+        `0x208 JUMP 0x214`,
+        `0x20a JUMP 0x20c`,
+        `0x20c JUMP IF V2 == 0x02`,
+        `0x20e JUMP 0x214`,
+        `0x210 JUMP 0x212`,
+        `0x212 V3 := 0x01`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("supports logical conditions in while loops", () => {
+      const source = `while (V0 == 0x00 && V1 != 0x00) { V2 = 0x01 }`;
+      const expected = [
+        `0x200 JUMP IF V0 == 0x00`,
+        `0x202 JUMP 0x210`,
+        `0x204 JUMP 0x206`,
+        `0x206 JUMP IF V1 != 0x00`,
+        `0x208 JUMP 0x210`,
+        `0x20a JUMP 0x20c`,
+        `0x20c V2 := 0x01`,
+        `0x20e JUMP 0x200`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("supports logical conditions in do...while loops", () => {
+      const source = `do { V2 = 0x01 } while (V0 == 0x00 || V1 == 0x00)`;
+      const expected = [
+        `0x200 V2 := 0x01`,
+        `0x202 JUMP IF V0 == 0x00`,
+        `0x204 JUMP 0x208`,
+        `0x206 JUMP 0x200`,
+        `0x208 JUMP IF V1 == 0x00`,
+        `0x20a JUMP 0x20e`,
+        `0x20c JUMP 0x200`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("supports logical conditions in for-loop tests", () => {
+      const source = `for (V0 = 0x01; V0 == 0x00 || V1 != 0x00; V0++) { V2 = 0x01 }`;
+      const expected = [
+        `0x200 V0 := 0x01`,
+        `0x202 V2 := 0x01`,
+        `0x204 V0 += 0x01`,
+        `0x206 JUMP IF V0 == 0x00`,
+        `0x208 JUMP 0x20c`,
+        `0x20a JUMP 0x202`,
+        `0x20c JUMP IF V1 != 0x00`,
+        `0x20e JUMP 0x212`,
+        `0x210 JUMP 0x202`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+  });
+
   describe("key condition", () => {
     test.each(["==", "!="])("supports if (KEY %s V0)", (operator) => {
       const source = `if (KEY ${operator} V0) { V1 = 0x01 }`;

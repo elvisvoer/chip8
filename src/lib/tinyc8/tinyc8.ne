@@ -6,6 +6,8 @@ const lexer = moo.compile({
     nl: { match: "\n", lineBreaks: true },
     "==": "==",
     "!=": "!=",
+    "&&": "&&",
+    "||": "||",
     "=": "=",
     "+=": "+=",
     "-=": "-=",
@@ -448,11 +450,11 @@ argument_list
             d => [d[1], ...d[4]]
         %}
 
-expression -> boolean_expression         {% id %}
+expression -> logical_or_expression {% id %}
 
-boolean_expression
-    -> comparison_expression     {% id %}
-    |  comparison_expression _ boolean_operator _ boolean_expression
+logical_or_expression
+    -> logical_and_expression {% id %}
+    |  logical_and_expression _ "||" _ logical_or_expression
         {%
             d => ({
                 type: "binary_operation",
@@ -464,9 +466,19 @@ boolean_expression
             })
         %}
 
-boolean_operator
-    -> "and"      {% id %}
-    |  "or"       {% id %}
+logical_and_expression
+    -> comparison_expression     {% id %}
+    |  comparison_expression _ "&&" _ logical_and_expression
+        {%
+            d => ({
+                type: "binary_operation",
+                operator: convertToken(d[2]),
+                left: d[0],
+                right: d[4],
+                start: d[0].start,
+                end: d[4].end
+            })
+        %}
 
 comparison_expression
     -> additive_expression    {% id %}
