@@ -1,114 +1,114 @@
-goto gameInit
+goto gameInit;
 
 mainLoop:
-V0 = 0x03
-DT = V0
-I = paddleSprite
+V0 = 0x03;
+DT = V0;
+I = paddleSprite;
 
-V0 = 0x0a
+V0 = 0x0a;
 if (KEY == V0) {
-    draw(V7, V8, 0x6)
-    V8++
-    draw(V7, V8, 0x6)
+    draw(V7, V8, 0x6);
+    V8++;
+    draw(V7, V8, 0x6);
 } else {
-    V0 = 0x0b
+    V0 = 0x0b;
     if (KEY == V0) {
-        draw(V7, V8, 0x6)
-        V8--
-        draw(V7, V8, 0x6)
+        draw(V7, V8, 0x6);
+        V8--;
+        draw(V7, V8, 0x6);
     }
 }
 
-V0 = 0x08
+V0 = 0x08;
 if (KEY == V0) {
-    draw(V9, VA, 0x6)
-    VA++
-    draw(V9, VA, 0x6)
+    draw(V9, VA, 0x6);
+    VA++;
+    draw(V9, VA, 0x6);
 } else {
-    V0 = 0x02
+    V0 = 0x02;
     if (KEY == V0) {
-        draw(V9, VA, 0x6)
-        VA--
-        draw(V9, VA, 0x6)
+        draw(V9, VA, 0x6);
+        VA--;
+        draw(V9, VA, 0x6);
     }
 }
 
-I = ballSprite
-draw(V3, V4, 0x1)
+I = ballSprite;
+draw(V3, V4, 0x1);
 ballUpdate:
-V3 += V5
-V4 += V6
+V3 += V5;
+V4 += V6;
 if (V3 == 0x00) {
-    goto resetBall
+    goto resetBall;
 }
 if (V3 == 0x3f) {
-    goto resetBall
+    goto resetBall;
 }
 if (V4 == 0x00) {
-    V6 = 0x01
+    V6 = 0x01;
 }
 if (V4 == 0x1f) {
-    V6 = 0xff
+    V6 = 0xff;
 }
 if (draw(V3, V4, 0x1) != 0x01) {
-    goto gameOver
+    goto gameOver;
 }
 if (V3 == 0x02) {
-    V5 = 0x01
+    V5 = 0x01;
 }
 if (V3 == 0x3e) {
-    V5 = 0xff
+    V5 = 0xff;
 }
-draw(V3, V4, 0x1)
-V0 = 0xc8
-ST = V0
-goto ballUpdate
+draw(V3, V4, 0x1);
+V0 = 0xc8;
+ST = V0;
+goto ballUpdate;
 
 gameOver:
-V0 = 0x0f
+V0 = 0x0f;
 if (KEY != V0) {
-    goto mainLoop
+    goto mainLoop;
 }
 
 gameInit:
-V7 = 0x02
-V8 = 0x0a
-V9 = 0x3e
-VA = 0x0a
+V7 = 0x02;
+V8 = 0x0a;
+V9 = 0x3e;
+VA = 0x0a;
 
 resetBall:
-V3 = 0x20
-V4 = 0x10
-0x27e RAND V5 0x01
+V3 = 0x20;
+V4 = 0x10;
+0x27e RAND V5 0x01;
 if (V5 != 0x00) {
-    V5 = 0xff
+    V5 = 0xff;
 } else {
-    V5 = 0x01
+    V5 = 0x01;
 }
-0x28a RAND V6 0x01
+0x28a RAND V6 0x01;
 if (V6 != 0x00) {
-    V6 = 0xff
+    V6 = 0xff;
 } else {
-    V6 = 0x01
+    V6 = 0x01;
 }
-clear()
-I = paddleSprite
-draw(V7, V8, 0x6)
-draw(V9, VA, 0x6)
-I = ballSprite
-draw(V3, V4, 0x1)
+clear();
+I = paddleSprite;
+draw(V7, V8, 0x6);
+draw(V9, VA, 0x6);
+I = ballSprite;
+draw(V3, V4, 0x1);
 
 waitForPress:
-V0 = 0x0f
+V0 = 0x0f;
 if (KEY != V0) {
-    goto waitForPress
+    goto waitForPress;
 }
 
 waitForRelease:
 if (KEY == V0) {
-    goto waitForRelease
+    goto waitForRelease;
 } else {
-    goto mainLoop
+    goto mainLoop;
 }
 
 static const byte paddleSprite[] = {

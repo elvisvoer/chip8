@@ -106,29 +106,13 @@ function convertTokenId(data) {
 
 @lexer lexer
 
-input -> top_level_statements {% id %}
+input -> _ml top_level_statements {% d => d[1] %}
 
 top_level_statements
-    ->  top_level_statement _
-        {%
-            d => [d[0]]
-        %}
-    |  top_level_statement _ "\n" _ top_level_statements
-        {%
-            d => [
-                d[0],
-                ...d[4]
-            ]
-        %}
-    # below 2 sub-rules handle blank lines
-    |  _ "\n" top_level_statements
-        {%
-            d => d[2]
-        %}
-    |  _
-        {%
-            d => []
-        %}
+    -> null
+        {% () => [] %}
+    |  top_level_statement _ml top_level_statements
+        {% d => [d[0], ...d[2]] %}
 
 top_level_statement
     -> fun_definition   {% id %}
@@ -180,44 +164,40 @@ parameter_list
             d => [d[0], ...d[4]]
         %}
 
-code_block -> "{" executable_statements "}"
+code_block -> "{" _ml executable_statements "}"
     {%
         (d) => ({
             type: "code_block",
-            statements: d[1],
+            statements: d[2],
             start: tokenStart(d[0]),
-            end: tokenEnd(d[2])
+            end: tokenEnd(d[3])
         })
     %}
 
 executable_statements
-    -> _
+    -> null
         {% () => [] %}
-    |  _ "\n" executable_statements
-        {% (d) => d[2] %}
-    |  _ executable_statement _
-        {% d => [d[1]] %}
-    |  _ executable_statement _ "\n" executable_statements
-        {%
-            d => [d[1], ...d[4]]
-        %}
+    |  executable_statement _ml executable_statements
+        {% d => [d[0], ...d[2]] %}
 
 executable_statement
-   -> return_statement     {% id %}
-   |  asm_line             {% id %}
+   -> simple_statement ";" {% d => d[0] %}
    |  code_block           {% id %}
-   |  var_assignment       {% id %}
-   |  postfix_update       {% id %}
-   |  call_statement       {% id %}
    |  label_statement      {% id %}
-   |  goto_statement       {% id %}
-   |  break_statement      {% id %}
-   |  key_skip_statement   {% id %}
-#    |  indexed_assignment   {% id %}
    |  do_while_loop        {% id %}
    |  while_loop           {% id %}
    |  if_statement         {% id %}
    |  for_loop             {% id %}
+
+simple_statement
+   -> return_statement     {% id %}
+   |  asm_line             {% id %}
+   |  var_assignment       {% id %}
+   |  postfix_update       {% id %}
+   |  call_statement       {% id %}
+   |  goto_statement       {% id %}
+   |  break_statement      {% id %}
+   |  key_skip_statement   {% id %}
 
 return_statement
    -> "return" __ expression
@@ -400,14 +380,14 @@ call_expression
 #         %}
 
 do_while_loop
-    -> "do" _ code_block _ "while" _ "(" _ expression _ ")"
+    -> "do" _ code_block _ "while" _ "(" _ expression _ ")" ";"
         {%
             d => ({
                 type: "do_while_loop",
                 body: d[2],
                 condition: d[8],
                 start: tokenStart(d[0]),
-                end: tokenEnd(d[10])
+                end: tokenEnd(d[11])
             })
         %}
 

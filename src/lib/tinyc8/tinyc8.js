@@ -109,22 +109,9 @@ function convertTokenId(data) {
 var grammar = {
     Lexer: lexer,
     ParserRules: [
-    {"name": "input", "symbols": ["top_level_statements"], "postprocess": id},
-    {"name": "top_level_statements", "symbols": ["top_level_statement", "_"], "postprocess": 
-        d => [d[0]]
-                },
-    {"name": "top_level_statements", "symbols": ["top_level_statement", "_", {"literal":"\n"}, "_", "top_level_statements"], "postprocess": 
-        d => [
-            d[0],
-            ...d[4]
-        ]
-                },
-    {"name": "top_level_statements", "symbols": ["_", {"literal":"\n"}, "top_level_statements"], "postprocess": 
-        d => d[2]
-                },
-    {"name": "top_level_statements", "symbols": ["_"], "postprocess": 
-        d => []
-                },
+    {"name": "input", "symbols": ["_ml", "top_level_statements"], "postprocess": d => d[1]},
+    {"name": "top_level_statements", "symbols": [], "postprocess": () => []},
+    {"name": "top_level_statements", "symbols": ["top_level_statement", "_ml", "top_level_statements"], "postprocess": d => [d[0], ...d[2]]},
     {"name": "top_level_statement", "symbols": ["fun_definition"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["static_array_declaration"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["code_block"], "postprocess": id},
@@ -158,34 +145,31 @@ var grammar = {
     {"name": "parameter_list", "symbols": ["identifier", "_", {"literal":","}, "_", "parameter_list"], "postprocess": 
         d => [d[0], ...d[4]]
                 },
-    {"name": "code_block", "symbols": [{"literal":"{"}, "executable_statements", {"literal":"}"}], "postprocess": 
+    {"name": "code_block", "symbols": [{"literal":"{"}, "_ml", "executable_statements", {"literal":"}"}], "postprocess":
         (d) => ({
             type: "code_block",
-            statements: d[1],
+            statements: d[2],
             start: tokenStart(d[0]),
-            end: tokenEnd(d[2])
+            end: tokenEnd(d[3])
         })
             },
-    {"name": "executable_statements", "symbols": ["_"], "postprocess": () => []},
-    {"name": "executable_statements", "symbols": ["_", {"literal":"\n"}, "executable_statements"], "postprocess": (d) => d[2]},
-    {"name": "executable_statements", "symbols": ["_", "executable_statement", "_"], "postprocess": d => [d[1]]},
-    {"name": "executable_statements", "symbols": ["_", "executable_statement", "_", {"literal":"\n"}, "executable_statements"], "postprocess": 
-        d => [d[1], ...d[4]]
-                },
-    {"name": "executable_statement", "symbols": ["return_statement"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["asm_line"], "postprocess": id},
+    {"name": "executable_statements", "symbols": [], "postprocess": () => []},
+    {"name": "executable_statements", "symbols": ["executable_statement", "_ml", "executable_statements"], "postprocess": d => [d[0], ...d[2]]},
+    {"name": "executable_statement", "symbols": ["simple_statement", {"literal":";"}], "postprocess": d => d[0]},
     {"name": "executable_statement", "symbols": ["code_block"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["postfix_update"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["label_statement"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["goto_statement"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["break_statement"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["key_skip_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["for_loop"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["return_statement"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["asm_line"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["var_assignment"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["postfix_update"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["call_statement"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["goto_statement"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["break_statement"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["key_skip_statement"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
         d => ({
             type: "return_statement",
@@ -300,13 +284,13 @@ var grammar = {
             end: tokenEnd(d[4])
         })
                 },
-    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "_", "code_block", "_", {"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}], "postprocess": 
+    {"name": "do_while_loop", "symbols": [{"literal":"do"}, "_", "code_block", "_", {"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, {"literal":";"}], "postprocess":
         d => ({
             type: "do_while_loop",
             body: d[2],
             condition: d[8],
             start: tokenStart(d[0]),
-            end: tokenEnd(d[10])
+            end: tokenEnd(d[11])
         })
                 },
     {"name": "while_loop", "symbols": [{"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess": 

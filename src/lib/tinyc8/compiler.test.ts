@@ -15,26 +15,26 @@ const assignmentOps = [
 ];
 
 const testCodeExamples = [
-  `0x200 CLEAR
-0x202 I = 0x22a
-0x204 V0 = 0x0c
-0x206 V1 = 0x08
-0x208 DRAW V0 V1 0xf
-0x20a V0 += 0x09
-0x20c I = 0x239
-0x20e DRAW V0 V1 0xf
-0x210 I = 0x248
-0x212 V0 += 0x08
-0x214 DRAW V0 V1 0xf
-0x216 V0 += 0x04
-0x218 I = 0x257
-0x21a DRAW V0 V1 0xf
-0x21c V0 += 0x08
-0x21e I = 0x266
-0x220 DRAW V0 V1 0xf
-0x222 V0 += 0x08
-0x224 I = 0x275
-0x226 DRAW V0 V1 0xf
+  `0x200 CLEAR;
+0x202 I = 0x22a;
+0x204 V0 = 0x0c;
+0x206 V1 = 0x08;
+0x208 DRAW V0 V1 0xf;
+0x20a V0 += 0x09;
+0x20c I = 0x239;
+0x20e DRAW V0 V1 0xf;
+0x210 I = 0x248;
+0x212 V0 += 0x08;
+0x214 DRAW V0 V1 0xf;
+0x216 V0 += 0x04;
+0x218 I = 0x257;
+0x21a DRAW V0 V1 0xf;
+0x21c V0 += 0x08;
+0x21e I = 0x266;
+0x220 DRAW V0 V1 0xf;
+0x222 V0 += 0x08;
+0x224 I = 0x275;
+0x226 DRAW V0 V1 0xf;
 `,
 ];
 
@@ -42,21 +42,21 @@ describe("TinyC8 compiler", () => {
   describe("comments", () => {
     test("supports // comments, including trailing comments", () => {
       const source = `// header
-V0 = 0x01 // register value
+V0 = 0x01; // register value
 // another comment
-V1 = 0x02`;
+V1 = 0x02;`;
       const expected = ["0x200 V0 := 0x01", "0x202 V1 := 0x02"].join("\n");
 
       expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
     });
 
     test("supports multiline C-style comments", () => {
-      const source = `V0 = 0x01
+      const source = `V0 = 0x01;
 /*
   multiline
   comment
 */
-V1 = 0x02 /* trailing block comment */`;
+V1 = 0x02; /* trailing block comment */`;
       const expected = ["0x200 V0 := 0x01", "0x202 V1 := 0x02"].join("\n");
 
       expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
@@ -65,7 +65,7 @@ V1 = 0x02 /* trailing block comment */`;
 
   describe.skip("asm statements", () => {
     test("can have an asm statement", () => {
-      const testCode = `0x200 CLEAR`;
+      const testCode = `0x200 CLEAR;`;
       const expectedResult = "0x200 CLEAR";
       const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
@@ -74,7 +74,7 @@ V1 = 0x02 /* trailing block comment */`;
 
     test("can have an asm statement inside a code block", () => {
       const testCode = `{
-          0x200 NOOP
+          0x200 NOOP;
         }`;
       const expectedResult = `0x200 NOOP`;
       const disassembledResult = bufferToAsm(compileTinyC8(testCode));
@@ -84,13 +84,13 @@ V1 = 0x02 /* trailing block comment */`;
 
     test("can compile all types of asm instructions", () => {
       const testCode = `{
-          0x200 CLEAR
-          0x202 I = 0x22a
-          0x204 V0 = 0x0c
-          0x206 V1 = 0x08
-          0x208 DRAW V0 V1 0xf
-          0x20a 0xff00
-          0x20c JUMP TO 0x222
+          0x200 CLEAR;
+          0x202 I = 0x22a;
+          0x204 V0 = 0x0c;
+          0x206 V1 = 0x08;
+          0x208 DRAW V0 V1 0xf;
+          0x20a 0xff00;
+          0x20c JUMP TO 0x222;
         }`;
       const expectedResult = [
         "0x200 CLEAR",
@@ -138,7 +138,7 @@ V1 = 0x02 /* trailing block comment */`;
 
     test("can have a code block with only a single instruction", () => {
       const testCode = `{
-          V0 = 0xed
+          V0 = 0xed;
         }`;
       const expectedResult = "0x200 V0 := 0xed";
       const disassembledResult = bufferToAsm(compileTinyC8(testCode));
@@ -149,7 +149,7 @@ V1 = 0x02 /* trailing block comment */`;
     test("can have a code block with a comment and a single instruction", () => {
       const testCode = `{
           // some comment
-          V0 = 0xed
+          V0 = 0xed;
         }`;
       const expectedResult = "0x200 V0 := 0xed";
       const disassembledResult = bufferToAsm(compileTinyC8(testCode));
@@ -159,9 +159,9 @@ V1 = 0x02 /* trailing block comment */`;
 
     test("can have a code block with multiple instructions", () => {
       const testCode = `{
-          I = 0x22a
+          I = 0x22a;
         // some comment
-          V0 = 0xed
+          V0 = 0xed;
         }`;
       const expectedResult = ["0x200 I := 0x22a", "0x202 V0 := 0xed"].join(
         "\n",
@@ -173,10 +173,10 @@ V1 = 0x02 /* trailing block comment */`;
 
     test("can have nested code blocks", () => {
       const testCode = `{
-          I = 0x22a
+          I = 0x22a;
         // some comment
           {
-            V0 = 0xed
+            V0 = 0xed;
           }
         }`;
       const expectedResult = ["0x200 I := 0x22a", "0x202 V0 := 0xed"].join(
@@ -192,7 +192,7 @@ V1 = 0x02 /* trailing block comment */`;
     test.each(assignmentOps)(
       "can assign a variable in a single line statement",
       (op, emittedOp) => {
-        const testCode = `V0 ${op} VE`;
+        const testCode = `V0 ${op} VE;`;
         const expectedResult = `0x200 V0 ${emittedOp} VE`;
         const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
@@ -204,7 +204,7 @@ V1 = 0x02 /* trailing block comment */`;
       "can assign a variable inside a code block",
       (op, emittedOp) => {
         const testCode = `{
-          V0 ${op} VF
+          V0 ${op} VF;
         }`;
         const expectedResult = `0x200 V0 ${emittedOp} VF`;
         const disassembledResult = bufferToAsm(compileTinyC8(testCode));
@@ -214,30 +214,47 @@ V1 = 0x02 /* trailing block comment */`;
     );
 
     test("does not accept the previous assignment operator", () => {
-      expect(() => compileTinyC8("V0 := 0x01")).toThrow();
+      expect(() => compileTinyC8("V0 := 0x01;")).toThrow();
+    });
+
+    test.each(["V0 = 0x01", "clear()", "0x200 CLEAR"])(
+      "requires a semicolon after %s",
+      (source) => {
+        expect(() => compileTinyC8(source)).toThrow();
+      },
+    );
+
+    test("allows multiple semicolon-separated instructions on one line", () => {
+      expect(bufferToAsm(compileTinyC8("V0 = 0x01; V1 = 0x02;"))).toEqual(
+        ["0x200 V0 := 0x01", "0x202 V1 := 0x02"].join("\n"),
+      );
+    });
+
+    test("requires a semicolon after a do...while loop", () => {
+      expect(() => compileTinyC8("do {} while (V0 == 0x00)")).toThrow();
     });
 
     test("compiles binary literals in assignments", () => {
-      expect(bufferToAsm(compileTinyC8("V0 = 0b10101010"))).toEqual(
+      expect(bufferToAsm(compileTinyC8("V0 = 0b10101010;"))).toEqual(
         "0x200 V0 := 0xaa",
       );
     });
 
     test("compiles binary literals as raw bytes", () => {
-      expect(bufferToAsm(compileTinyC8("0x200 0b10101010"))).toEqual(
+      expect(bufferToAsm(compileTinyC8("0x200 0b10101010;"))).toEqual(
         "0x200 0xaa",
       );
     });
 
     test("compiles binary literals in raw assembler operands", () => {
       expect(
-        bufferToAsm(compileTinyC8("0x200 RAND V0 0b10101010")),
+        bufferToAsm(compileTinyC8("0x200 RAND V0 0b10101010;")),
       ).toEqual("0x200 RAND V0 0xaa");
     });
 
     test("emits static byte arrays and resolves their address in I", () => {
-      const source = `I = sprite
-draw(V0, V1, 0x2)
+      const source = `I = sprite;
+draw(V0, V1, 0x2);
 static const byte sprite[] = {
   0x80,
   0b11110000,
@@ -258,19 +275,19 @@ static const byte sprite[] = {
     });
 
     test("compiles I += Vx to CHIP-8 INC Vx", () => {
-      expect(bufferToAsm(compileTinyC8("I += V0"))).toEqual("0x200 INC V0");
-      expect(bufferToAsm(compileTinyC8("I += VF"))).toEqual("0x200 INC VF");
+      expect(bufferToAsm(compileTinyC8("I += V0;"))).toEqual("0x200 INC V0");
+      expect(bufferToAsm(compileTinyC8("I += VF;"))).toEqual("0x200 INC VF");
     });
 
     test("rejects non-register operands for I +=", () => {
-      expect(() => compileTinyC8("I += 0x01")).toThrow(
+      expect(() => compileTinyC8("I += 0x01;")).toThrow(
         "I += expects a V-register",
       );
     });
   });
 
   describe("built-in functions", () => {
-    test.each(["clear()", "0x200 clear()"])(
+    test.each(["clear();", "0x200 clear();"])(
       "compiles %s to the CLEAR instruction",
       (source) => {
         expect(bufferToAsm(compileTinyC8(source))).toEqual("0x200 CLEAR");
@@ -278,20 +295,20 @@ static const byte sprite[] = {
     );
 
     test("rejects arguments to clear()", () => {
-      expect(() => compileTinyC8("clear(0x01)")).toThrow(
+      expect(() => compileTinyC8("clear(0x01);")).toThrow(
         "clear() does not accept arguments",
       );
     });
 
     test.each([
-      ["save(V0)", "SAVE 0x0"],
-      ["save(VF)", "SAVE 0xF"],
-      ["load(V5)", "LOAD 0x5"],
+      ["save(V0);", "SAVE 0x0"],
+      ["save(VF);", "SAVE 0xF"],
+      ["load(V5);", "LOAD 0x5"],
     ])("compiles %s to the corresponding CHIP-8 instruction", (source, asm) => {
       expect(bufferToAsm(compileTinyC8(source))).toEqual(`0x200 ${asm}`);
     });
 
-    test.each(["save()", "save(0x01)", "save(V0, V1)", "load(I)"])(
+    test.each(["save();", "save(0x01);", "save(V0, V1);", "load(I);"])(
       "rejects invalid %s arguments",
       (source) => {
         expect(() => compileTinyC8(source)).toThrow(
@@ -301,19 +318,19 @@ static const byte sprite[] = {
     );
 
     test("rejects using save() or load() as a value", () => {
-      expect(() => compileTinyC8("V0 = load(V1)")).toThrow(
+      expect(() => compileTinyC8("V0 = load(V1);")).toThrow(
         "load() does not return a value",
       );
     });
 
     test("compiles draw() to DRAW", () => {
-      expect(bufferToAsm(compileTinyC8("draw(V0, V1, 0x6)"))).toEqual(
+      expect(bufferToAsm(compileTinyC8("draw(V0, V1, 0x6);"))).toEqual(
         "0x200 DRAW V0 V1 0x6",
       );
     });
 
     test("uses draw()'s collision flag as a condition value", () => {
-      const source = `if (draw(V0, V1, 0x6)) { V2 = 0x01 }`;
+      const source = `if (draw(V0, V1, 0x6)) { V2 = 0x01; }`;
       const expected = [
         `0x200 DRAW V0 V1 0x6`,
         `0x202 JUMP IF VF != 0x00`,
@@ -326,7 +343,7 @@ static const byte sprite[] = {
     });
 
     test("can compare draw()'s collision flag", () => {
-      const source = `if (draw(V0, V1, 0x6) == 0x00) { V2 = 0x01 }`;
+      const source = `if (draw(V0, V1, 0x6) == 0x00) { V2 = 0x01; }`;
       const expected = [
         `0x200 DRAW V0 V1 0x6`,
         `0x202 JUMP IF VF == 0x00`,
@@ -339,9 +356,9 @@ static const byte sprite[] = {
     });
 
     test("can branch on draw()'s collision flag", () => {
-      const source = `if (draw(V0, V1, 0x1) != 0x01) { goto done }
+      const source = `if (draw(V0, V1, 0x1) != 0x01) { goto done; }
 done:
-clear()`;
+clear();`;
       const expected = [
         `0x200 DRAW V0 V1 0x1`,
         `0x202 JUMP IF VF == 0x01`,
@@ -355,34 +372,34 @@ clear()`;
     test("can assign draw()'s collision flag to a register", () => {
       const expected = ["0x200 DRAW V0 V1 0x6", "0x202 V2 := VF"].join("\n");
 
-      expect(bufferToAsm(compileTinyC8("V2 = draw(V0, V1, 0x6)"))).toEqual(
+      expect(bufferToAsm(compileTinyC8("V2 = draw(V0, V1, 0x6);"))).toEqual(
         expected,
       );
     });
 
     test("rejects invalid draw() arguments", () => {
-      expect(() => compileTinyC8("draw(V0, V1)")).toThrow(
+      expect(() => compileTinyC8("draw(V0, V1);")).toThrow(
         "draw() expects two registers and a hexadecimal or binary height",
       );
     });
 
     test("accepts binary literals as draw heights and rand masks", () => {
       expect(
-        bufferToAsm(compileTinyC8("draw(V0, V1, 0b0110)")),
+        bufferToAsm(compileTinyC8("draw(V0, V1, 0b0110);")),
       ).toEqual("0x200 DRAW V0 V1 0x6");
       expect(
-        bufferToAsm(compileTinyC8("V7 = rand(0b00010111)")),
+        bufferToAsm(compileTinyC8("V7 = rand(0b00010111);")),
       ).toEqual("0x200 RAND V7 0x17");
     });
 
     test("compiles rand() assignment to RAND with the destination register", () => {
-      expect(bufferToAsm(compileTinyC8("V7 = rand(0x17)"))).toEqual(
+      expect(bufferToAsm(compileTinyC8("V7 = rand(0x17);"))).toEqual(
         "0x200 RAND V7 0x17",
       );
     });
 
     test("uses VF as rand()'s result when used as a condition", () => {
-      const source = `if (rand(0x0a)) { V2 = 0x01 }`;
+      const source = `if (rand(0x0a)) { V2 = 0x01; }`;
       const expected = [
         `0x200 RAND VF 0x0a`,
         `0x202 JUMP IF VF != 0x00`,
@@ -396,10 +413,10 @@ clear()`;
 
     test("rejects invalid rand() arguments and targets", () => {
       for (const source of [
-        "rand()",
-        "rand(0x01, 0x02)",
-        "rand(V0)",
-        "I = rand(0x01)",
+        "rand();",
+        "rand(0x01, 0x02);",
+        "rand(V0);",
+        "I = rand(0x01);",
       ]) {
         expect(() => compileTinyC8(source)).toThrow(
           "rand() expects a hexadecimal or binary mask and a V-register target",
@@ -413,7 +430,7 @@ clear()`;
       ["++", "0x01"],
       ["--", "0xff"],
     ])("compiles V0%s as an update", (operator, offset) => {
-      expect(bufferToAsm(compileTinyC8(`V0${operator}`))).toEqual(
+      expect(bufferToAsm(compileTinyC8(`V0${operator};`))).toEqual(
         `0x200 V0 += ${offset}`,
       );
     });
@@ -421,7 +438,7 @@ clear()`;
 
   describe("logical operators", () => {
     test("short-circuits && in an if condition", () => {
-      const source = `if (V0 == 0x00 && V1 != 0x00) { V2 = 0x01 }`;
+      const source = `if (V0 == 0x00 && V1 != 0x00) { V2 = 0x01; }`;
       const expected = [
         `0x200 JUMP IF V0 == 0x00`,
         `0x202 JUMP 0x20e`,
@@ -437,9 +454,9 @@ clear()`;
 
     test("short-circuits || across if and else branches", () => {
       const source = `if (V0 == 0x00 || V1 != 0x00) {
-  V2 = 0x01
+        V2 = 0x01;
 } else {
-  V2 = 0x02
+        V2 = 0x02;
 }`;
       const expected = [
         `0x200 JUMP IF V0 == 0x00`,
@@ -457,7 +474,7 @@ clear()`;
     });
 
     test("gives && higher precedence than ||", () => {
-      const source = `if (V0 == 0x00 || V1 == 0x01 && V2 == 0x02) { V3 = 0x01 }`;
+      const source = `if (V0 == 0x00 || V1 == 0x01 && V2 == 0x02) { V3 = 0x01; }`;
       const expected = [
         `0x200 JUMP IF V0 == 0x00`,
         `0x202 JUMP 0x206`,
@@ -475,7 +492,7 @@ clear()`;
     });
 
     test("supports logical conditions in while loops", () => {
-      const source = `while (V0 == 0x00 && V1 != 0x00) { V2 = 0x01 }`;
+      const source = `while (V0 == 0x00 && V1 != 0x00) { V2 = 0x01; }`;
       const expected = [
         `0x200 JUMP IF V0 == 0x00`,
         `0x202 JUMP 0x210`,
@@ -491,7 +508,7 @@ clear()`;
     });
 
     test("supports logical conditions in do...while loops", () => {
-      const source = `do { V2 = 0x01 } while (V0 == 0x00 || V1 == 0x00)`;
+      const source = `do { V2 = 0x01; } while (V0 == 0x00 || V1 == 0x00);`;
       const expected = [
         `0x200 V2 := 0x01`,
         `0x202 JUMP IF V0 == 0x00`,
@@ -506,7 +523,7 @@ clear()`;
     });
 
     test("supports logical conditions in for-loop tests", () => {
-      const source = `for (V0 = 0x01; V0 == 0x00 || V1 != 0x00; V0++) { V2 = 0x01 }`;
+      const source = `for (V0 = 0x01; V0 == 0x00 || V1 != 0x00; V0++) { V2 = 0x01; }`;
       const expected = [
         `0x200 V0 := 0x01`,
         `0x202 V2 := 0x01`,
@@ -525,7 +542,7 @@ clear()`;
 
   describe("key condition", () => {
     test.each(["==", "!="])("supports if (KEY %s V0)", (operator) => {
-      const source = `if (KEY ${operator} V0) { V1 = 0x01 }`;
+      const source = `if (KEY ${operator} V0) { V1 = 0x01; }`;
       const oppositeOperator = operator === "==" ? "!=" : "==";
       const expected = [
         `0x200 SKIP IF KEY ${oppositeOperator} V0`,
@@ -536,7 +553,7 @@ clear()`;
     });
 
     test.each(["==", "!="])("supports while (KEY %s V0)", (operator) => {
-      const source = `while (KEY ${operator} V0) { V1 = 0x01 }`;
+      const source = `while (KEY ${operator} V0) { V1 = 0x01; }`;
       const expected = [
         `0x200 SKIP IF KEY ${operator} V0`,
         `0x202 JUMP 0x208`,
@@ -549,9 +566,9 @@ clear()`;
 
     test("supports a key condition with an else branch", () => {
       const source = `if (KEY == V0) {
-  V1 = 0x01
+        V1 = 0x01;
 } else {
-  V1 = 0x02
+        V1 = 0x02;
 }`;
       const expected = [
         `0x200 SKIP IF KEY == V0`,
@@ -566,9 +583,9 @@ clear()`;
 
     test("supports an else-if key condition", () => {
       const source = `if (KEY == V0) {
-  V1 = 0x01
+        V1 = 0x01;
 } else if (KEY == V2) {
-  V1 = 0x02
+        V1 = 0x02;
 }`;
       const expected = [
         `0x200 SKIP IF KEY == V0`,
@@ -587,8 +604,8 @@ clear()`;
     test.each([
       {
         name: "while loop",
-        source: `while (V0 == 0x00) { break }
-V1 = 0x01`,
+        source: `while (V0 == 0x00) { break; }
+V1 = 0x01;`,
         expected: [
           `0x200 JUMP IF V0 == 0x00`,
           `0x202 JUMP 0x208`,
@@ -599,8 +616,8 @@ V1 = 0x01`,
       },
       {
         name: "do...while loop",
-        source: `do { break } while (V0 != 0x00)
-V1 = 0x01`,
+        source: `do { break; } while (V0 != 0x00);
+V1 = 0x01;`,
         expected: [
           `0x200 JUMP 0x206`,
           `0x202 JUMP IF V0 == 0x00`,
@@ -610,8 +627,8 @@ V1 = 0x01`,
       },
       {
         name: "for loop",
-        source: `for (;;) { break }
-V1 = 0x01`,
+        source: `for (;;) { break; }
+V1 = 0x01;`,
         expected: [
           `0x200 JUMP 0x204`,
           `0x202 JUMP 0x200`,
@@ -624,10 +641,10 @@ V1 = 0x01`,
 
     test("breaks only the innermost loop", () => {
       const source = `while (V0 == 0x00) {
-  while (V1 == 0x00) { break }
-  break
+        while (V1 == 0x00) { break; }
+        break;
 }
-V2 = 0x01`;
+      V2 = 0x01;`;
       const expected = [
         `0x200 JUMP IF V0 == 0x00`,
         `0x202 JUMP 0x210`,
@@ -644,7 +661,7 @@ V2 = 0x01`;
     });
 
     test("reports a break outside a loop", () => {
-      expect(() => compileTinyC8("break")).toThrow(
+      expect(() => compileTinyC8("break;")).toThrow(
         "Break statement outside loop",
       );
     });
@@ -652,13 +669,13 @@ V2 = 0x01`;
 
   describe("goto statement", () => {
     test("resolves function calls and labels after one-byte data", () => {
-      const source = `goto main
-0x202 0x50
+      const source = `goto main;
+0x202 0x50;
 fun helper() {
-  V0 = 0x01
+  V0 = 0x01;
 }
 main:
-helper()`;
+helper();`;
       const expected = [
         "0x200 JUMP 0x207",
         "0x202 0x50",
@@ -671,12 +688,12 @@ helper()`;
     });
 
     test("jumps to forward and backward labels", () => {
-      const testCode = `goto after
+      const testCode = `goto after;
 start:
-V0 += 0x01
-goto start
+V0 += 0x01;
+goto start;
 after:
-V1 = 0x02`;
+V1 = 0x02;`;
       const expectedResult = [
         `0x200 JUMP 0x206`,
         `0x202 V0 += 0x01`,
@@ -690,14 +707,14 @@ V1 = 0x02`;
 
     test("emits compact branches when both if branches jump", () => {
       const source = `if (KEY == V0) {
-  goto pressed
+        goto pressed;
 } else {
-  goto released
+        goto released;
 }
 pressed:
-V1 = 0x01
+      V1 = 0x01;
 released:
-V2 = 0x02`;
+      V2 = 0x02;`;
       const expected = [
         `0x200 SKIP IF KEY == V0`,
         `0x202 JUMP 0x208`,
@@ -712,12 +729,12 @@ V2 = 0x02`;
     test("resolves labels after generated control flow", () => {
       const testCode = `if (V0 == 0x00) {
   inside:
-  goto done
+        goto done;
 } else {
-  V1 = 0x01
+        V1 = 0x01;
 }
 done:
-V2 = 0x02`;
+      V2 = 0x02;`;
       const expectedResult = [
         `0x200 JUMP IF V0 == 0x00`,
         `0x202 JUMP 0x208`,
@@ -732,7 +749,7 @@ V2 = 0x02`;
     });
 
     test("reports an unknown label", () => {
-      expect(() => compileTinyC8("goto missing")).toThrow(
+      expect(() => compileTinyC8("goto missing;")).toThrow(
         "Unknown TinyC8 label 'missing'",
       );
     });
@@ -746,7 +763,7 @@ V2 = 0x02`;
 
   describe("if statement", () => {
     test("can have an if statement with an else branch", () => {
-      const testCode = `if (V0 == 0x00) { V1 = 0x01 } else { V1 = 0x02 }`;
+      const testCode = `if (V0 == 0x00) { V1 = 0x01; } else { V1 = 0x02; }`;
       const expectedResult = [
         `0x200 JUMP IF V0 == 0x00`,
         `0x202 JUMP 0x208`,
@@ -762,7 +779,7 @@ V2 = 0x02`;
 
   describe("do...while loop", () => {
     test("can have single-instruction do...while loop", () => {
-      const testCode = `do {V0 = DT} while (V0 != 0x00)`;
+      const testCode = `do {V0 = DT;} while (V0 != 0x00);`;
       const expectedResult = [
         `0x200 V0 := DT`,
         `0x202 JUMP IF V0 == 0x00`,
@@ -775,9 +792,9 @@ V2 = 0x02`;
 
     test("can have do...while loop with a code block having multiple instructions", () => {
       const testCode = `do {
-        V0 = DT
-        ST = V1
-      } while (V0 != 0x00)`;
+        V0 = DT;
+        ST = V1;
+      } while (V0 != 0x00);`;
       const expectedResult = [
         `0x200 V0 := DT`,
         `0x202 ST := V1`,
@@ -790,7 +807,7 @@ V2 = 0x02`;
     });
 
     test("can have do...while loop with opposite condition", () => {
-      const testCode = `do {V0 = DT} while (V0 == 0x00)`;
+      const testCode = `do {V0 = DT;} while (V0 == 0x00);`;
       const expectedResult = [
         `0x200 V0 := DT`,
         `0x202 JUMP IF V0 != 0x00`,
@@ -804,7 +821,7 @@ V2 = 0x02`;
 
   describe("while loop", () => {
     test("checks the condition before running the body", () => {
-      const testCode = `while (V0 != 0x00) { V1 = 0x01 }`;
+      const testCode = `while (V0 != 0x00) { V1 = 0x01; }`;
       const expectedResult = [
         `0x200 JUMP IF V0 != 0x00`,
         `0x202 JUMP 0x208`,
@@ -818,8 +835,8 @@ V2 = 0x02`;
 
     test("loops back after a multi-statement body", () => {
       const testCode = `while (V0 == 0x00) {
-        V1 = 0x01
-        V2 = 0x02
+        V1 = 0x01;
+        V2 = 0x02;
       }`;
       const expectedResult = [
         `0x200 JUMP IF V0 == 0x00`,
