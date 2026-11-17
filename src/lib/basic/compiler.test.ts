@@ -238,6 +238,38 @@ describe("basic compiler", () => {
     });
   });
 
+  describe("while loop", () => {
+    test("checks the condition before running the body", () => {
+      const testCode = `while (V0 != 0x00) { V1 := 0x01 }`;
+      const expectedResult = [
+        `0x200 JUMP IF V0 != 0x00`,
+        `0x202 JUMP 0x208`,
+        `0x204 V1 := 0x01`,
+        `0x206 JUMP 0x200`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+
+    test("loops back after a multi-statement body", () => {
+      const testCode = `while (V0 == 0x00) {
+        V1 := 0x01
+        V2 := 0x02
+      }`;
+      const expectedResult = [
+        `0x200 JUMP IF V0 == 0x00`,
+        `0x202 JUMP 0x20a`,
+        `0x204 V1 := 0x01`,
+        `0x206 V2 := 0x02`,
+        `0x208 JUMP 0x200`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileBasic(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+  });
+
   describe("for loop", () => {
     test("can have an empty infinite loop", () => {
       const testCode = `for(;;){}`;

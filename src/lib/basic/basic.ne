@@ -175,6 +175,7 @@ executable_statement
    |  line_comment         {% id %}
 #    |  indexed_assignment   {% id %}
    |  do_while_loop        {% id %}
+   |  while_loop           {% id %}
    |  if_statement         {% id %}
    |  for_loop             {% id %}
 
@@ -299,6 +300,18 @@ do_while_loop
                 condition: d[8],
                 start: tokenStart(d[0]),
                 end: tokenEnd(d[10])
+            })
+        %}
+
+while_loop
+    -> "while" _ "(" _ expression _ ")" _ code_block
+        {%
+            d => ({
+                type: "while_loop",
+                condition: d[4],
+                body: d[8],
+                start: tokenStart(d[0]),
+                end: d[8].end
             })
         %}
 

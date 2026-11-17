@@ -33,6 +33,21 @@ function uncontrolledLoopToAsm(
   acc.push(`JUMP ${initialOffsetStr}`);
 }
 
+function whileLoopToAsm(node: any, acc: string[]) {
+  const body: any[] = [];
+  astNodeToAsm(node.body, body);
+
+  const start = 0x200 + acc.length * 2;
+  const end = 0x200 + (acc.length + body.length + 3) * 2;
+  const startTarget = `0x${start.toString(16).padStart(3, "0")}`;
+  const endTarget = `0x${end.toString(16).padStart(3, "0")}`;
+
+  acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
+  acc.push(`JUMP ${endTarget}`);
+  acc.push(...body);
+  acc.push(`JUMP ${startTarget}`);
+}
+
 function forLoopToAsm(node: any, acc: string[]) {
   if (node.init) {
     astNodeToAsm(node.init, acc);
@@ -145,6 +160,9 @@ function astNodeToAsm(node: any, acc: string[]): void {
       break;
     case "do_while_loop":
       uncontrolledLoopToAsm(node, acc, true);
+      break;
+    case "while_loop":
+      whileLoopToAsm(node, acc);
       break;
     case "for_loop":
       forLoopToAsm(node, acc);

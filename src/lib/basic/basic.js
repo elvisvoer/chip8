@@ -152,6 +152,7 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["for_loop"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
@@ -224,6 +225,15 @@ var grammar = {
             condition: d[8],
             start: tokenStart(d[0]),
             end: tokenEnd(d[10])
+        })
+                },
+    {"name": "while_loop", "symbols": [{"literal":"while"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block"], "postprocess":
+        d => ({
+            type: "while_loop",
+            condition: d[4],
+            body: d[8],
+            start: tokenStart(d[0]),
+            end: d[8].end
         })
                 },
     {"name": "for_loop", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "for_loop_init", "_", {"literal":";"}, "_", "for_loop_expr", "_", {"literal":";"}, "_", "for_loop_expr", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
