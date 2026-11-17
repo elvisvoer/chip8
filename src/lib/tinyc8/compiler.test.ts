@@ -180,6 +180,60 @@ describe("TinyC8 compiler", () => {
     );
   });
 
+  describe("goto statement", () => {
+    test("jumps to forward and backward labels", () => {
+      const testCode = `goto after
+start:
+V0 += 0x01
+goto start
+after:
+V1 := 0x02`;
+      const expectedResult = [
+        `0x200 JUMP 0x206`,
+        `0x202 V0 += 0x01`,
+        `0x204 JUMP 0x202`,
+        `0x206 V1 := 0x02`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+
+    test("resolves labels after generated control flow", () => {
+      const testCode = `if (V0 == 0x00) {
+  inside:
+  goto done
+} else {
+  V1 := 0x01
+}
+done:
+V2 := 0x02`;
+      const expectedResult = [
+        `0x200 JUMP IF V0 == 0x00`,
+        `0x202 JUMP 0x208`,
+        `0x204 JUMP 0x20a`,
+        `0x206 JUMP 0x20a`,
+        `0x208 V1 := 0x01`,
+        `0x20a V2 := 0x02`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+
+    test("reports an unknown label", () => {
+      expect(() => compileTinyC8("goto missing")).toThrow(
+        "Unknown TinyC8 label 'missing'",
+      );
+    });
+
+    test("reports duplicate labels", () => {
+      expect(() => compileTinyC8("loop:\nloop:")).toThrow(
+        "Duplicate TinyC8 label 'loop'",
+      );
+    });
+  });
+
   describe("if statement", () => {
     test("can have an if statement with an else branch", () => {
       const testCode = `if (V0 == 0x00) { V1 := 0x01 } else { V1 := 0x02 }`;

@@ -53,6 +53,7 @@ const lexer = moo.compile({
             for: "for",
             if: "if",
             else: "else",
+            goto: "goto",
         })
     }
 });
@@ -173,6 +174,8 @@ executable_statement
    |  var_assignment       {% id %}
    |  call_statement       {% id %}
    |  line_comment         {% id %}
+   |  label_statement      {% id %}
+   |  goto_statement       {% id %}
 #    |  indexed_assignment   {% id %}
    |  do_while_loop        {% id %}
    |  while_loop           {% id %}
@@ -189,6 +192,28 @@ return_statement
                end: d[2].end
            })
        %}
+
+label_statement
+    -> identifier ":"
+        {%
+            d => ({
+                type: "label_statement",
+                name: d[0].value,
+                start: d[0].start,
+                end: tokenEnd(d[1])
+            })
+        %}
+
+goto_statement
+    -> "goto" __ identifier
+        {%
+            d => ({
+                type: "goto_statement",
+                target: d[2].value,
+                start: tokenStart(d[0]),
+                end: d[2].end
+            })
+        %}
 
 asm_line
     -> hex __ asm_code

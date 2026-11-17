@@ -3,6 +3,12 @@ import { compileAsm } from "../asm/assembler";
 // @ts-ignore
 import tinyC8Grammar from "./tinyc8";
 
+const labelMarker = "@@tinyc8-label ";
+
+function instructionCount(lines: string[]): number {
+  return lines.filter((line) => !line.startsWith(labelMarker)).length;
+}
+
 const oppositeOperator = {
   "==": "!=",
   "!=": "==",
@@ -23,7 +29,7 @@ function uncontrolledLoopToAsm(
   acc: string[],
   useOppositeOperator = false,
 ): void {
-  const initialOffset = 0x200 + acc.length * 2;
+  const initialOffset = 0x200 + instructionCount(acc) * 2;
   const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
   const statements = node.body;
 
@@ -37,8 +43,9 @@ function whileLoopToAsm(node: any, acc: string[]) {
   const body: any[] = [];
   astNodeToAsm(node.body, body);
 
-  const start = 0x200 + acc.length * 2;
-  const end = 0x200 + (acc.length + body.length + 3) * 2;
+  const start = 0x200 + instructionCount(acc) * 2;
+  const end =
+    0x200 + (instructionCount(acc) + instructionCount(body) + 3) * 2;
   const startTarget = `0x${start.toString(16).padStart(3, "0")}`;
   const endTarget = `0x${end.toString(16).padStart(3, "0")}`;
 
@@ -53,7 +60,7 @@ function forLoopToAsm(node: any, acc: string[]) {
     astNodeToAsm(node.init, acc);
   }
 
-  const offset = 0x200 + acc.length * 2;
+  const offset = 0x200 + instructionCount(acc) * 2;
   const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
 
   if (node.body) {
@@ -85,9 +92,16 @@ function ifStatementToAsm(node: any, acc: string[]) {
   const alternate: any[] = [];
   astNodeToAsm(node.alternate, alternate);
 
-  const elseStart = 0x200 + (acc.length + 3 + body.length) * 2;
+  const elseStart =
+    0x200 + (instructionCount(acc) + 3 + instructionCount(body)) * 2;
   const elseTarget = `0x${elseStart.toString(16).padStart(3, "0")}`;
-  const endTarget = 0x200 + (acc.length + 3 + body.length + alternate.length) * 2;
+  const endTarget =
+    0x200 +
+    (instructionCount(acc) +
+      3 +
+      instructionCount(body) +
+      instructionCount(alternate)) *
+      2;
   const endTargetStr = `0x${endTarget.toString(16).padStart(3, "0")}`;
 
   acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
@@ -99,6 +113,12 @@ function ifStatementToAsm(node: any, acc: string[]) {
 
 function astNodeToAsm(node: any, acc: string[]): void {
   switch (node.type) {
+    case "label_statement":
+      acc.push(`${labelMarker}${node.name}`);
+      break;
+    case "goto_statement":
+      acc.push(`GOTO ${node.target}`);
+      break;
     case "asm_line":
       if (node.value.type === "identifier") {
         acc.push(`${node.value.value}`);
@@ -178,16 +198,13 @@ function astNodeToAsm(node: any, acc: string[]): void {
 function astToAsm(astNodes: any[]): string {
   let result: string[] = [];
   const symbols = new Map<string, string>();
-
   astNodes.forEach((node) => {
     if (node.type === "fun_definition") {
-      let offset = 0x200 + result.length * 2;
+      let offset = 0x200 + instructionCount(result) * 2;
       let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
       symbols.set(node.name.value, offsetStr);
       astNodeToAsm(node.body, result);
 
-      offset = 0x200 + result.length * 2;
-      offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
       result.push("RETURN");
       return;
     }
@@ -195,7 +212,34 @@ function astToAsm(astNodes: any[]): string {
     astNodeToAsm(node, result);
   });
 
+  const labels = new Map<string, string>();
+  let offset = 0x200;
+  result = result.filter((line) => {
+    if (line.startsWith(labelMarker)) {
+      const name = line.slice(labelMarker.length);
+      if (labels.has(name)) {
+        throw new Error(`Duplicate TinyC8 label '${name}'`);
+      }
+
+      labels.set(name, `0x${offset.toString(16).padStart(3, "0")}`);
+      return false;
+    }
+
+    offset += 2;
+    return true;
+  });
+
   result = result.map((line) => {
+    if (line.startsWith("GOTO ")) {
+      const target = line.slice("GOTO ".length);
+      const address = labels.get(target);
+      if (!address) {
+        throw new Error(`Unknown TinyC8 label '${target}'`);
+      }
+
+      return `JUMP ${address}`;
+    }
+
     const labelList = Array.from(symbols.keys());
     for (let i = 0; i < labelList.length; i++) {
       const label = labelList[i];

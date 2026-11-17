@@ -57,6 +57,7 @@ const lexer = moo.compile({
             for: "for",
             if: "if",
             else: "else",
+            goto: "goto",
         })
     }
 });
@@ -151,6 +152,8 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["label_statement"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["goto_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
@@ -163,6 +166,22 @@ var grammar = {
             end: d[2].end
         })
                },
+    {"name": "label_statement", "symbols": ["identifier", {"literal":":"}], "postprocess":
+        d => ({
+            type: "label_statement",
+            name: d[0].value,
+            start: d[0].start,
+            end: tokenEnd(d[1])
+        })
+                },
+    {"name": "goto_statement", "symbols": [{"literal":"goto"}, "__", "identifier"], "postprocess":
+        d => ({
+            type: "goto_statement",
+            target: d[2].value,
+            start: tokenStart(d[0]),
+            end: d[2].end
+        })
+                },
     {"name": "asm_line", "symbols": ["hex", "__", "asm_code"], "postprocess": 
         d => ({
             type: "asm_line",
