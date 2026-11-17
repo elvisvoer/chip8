@@ -46,6 +46,13 @@ function isRandCall(node: any): boolean {
   );
 }
 
+function isSaveLoadCall(node: any): boolean {
+  return (
+    node?.type === "call_expression" &&
+    (node.fun_name.value === "save" || node.fun_name.value === "load")
+  );
+}
+
 function drawCallToAsm(node: any): string {
   const [x, y, height] = node.arguments;
   if (
@@ -71,6 +78,18 @@ function randCallToAsm(node: any, target = "VF"): string {
   }
 
   return `RAND ${target} ${mask.value}`;
+}
+
+function saveLoadCallToAsm(node: any): string {
+  const [register] = node.arguments;
+  const match =
+    register?.type === "var_reference" &&
+    /^V([0-9a-f])$/i.exec(register.var_name.value);
+  if (node.arguments.length !== 1 || !match) {
+    throw new Error(`${node.fun_name.value}() expects one V-register`);
+  }
+
+  return `${node.fun_name.value.toUpperCase()} 0x${match[1].toLowerCase()}`;
 }
 
 function expressionValueToAsm(node: any): string {
@@ -466,6 +485,8 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
           drawCallToAsm(node.value),
           `${node.var_name.value} ${operator} VF`,
         );
+      } else if (isSaveLoadCall(node.value)) {
+        throw new Error(`${node.value.fun_name.value}() does not return a value`);
       } else if (
         node.var_name.value === "I" &&
         node.operator.value === "+="
@@ -507,6 +528,8 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
         acc.push(drawCallToAsm(node));
       } else if (node.fun_name.value === "rand") {
         acc.push(randCallToAsm(node));
+      } else if (isSaveLoadCall(node)) {
+        acc.push(saveLoadCallToAsm(node));
       } else {
         acc.push(`CALL ${node.fun_name.value}`);
       }

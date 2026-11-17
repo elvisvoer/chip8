@@ -243,6 +243,29 @@ V1 = 0x02 /* trailing block comment */`;
       );
     });
 
+    test.each([
+      ["save(V0)", "SAVE 0x0"],
+      ["save(VF)", "SAVE 0xF"],
+      ["load(V5)", "LOAD 0x5"],
+    ])("compiles %s to the corresponding CHIP-8 instruction", (source, asm) => {
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(`0x200 ${asm}`);
+    });
+
+    test.each(["save()", "save(0x01)", "save(V0, V1)", "load(I)"])(
+      "rejects invalid %s arguments",
+      (source) => {
+        expect(() => compileTinyC8(source)).toThrow(
+          `${source.startsWith("save") ? "save" : "load"}() expects one V-register`,
+        );
+      },
+    );
+
+    test("rejects using save() or load() as a value", () => {
+      expect(() => compileTinyC8("V0 = load(V1)")).toThrow(
+        "load() does not return a value",
+      );
+    });
+
     test("compiles draw() to DRAW", () => {
       expect(bufferToAsm(compileTinyC8("draw(V0, V1, 0x6)"))).toEqual(
         "0x200 DRAW V0 V1 0x6",
