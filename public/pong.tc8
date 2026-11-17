@@ -152,7 +152,7 @@ if (V6 == 0x40) {
 }
 goto ballUpdate;
 // start updateScore
-fun updateScore() {
+void updateScore() {
   I = 0x2f2;
   0x2d6 BCDC VE;
   0x2d8 LOAD 0x2;

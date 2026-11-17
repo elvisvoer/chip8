@@ -668,10 +668,14 @@ V1 = 0x01;`,
   });
 
   describe("goto statement", () => {
+    test("rejects the old fun declaration keyword", () => {
+      expect(() => compileTinyC8("fun helper() {}")).toThrow();
+    });
+
     test("resolves function calls and labels after one-byte data", () => {
       const source = `goto main;
 0x202 0x50;
-fun helper() {
+void helper() {
   V0 = 0x01;
 }
 main:

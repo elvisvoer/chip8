@@ -60,7 +60,7 @@ const lexer = moo.compile({
             static: "static",
             const: "const",
             byte: "byte",
-            fun: "fun",
+            void: "void",
             do: "do",
             while: "while",
             for: "for",
@@ -130,7 +130,7 @@ var grammar = {
     {"name": "byte_array_value", "symbols": ["hex"], "postprocess": id},
     {"name": "byte_array_value", "symbols": ["binary"], "postprocess": id},
     {"name": "byte_array_value", "symbols": ["number"], "postprocess": id},
-    {"name": "fun_definition", "symbols": [{"literal":"fun"}, "__", "identifier", "_", {"literal":"("}, "_", "parameter_list", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
+    {"name": "fun_definition", "symbols": [{"literal":"void"}, "__", "identifier", "_", {"literal":"("}, "_", "parameter_list", "_", {"literal":")"}, "_", "code_block"], "postprocess":
         d => ({
             type: "fun_definition",
             name: d[2],

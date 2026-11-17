@@ -2,7 +2,7 @@ goto main;
 0x202 JUMP IF V3 != 0x38;
 0x204 0x50;
 
-fun drawLogo() {
+void drawLogo() {
 0x205 V0 = 0x04;
 0x207 VA = V0;
 0x209 V0 = 0x04;
@@ -133,7 +133,7 @@ drawNumber();
 // infinite loop?!
 0x2fd JUMP 0x2fd;
 
-fun readDigit() {
+void readDigit() {
 0x2ff V1 = V0;
 0x301 I = 0x381;
 0x303 V2 = 0x01;
@@ -142,7 +142,7 @@ I += VE;
 load(V0);
 }
 
-fun multiply() {
+void multiply() {
 0x30d V2 = 0x01;
 0x30f V3 = 0x00;
 0x311 V3 += V0;
@@ -152,7 +152,7 @@ fun multiply() {
 0x319 V0 = V3;
 }
 
-fun divide() {
+void divide() {
 0x31d I = 0x381;
 I += VE;
 save(V6);
@@ -179,7 +179,7 @@ load(V5);
 0x34b V0 = V6;
 }
 
-fun subtractUntilUnderflow() {
+void subtractUntilUnderflow() {
 0x34f V2 = V0;
 0x351 V0 -= V1;
 0x353 JUMP IF VF == 0x00;
@@ -187,7 +187,7 @@ fun subtractUntilUnderflow() {
 0x357 V0 = V2;
 }
 
-fun drawNumber() {
+void drawNumber() {
 0x35b I = 0x373;
 0x35d BCDC V0;
 load(V2);

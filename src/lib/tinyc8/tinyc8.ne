@@ -56,7 +56,7 @@ const lexer = moo.compile({
             static: "static",
             const: "const",
             byte: "byte",
-            fun: "fun",
+            void: "void",
             do: "do",
             while: "while",
             for: "for",
@@ -144,7 +144,7 @@ byte_array_value
     |  number  {% id %}
 
 fun_definition
-    -> "fun" __ identifier _ "(" _ parameter_list _ ")" _ code_block
+    -> "void" __ identifier _ "(" _ parameter_list _ ")" _ code_block
         {%
             d => ({
                 type: "fun_definition",
@@ -614,7 +614,7 @@ unary_expression
 #         %}
 
 # fun_expression
-#     -> "fun" _ "(" _ parameter_list _ ")" _ code_block
+#     -> "void" _ "(" _ parameter_list _ ")" _ code_block
 #         {%
 #             d => ({
 #                 type: "fun_expression",

@@ -18,7 +18,7 @@ do {
 
 0x21c JUMP 0x202;
 
-fun drawDisplay() {
+void drawDisplay() {
   clear();
   0x222 I = 0x23a;
   0x224 BCDC V3;
