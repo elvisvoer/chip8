@@ -180,6 +180,55 @@ describe("TinyC8 compiler", () => {
     );
   });
 
+  describe("key condition", () => {
+    test.each(["==", "!="])("supports if (KEY %s V0)", (operator) => {
+      const source = `if (KEY ${operator} V0) { V1 := 0x01 }`;
+      const expected = [
+        `0x200 SKIP IF KEY ${operator} V0`,
+        `0x202 JUMP 0x206`,
+        `0x204 V1 := 0x01`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("supports a key condition with an else branch", () => {
+      const source = `if (KEY == V0) {
+  V1 := 0x01
+} else {
+  V1 := 0x02
+}`;
+      const expected = [
+        `0x200 SKIP IF KEY == V0`,
+        `0x202 JUMP 0x208`,
+        `0x204 V1 := 0x01`,
+        `0x206 JUMP 0x20a`,
+        `0x208 V1 := 0x02`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("supports an else-if key condition", () => {
+      const source = `if (KEY == V0) {
+  V1 := 0x01
+} else if (KEY == V2) {
+  V1 := 0x02
+}`;
+      const expected = [
+        `0x200 SKIP IF KEY == V0`,
+        `0x202 JUMP 0x208`,
+        `0x204 V1 := 0x01`,
+        `0x206 JUMP 0x20e`,
+        `0x208 SKIP IF KEY == V2`,
+        `0x20a JUMP 0x20e`,
+        `0x20c V1 := 0x02`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+  });
+
   describe("break statement", () => {
     test.each([
       {

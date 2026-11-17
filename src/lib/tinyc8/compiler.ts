@@ -38,6 +38,25 @@ function binaryExprToAsm(item: any, useOppositeOperator = false) {
   return `${left} ${operator} ${right}`;
 }
 
+function conditionInstruction(item: any, useOppositeOperator = false): string {
+  const keyOperand =
+    item.left.type === "key_reference"
+      ? item.right
+      : item.right.type === "key_reference"
+        ? item.left
+        : null;
+
+  if (keyOperand) {
+    const operator = useOppositeOperator
+      ? (oppositeOperator as any)[item.operator.value]
+      : item.operator.value;
+    const register = keyOperand.var_name?.value ?? keyOperand.value;
+    return `SKIP IF KEY ${operator} ${register}`;
+  }
+
+  return `JUMP IF ${binaryExprToAsm(item, useOppositeOperator)}`;
+}
+
 function uncontrolledLoopToAsm(
   node: any,
   acc: string[],
@@ -50,7 +69,7 @@ function uncontrolledLoopToAsm(
   const endOffset = initialOffset + (instructionCount(body) + 2) * 2;
 
   acc.push(...resolveBreaks(body, endOffset));
-  acc.push(`JUMP IF ${binaryExprToAsm(node.condition, useOppositeOperator)}`);
+  acc.push(conditionInstruction(node.condition, useOppositeOperator));
   acc.push(`JUMP ${addressString(initialOffset)}`);
 }
 
@@ -61,7 +80,7 @@ function whileLoopToAsm(node: any, acc: string[], baseAddress: number) {
 
   const end = start + (instructionCount(body) + 3) * 2;
 
-  acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
+  acc.push(conditionInstruction(node.condition));
   acc.push(`JUMP ${addressString(end)}`);
   acc.push(...resolveBreaks(body, end));
   acc.push(`JUMP ${addressString(start)}`);
@@ -90,7 +109,7 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
   acc.push(...resolveBreaks(body, end), ...increment);
 
   if (node.condition) {
-    acc.push(`JUMP IF ${binaryExprToAsm(node.condition, true)}`);
+    acc.push(conditionInstruction(node.condition, true));
   }
 
   acc.push(`JUMP ${addressString(start)}`);
@@ -100,9 +119,20 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
   const start = addressAt(acc, baseAddress);
   const body: any[] = [];
   const statements = node.body;
+  const hasKeyCondition =
+    node.condition.left.type === "key_reference" ||
+    node.condition.right.type === "key_reference";
 
   if (!node.alternate) {
-    astNodeToAsm(statements, body, start + 2);
+    astNodeToAsm(statements, body, start + (hasKeyCondition ? 4 : 2));
+    if (hasKeyCondition) {
+      const end = start + (instructionCount(body) + 2) * 2;
+      acc.push(conditionInstruction(node.condition));
+      acc.push(`JUMP ${addressString(end)}`);
+      acc.push(...body);
+      return;
+    }
+
     acc.push(`JUMP IF ${binaryExprToAsm(node.condition, true)}`);
     acc.push(...body);
     return;
@@ -115,7 +145,7 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
 
   const endTarget = elseStart + instructionCount(alternate) * 2;
 
-  acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
+  acc.push(conditionInstruction(node.condition));
   acc.push(`JUMP ${addressString(elseStart)}`);
   acc.push(...body);
   acc.push(`JUMP ${addressString(endTarget)}`);
@@ -132,6 +162,9 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
       break;
     case "break_statement":
       acc.push(breakMarker);
+      break;
+    case "key_skip_statement":
+      acc.push(`SKIP IF KEY ${node.operator.value} ${node.key.value}`);
       break;
     case "asm_line":
       if (node.value.type === "identifier") {

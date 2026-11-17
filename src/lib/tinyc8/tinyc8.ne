@@ -55,6 +55,8 @@ const lexer = moo.compile({
             else: "else",
             goto: "goto",
             break: "break",
+            SKIP: "SKIP",
+            KEY: "KEY",
         })
     }
 });
@@ -178,6 +180,7 @@ executable_statement
    |  label_statement      {% id %}
    |  goto_statement       {% id %}
    |  break_statement      {% id %}
+   |  key_skip_statement   {% id %}
 #    |  indexed_assignment   {% id %}
    |  do_while_loop        {% id %}
    |  while_loop           {% id %}
@@ -243,6 +246,24 @@ asm_code
     |  hex              {% id %}
     |  var_assignment   {% id %}
     |  asm_cmd          {% id %}
+    |  key_skip_statement {% id %}
+
+key_skip_statement
+    -> "SKIP" __ identifier __ "KEY" _ comparison_operator _ identifier
+        {%
+            d => {
+                if (d[2].value !== "IF") {
+                    throw new Error("Expected IF in key skip instruction");
+                }
+                return {
+                    type: "key_skip_statement",
+                    operator: d[6],
+                    key: d[8],
+                    start: tokenStart(d[0]),
+                    end: d[8].end
+                };
+            }
+        %}
 
 asm_cmd
     -> identifier __ asm_cmd_args
@@ -472,6 +493,15 @@ multiplicative_expression
 unary_expression
     -> number               {% id %}
     |  hex                  {% id %}
+    |  "KEY"
+        {%
+            d => ({
+                type: "key_reference",
+                value: d[0].value,
+                start: tokenStart(d[0]),
+                end: tokenEnd(d[0])
+            })
+        %}
     |  identifier
         {%
             d => ({

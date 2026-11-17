@@ -59,6 +59,8 @@ const lexer = moo.compile({
             else: "else",
             goto: "goto",
             break: "break",
+            SKIP: "SKIP",
+            KEY: "KEY",
         })
     }
 });
@@ -156,6 +158,7 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["label_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["goto_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["break_statement"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["key_skip_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
@@ -203,6 +206,21 @@ var grammar = {
     {"name": "asm_code", "symbols": ["hex"], "postprocess": id},
     {"name": "asm_code", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "asm_code", "symbols": ["asm_cmd"], "postprocess": id},
+    {"name": "asm_code", "symbols": ["key_skip_statement"], "postprocess": id},
+    {"name": "key_skip_statement", "symbols": [{"literal":"SKIP"}, "__", "identifier", "__", {"literal":"KEY"}, "_", "comparison_operator", "_", "identifier"], "postprocess":
+        d => {
+            if (d[2].value !== "IF") {
+                throw new Error("Expected IF in key skip instruction");
+            }
+            return {
+                type: "key_skip_statement",
+                operator: d[6],
+                key: d[8],
+                start: tokenStart(d[0]),
+                end: d[8].end
+            };
+        }
+                },
     {"name": "asm_cmd", "symbols": ["identifier", "__", "asm_cmd_args"], "postprocess": 
         d => ({
             type: "asm_command",
@@ -348,6 +366,14 @@ var grammar = {
                 },
     {"name": "unary_expression", "symbols": ["number"], "postprocess": id},
     {"name": "unary_expression", "symbols": ["hex"], "postprocess": id},
+    {"name": "unary_expression", "symbols": [{"literal":"KEY"}], "postprocess":
+        d => ({
+            type: "key_reference",
+            value: d[0].value,
+            start: tokenStart(d[0]),
+            end: tokenEnd(d[0])
+        })
+                },
     {"name": "unary_expression", "symbols": ["identifier"], "postprocess": 
         d => ({
             type: "var_reference",
