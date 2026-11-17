@@ -214,6 +214,13 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
       );
       break;
     }
+    case "postfix_update":
+      acc.push(
+        `${node.var_name.value} += ${
+          node.operator.value === "++" ? "0x01" : "0xff"
+        }`,
+      );
+      break;
     case "binary_operation":
       acc.push(binaryExprToAsm(node));
       break;

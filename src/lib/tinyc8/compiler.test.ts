@@ -194,6 +194,17 @@ describe("TinyC8 compiler", () => {
     });
   });
 
+  describe("postfix operators", () => {
+    test.each([
+      ["++", "0x01"],
+      ["--", "0xff"],
+    ])("compiles V0%s as an update", (operator, offset) => {
+      expect(bufferToAsm(compileTinyC8(`V0${operator}`))).toEqual(
+        `0x200 V0 += ${offset}`,
+      );
+    });
+  });
+
   describe("key condition", () => {
     test.each(["==", "!="])("supports if (KEY %s V0)", (operator) => {
       const source = `if (KEY ${operator} V0) { V1 = 0x01 }`;
@@ -527,6 +538,19 @@ V2 = 0x02`;
         `0x200 V0 := 0x0f`,
         `0x202 V0 += V1`,
         `0x204 JUMP IF V0 == 0xff`,
+        `0x206 JUMP 0x202`,
+      ].join("\n");
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
+
+      expect(disassembledResult).toEqual(expectedResult);
+    });
+
+    test("supports a postfix decrement as the loop step", () => {
+      const testCode = `for(V0 = 0xff; V0 != 0x00; V0--){}`;
+      const expectedResult = [
+        `0x200 V0 := 0xff`,
+        `0x202 V0 += 0xff`,
+        `0x204 JUMP IF V0 == 0x00`,
         `0x206 JUMP 0x202`,
       ].join("\n");
       const disassembledResult = bufferToAsm(compileTinyC8(testCode));

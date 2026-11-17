@@ -15,6 +15,8 @@ const lexer = moo.compile({
     "^=": "^=",
     "<<=": "<<=",
     ">>=": ">>=",
+    "++": "++",
+    "--": "--",
     lparan: "(",
     rparan: ")",
     comma: ",",
@@ -175,6 +177,7 @@ executable_statement
    |  asm_line             {% id %}
    |  code_block           {% id %}
    |  var_assignment       {% id %}
+   |  postfix_update       {% id %}
    |  call_statement       {% id %}
    |  line_comment         {% id %}
    |  label_statement      {% id %}
@@ -299,6 +302,22 @@ var_assignment
             })
         %}
 
+postfix_update
+    -> identifier _ postfix_op
+        {%
+            d => ({
+                type: "postfix_update",
+                var_name: d[0],
+                operator: d[2],
+                start: d[0].start,
+                end: tokenEnd(d[2])
+            })
+        %}
+
+postfix_op
+    -> "++" {% d => d[0] %}
+    |  "--" {% d => d[0] %}
+
 assignment_op
     -> "="   {% d => d[0] %}
     | "+="  {% d => d[0] %}
@@ -374,7 +393,7 @@ while_loop
         %}
 
 for_loop
-    -> "for" _ "(" _ for_loop_init _ ";" _ for_loop_expr _ ";" _ for_loop_expr _ ")" _ code_block
+    -> "for" _ "(" _ for_loop_init _ ";" _ for_loop_expr _ ";" _ for_loop_increment _ ")" _ code_block
         {%
             d => ({
                 type: "for_loop",
@@ -393,6 +412,11 @@ for_loop_init
 
 for_loop_expr
     ->  expression {% id %}
+    |   null           {% () => null %}
+
+for_loop_increment
+    ->  expression     {% id %}
+    |   postfix_update {% id %}
     |   null           {% () => null %}
 
 if_statement

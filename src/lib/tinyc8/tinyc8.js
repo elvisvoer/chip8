@@ -19,6 +19,8 @@ const lexer = moo.compile({
     "^=": "^=",
     "<<=": "<<=",
     ">>=": ">>=",
+    "++": "++",
+    "--": "--",
     lparan: "(",
     rparan: ")",
     comma: ",",
@@ -153,6 +155,7 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["asm_line"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["code_block"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["postfix_update"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["label_statement"], "postprocess": id},
@@ -245,6 +248,17 @@ var grammar = {
             end: d[4].end
         })
                 },
+    {"name": "postfix_update", "symbols": ["identifier", "_", "postfix_op"], "postprocess":
+        d => ({
+            type: "postfix_update",
+            var_name: d[0],
+            operator: d[2],
+            start: d[0].start,
+            end: tokenEnd(d[2])
+        })
+                },
+    {"name": "postfix_op", "symbols": [{"literal":"++"}], "postprocess": d => d[0]},
+    {"name": "postfix_op", "symbols": [{"literal":"--"}], "postprocess": d => d[0]},
     {"name": "assignment_op", "symbols": [{"literal":"="}], "postprocess": d => d[0]},
     {"name": "assignment_op", "symbols": [{"literal":"+="}], "postprocess": d => d[0]},
     {"name": "assignment_op", "symbols": [{"literal":"-="}], "postprocess": d => d[0]},
@@ -282,7 +296,7 @@ var grammar = {
             end: d[8].end
         })
                 },
-    {"name": "for_loop", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "for_loop_init", "_", {"literal":";"}, "_", "for_loop_expr", "_", {"literal":";"}, "_", "for_loop_expr", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
+    {"name": "for_loop", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "for_loop_init", "_", {"literal":";"}, "_", "for_loop_expr", "_", {"literal":";"}, "_", "for_loop_increment", "_", {"literal":")"}, "_", "code_block"], "postprocess":
         d => ({
             type: "for_loop",
             body: d[16],
@@ -297,6 +311,9 @@ var grammar = {
     {"name": "for_loop_init", "symbols": [], "postprocess": () => null},
     {"name": "for_loop_expr", "symbols": ["expression"], "postprocess": id},
     {"name": "for_loop_expr", "symbols": [], "postprocess": () => null},
+    {"name": "for_loop_increment", "symbols": ["expression"], "postprocess": id},
+    {"name": "for_loop_increment", "symbols": ["postfix_update"], "postprocess": id},
+    {"name": "for_loop_increment", "symbols": [], "postprocess": () => null},
     {"name": "if_statement", "symbols": [{"literal":"if"}, "_", {"literal":"("}, "_", "expression", "_", {"literal":")"}, "_", "code_block", "_", "else_clause"], "postprocess": 
         d => ({
             type: "if_statement",
