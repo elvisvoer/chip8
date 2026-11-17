@@ -515,8 +515,6 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
     case "for_loop":
       forLoopToAsm(node, acc, baseAddress);
       break;
-    case "comment":
-      break;
     default:
       console.log(JSON.stringify(node, undefined, 2));
       throw new Error("Unknown node");

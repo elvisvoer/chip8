@@ -2,7 +2,10 @@
 const moo = require("moo");
 
 const lexer = moo.compile({
-    ws: /[ \t]+/,
+    ws: {
+        match: /(?:[ \t]+|\/\/[^\n]*|\/\*[\s\S]*?\*\/)/,
+        lineBreaks: true
+    },
     nl: { match: "\n", lineBreaks: true },
     "==": "==",
     "!=": "!=",
@@ -33,10 +36,6 @@ const lexer = moo.compile({
     modulo: "%",
     colon: ":",
     semicolon: ";",
-    comment: {
-        match: /#[^\n]*/,
-        value: s => s.substring(1)
-    },
     string_literal: {
         match: /"(?:[^\n\\"]|\\["\\ntbfr])*"/,
         value: s => JSON.parse(s)
@@ -104,7 +103,7 @@ function convertTokenId(data) {
 input -> top_level_statements {% id %}
 
 top_level_statements
-    ->  top_level_statement
+    ->  top_level_statement _
         {%
             d => [d[0]]
         %}
@@ -127,7 +126,6 @@ top_level_statements
 
 top_level_statement
     -> fun_definition   {% id %}
-    |  line_comment     {% id %}
     |  code_block       {% id %}
     |  executable_statement {% id %}
 
@@ -181,7 +179,6 @@ executable_statement
    |  var_assignment       {% id %}
    |  postfix_update       {% id %}
    |  call_statement       {% id %}
-   |  line_comment         {% id %}
    |  label_statement      {% id %}
    |  goto_statement       {% id %}
    |  break_statement      {% id %}
@@ -615,8 +612,6 @@ unary_expression
 #                 end: d[8].end
 #             })
 #         %}
-
-line_comment -> %comment {% convertTokenId %}
 
 string_literal -> %string_literal {% convertTokenId %}
 hex -> %hex_literal {% convertTokenId %}

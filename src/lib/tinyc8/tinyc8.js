@@ -6,7 +6,10 @@ function id(x) { return x[0]; }
 const moo = require("moo");
 
 const lexer = moo.compile({
-    ws: /[ \t]+/,
+    ws: {
+        match: /(?:[ \t]+|\/\/[^\n]*|\/\*[\s\S]*?\*\/)/,
+        lineBreaks: true
+    },
     nl: { match: "\n", lineBreaks: true },
     "==": "==",
     "!=": "!=",
@@ -37,10 +40,6 @@ const lexer = moo.compile({
     modulo: "%",
     colon: ":",
     semicolon: ";",
-    comment: {
-        match: /#[^\n]*/,
-        value: s => s.substring(1)
-    },
     string_literal: {
         match: /"(?:[^\n\\"]|\\["\\ntbfr])*"/,
         value: s => JSON.parse(s)
@@ -105,7 +104,7 @@ var grammar = {
     Lexer: lexer,
     ParserRules: [
     {"name": "input", "symbols": ["top_level_statements"], "postprocess": id},
-    {"name": "top_level_statements", "symbols": ["top_level_statement"], "postprocess": 
+    {"name": "top_level_statements", "symbols": ["top_level_statement", "_"], "postprocess":
         d => [d[0]]
                 },
     {"name": "top_level_statements", "symbols": ["top_level_statement", "_", {"literal":"\n"}, "_", "top_level_statements"], "postprocess": 
@@ -121,7 +120,6 @@ var grammar = {
         d => []
                 },
     {"name": "top_level_statement", "symbols": ["fun_definition"], "postprocess": id},
-    {"name": "top_level_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["code_block"], "postprocess": id},
     {"name": "top_level_statement", "symbols": ["executable_statement"], "postprocess": id},
     {"name": "fun_definition", "symbols": [{"literal":"fun"}, "__", "identifier", "_", {"literal":"("}, "_", "parameter_list", "_", {"literal":")"}, "_", "code_block"], "postprocess": 
@@ -159,7 +157,6 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["postfix_update"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["call_statement"], "postprocess": id},
-    {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["label_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["goto_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["break_statement"], "postprocess": id},
@@ -416,7 +413,6 @@ var grammar = {
     {"name": "unary_expression", "symbols": [{"literal":"("}, "expression", {"literal":")"}], "postprocess": 
         data => data[1]
                 },
-    {"name": "line_comment", "symbols": [(lexer.has("comment") ? {type: "comment"} : comment)], "postprocess": convertTokenId},
     {"name": "string_literal", "symbols": [(lexer.has("string_literal") ? {type: "string_literal"} : string_literal)], "postprocess": convertTokenId},
     {"name": "hex", "symbols": [(lexer.has("hex_literal") ? {type: "hex_literal"} : hex_literal)], "postprocess": convertTokenId},
     {"name": "number", "symbols": [(lexer.has("number_literal") ? {type: "number_literal"} : number_literal)], "postprocess": convertTokenId},

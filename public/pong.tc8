@@ -151,7 +151,7 @@ if (V6 == 0x40) {
   V6 += 0xfe
 }
 goto ballUpdate
-##### start updateScore
+// start updateScore
 fun updateScore() {
   I = 0x2f2
   0x2d6 BCDC VE
@@ -164,7 +164,7 @@ fun updateScore() {
   0x2e4 FONT V2
   draw(V4, V5, 0x5)
 }
-##### end updateScore
+// end updateScore
 0x2ea 0x8080
 0x2ec 0x8080
 0x2ee 0x8080

@@ -39,6 +39,30 @@ const testCodeExamples = [
 ];
 
 describe("TinyC8 compiler", () => {
+  describe("comments", () => {
+    test("supports // comments, including trailing comments", () => {
+      const source = `// header
+V0 = 0x01 // register value
+// another comment
+V1 = 0x02`;
+      const expected = ["0x200 V0 := 0x01", "0x202 V1 := 0x02"].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("supports multiline C-style comments", () => {
+      const source = `V0 = 0x01
+/*
+  multiline
+  comment
+*/
+V1 = 0x02 /* trailing block comment */`;
+      const expected = ["0x200 V0 := 0x01", "0x202 V1 := 0x02"].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+  });
+
   describe.skip("asm statements", () => {
     test("can have an asm statement", () => {
       const testCode = `0x200 CLEAR`;
@@ -104,7 +128,7 @@ describe("TinyC8 compiler", () => {
 
     test("can have a code block with only a comment", () => {
       const testCode = `{
-          # some comment
+          // some comment
         }`;
       const expectedResult = ``;
       const disassembledResult = bufferToAsm(compileTinyC8(testCode));
@@ -124,7 +148,7 @@ describe("TinyC8 compiler", () => {
 
     test("can have a code block with a comment and a single instruction", () => {
       const testCode = `{
-          # some comment
+          // some comment
           V0 = 0xed
         }`;
       const expectedResult = "0x200 V0 := 0xed";
@@ -136,7 +160,7 @@ describe("TinyC8 compiler", () => {
     test("can have a code block with multiple instructions", () => {
       const testCode = `{
           I = 0x22a
-          # some comment
+        // some comment
           V0 = 0xed
         }`;
       const expectedResult = ["0x200 I := 0x22a", "0x202 V0 := 0xed"].join(
@@ -150,7 +174,7 @@ describe("TinyC8 compiler", () => {
     test("can have nested code blocks", () => {
       const testCode = `{
           I = 0x22a
-          # some comment
+        // some comment
           {
             V0 = 0xed
           }
