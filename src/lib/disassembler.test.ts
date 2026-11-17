@@ -22,6 +22,30 @@ function assembleDisassembly(asm: string): Uint8Array {
   return compileAsm(asm.replace(/^0x[\da-f]+\s+/gim, ""));
 }
 
+const tinyC8Roms = [
+  "br8kout.ch8",
+  "chipcross.ch8",
+  "chip8-picture.ch8",
+  "dt-test.ch8",
+  "elvis.ch8",
+  "ibm-logo.ch8",
+  "pong.ch8",
+  "snake.ch8",
+  "sqrt-test.ch8",
+  "zero-pong.ch8",
+];
+
+const disassemblyRoundTripRoms = [
+  "br8kout.ch8",
+  "chip8-picture.ch8",
+  "dt-test.ch8",
+  "ibm-logo.ch8",
+  "pong.ch8",
+  "snake.ch8",
+  "sqrt-test.ch8",
+  "zero-pong.ch8",
+];
+
 describe("Disassembler", () => {
   test("disassembles instructions at odd jump targets", () => {
     const buffer = Uint8Array.fromHex("120560e050610200ee");
@@ -37,46 +61,29 @@ describe("Disassembler", () => {
     expect(areBuffersEqual(buffer, assembleDisassembly(asm))).toBeTruthy();
   });
 
-  test.each([
-    "br8kout.ch8",
-    "chip8-picture.ch8",
-    "dt-test.ch8",
-    "ibm-logo.ch8",
-    "pong.ch8",
-    "snake.ch8",
-    "sqrt-test.ch8",
-    "zero-pong.ch8",
-  ])("can correctly disassemble/assemble %1", (rom) => {
-    const buffer = new Uint8Array(readFileSync(`public/${rom}`));
-    const asm = bufferToAsm(buffer);
-    writeFileSync(`public/${rom.replace("ch8", "asm")}`, asm);
-
-    const newBuffer = compileTinyC8(
-      readFileSync(`public/${rom.replace("ch8", "tc8")}`, "utf-8"),
-    );
-    const disassembledBuffer = assembleDisassembly(asm);
-
-    expect(newBuffer, rom).toEqual(buffer);
-    expect(areBuffersEqual(buffer, disassembledBuffer)).toBeTruthy();
-  });
-
-  test("compiles the high-level Chipcross source to its original ROM", () => {
-    const rom = new Uint8Array(readFileSync("public/chipcross.ch8"));
-    const source = readFileSync("public/chipcross.tc8", "utf-8");
-
-    expect(compileTinyC8(source)).toEqual(rom);
-  });
-
-  test.each(["elvis.ch8", "snake.ch8"])(
-    "compiles the high-level %s source to its original ROM",
-    (romFile) => {
-      const rom = new Uint8Array(readFileSync(`public/${romFile}`));
+  test.each(tinyC8Roms)(
+    "compiles high-level %s source to its original ROM",
+    (rom) => {
+      const buffer = new Uint8Array(readFileSync(`public/${rom}`));
       const source = readFileSync(
-        `public/${romFile.replace("ch8", "tc8")}`,
+        `public/${rom.replace("ch8", "tc8")}`,
         "utf-8",
       );
 
-      expect(compileTinyC8(source)).toEqual(rom);
+      expect(compileTinyC8(source), rom).toEqual(buffer);
+    },
+  );
+
+  test.each(disassemblyRoundTripRoms)(
+    "can correctly disassemble/assemble %s",
+    (rom) => {
+      const buffer = new Uint8Array(readFileSync(`public/${rom}`));
+      const asm = bufferToAsm(buffer);
+      writeFileSync(`public/${rom.replace("ch8", "asm")}`, asm);
+
+      expect(assembleDisassembly(asm), `${rom} disassembly round-trip`).toEqual(
+        buffer,
+      );
     },
   );
 });
