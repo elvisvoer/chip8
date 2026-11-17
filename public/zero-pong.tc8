@@ -8,13 +8,13 @@ I = 0x2b0
 V0 = 0x0a
 if (KEY == V0) {
     0x20e DRAW V7 V8 0x6
-    V8 += 0x01
+    V8++
     0x212 DRAW V7 V8 0x6
 } else {
     V0 = 0x0b
     if (KEY == V0) {
         0x21c DRAW V7 V8 0x6
-        V8 += 0xff
+        V8--
         0x220 DRAW V7 V8 0x6
     }
 }
@@ -22,13 +22,13 @@ if (KEY == V0) {
 V0 = 0x08
 if (KEY == V0) {
     0x228 DRAW V9 VA 0x6
-    VA += 0x01
+    VA++
     0x22c DRAW V9 VA 0x6
 } else {
     V0 = 0x02
     if (KEY == V0) {
         0x236 DRAW V9 VA 0x6
-        VA += 0xff
+        VA--
         0x23a DRAW V9 VA 0x6
     }
 }
