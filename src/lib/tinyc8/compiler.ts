@@ -1,7 +1,7 @@
 import nearley from "nearley";
 import { compileAsm } from "../asm/assembler";
 // @ts-ignore
-import basicGrm from "./basic";
+import tinyC8Grammar from "./tinyc8";
 
 const oppositeOperator = {
   "==": "!=",
@@ -210,8 +210,8 @@ function astToAsm(astNodes: any[]): string {
   return result.join("\n");
 }
 
-export function compileBasic(data: string): Uint8Array {
-  const parser = new nearley.Parser(nearley.Grammar.fromCompiled(basicGrm));
+export function compileTinyC8(data: string): Uint8Array {
+  const parser = new nearley.Parser(nearley.Grammar.fromCompiled(tinyC8Grammar));
   console.time();
   parser.feed(data);
   console.timeEnd();

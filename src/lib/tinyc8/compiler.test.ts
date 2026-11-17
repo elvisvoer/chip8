@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { compileBasic } from "./compiler";
+import { compileTinyC8 } from "./compiler";
 import { bufferToAsm } from "../disassembler";
 
 const assignmentOp = [":=", "+=", "-=", "~=", "&=", "|=", "^=", "<<=", ">>="];
@@ -28,12 +28,12 @@ const testCodeExamples = [
 `,
 ];
 
-describe("basic compiler", () => {
+describe("TinyC8 compiler", () => {
   describe.skip("asm statements", () => {
     test("can have an asm statement", () => {
       const testCode = `0x200 CLEAR`;
       const expectedResult = "0x200 CLEAR";
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -43,7 +43,7 @@ describe("basic compiler", () => {
           0x200 NOOP
         }`;
       const expectedResult = `0x200 NOOP`;
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -68,7 +68,7 @@ describe("basic compiler", () => {
         "0x20c JUMP TO 0x222",
       ].join("\n");
 
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -78,7 +78,7 @@ describe("basic compiler", () => {
     test("can have an empty code block", () => {
       const testCode = `{}`;
       const expectedResult = ``;
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -87,7 +87,7 @@ describe("basic compiler", () => {
       const testCode = `{
          }`;
       const expectedResult = ``;
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -97,7 +97,7 @@ describe("basic compiler", () => {
           # some comment
         }`;
       const expectedResult = ``;
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -107,7 +107,7 @@ describe("basic compiler", () => {
           V0 := 0xed
         }`;
       const expectedResult = "0x200 V0 := 0xed";
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -118,7 +118,7 @@ describe("basic compiler", () => {
           V0 := 0xed
         }`;
       const expectedResult = "0x200 V0 := 0xed";
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -132,7 +132,7 @@ describe("basic compiler", () => {
       const expectedResult = ["0x200 I := 0x22a", "0x202 V0 := 0xed"].join(
         "\n",
       );
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -148,7 +148,7 @@ describe("basic compiler", () => {
       const expectedResult = ["0x200 I := 0x22a", "0x202 V0 := 0xed"].join(
         "\n",
       );
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -160,7 +160,7 @@ describe("basic compiler", () => {
       (op) => {
         const testCode = `V0 ${op} VE`;
         const expectedResult = `0x200 V0 ${op} VE`;
-        const disassembledResult = bufferToAsm(compileBasic(testCode));
+        const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
         expect(disassembledResult).toEqual(expectedResult);
       },
@@ -173,7 +173,7 @@ describe("basic compiler", () => {
           V0 ${op} VF
         }`;
         const expectedResult = `0x200 V0 ${op} VF`;
-        const disassembledResult = bufferToAsm(compileBasic(testCode));
+        const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
         expect(disassembledResult).toEqual(expectedResult);
       },
@@ -190,7 +190,7 @@ describe("basic compiler", () => {
         `0x206 JUMP 0x20a`,
         `0x208 V1 := 0x02`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -204,7 +204,7 @@ describe("basic compiler", () => {
         `0x202 JUMP IF V0 == 0x00`,
         `0x204 JUMP 0x200`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -220,7 +220,7 @@ describe("basic compiler", () => {
         `0x204 JUMP IF V0 == 0x00`,
         `0x206 JUMP 0x200`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -232,7 +232,7 @@ describe("basic compiler", () => {
         `0x202 JUMP IF V0 != 0x00`,
         `0x204 JUMP 0x200`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -247,7 +247,7 @@ describe("basic compiler", () => {
         `0x204 V1 := 0x01`,
         `0x206 JUMP 0x200`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -264,7 +264,7 @@ describe("basic compiler", () => {
         `0x206 V2 := 0x02`,
         `0x208 JUMP 0x200`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -276,7 +276,7 @@ describe("basic compiler", () => {
       const expectedResult = [
         `0x200 JUMP 0x200`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -287,7 +287,7 @@ describe("basic compiler", () => {
         `0x200 V0 := 0xff`,
         `0x202 JUMP 0x202`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -299,7 +299,7 @@ describe("basic compiler", () => {
         `0x202 V0 += V1`,
         `0x204 JUMP 0x202`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -312,7 +312,7 @@ describe("basic compiler", () => {
         `0x204 JUMP IF V0 == 0xff`,
         `0x206 JUMP 0x202`,
       ].join("\n");
-      const disassembledResult = bufferToAsm(compileBasic(testCode));
+      const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
       expect(disassembledResult).toEqual(expectedResult);
     });
@@ -322,7 +322,7 @@ describe("basic compiler", () => {
     test.each(testCodeExamples)(
       "can assign a variable in a single line statement",
       (testCode) => {
-        const disassembledResult = bufferToAsm(compileBasic(testCode));
+        const disassembledResult = bufferToAsm(compileTinyC8(testCode));
 
         expect(disassembledResult.length).toBeGreaterThan(0);
       },

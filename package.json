@@ -11,8 +11,8 @@
     "test": "vitest",
     "nearleyc": "nearleyc",
     "ne-asm": "nearleyc src/lib/asm/asm.ne -o src/lib/asm/asm.js",
-    "ne-basic": "nearleyc src/lib/basic/basic.ne -o src/lib/basic/basic.js",
-    "all": "npm run ne-asm && npm run ne-basic && npm test"
+    "ne-tinyc8": "nearleyc src/lib/tinyc8/tinyc8.ne -o src/lib/tinyc8/tinyc8.js",
+    "all": "npm run ne-asm && npm run ne-tinyc8 && npm test"
   },
   "devDependencies": {
     "@types/nearley": "^2.11.5",

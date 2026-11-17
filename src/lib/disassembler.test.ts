@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { readFileSync, writeFileSync } from "node:fs";
-import { compileBasic } from "./basic/compiler";
+import { compileTinyC8 } from "./tinyc8/compiler";
 import { bufferToAsm } from "./disassembler";
 
 function areBuffersEqual(left: Uint8Array, right: Uint8Array): boolean {
@@ -33,14 +33,14 @@ describe("Disassembler", () => {
     const asm = bufferToAsm(buffer);
     writeFileSync(`public/${rom.replace("ch8", "asm")}`, asm);
 
-    const newBuffer = compileBasic(
-      readFileSync(`public/${rom.replace("ch8", "b")}`, "utf-8"),
+    const newBuffer = compileTinyC8(
+      readFileSync(`public/${rom.replace("ch8", "tc8")}`, "utf-8"),
     );
 
-    //  const eBuffer = compileBasic(readFileSync(`public/elvis.b`, "utf-8"))
+    //  const eBuffer = compileTinyC8(readFileSync(`public/elvis.tc8`, "utf-8"))
     //  writeFileSync("public/elvis.ch8", eBuffer);
 
-    // writeFileSync(`public/${rom.replace("ch8", "b.ch8")}`, newBuffer);
+    // writeFileSync(`public/${rom.replace("ch8", "tc8.ch8")}`, newBuffer);
 
     expect(areBuffersEqual(buffer, newBuffer)).toBeTruthy();
     // expect(true).toBeTruthy();
