@@ -466,6 +466,17 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
           drawCallToAsm(node.value),
           `${node.var_name.value} ${operator} VF`,
         );
+      } else if (
+        node.var_name.value === "I" &&
+        node.operator.value === "+="
+      ) {
+        if (
+          node.value.type !== "var_reference" ||
+          !/^V[0-9a-f]$/i.test(node.value.var_name.value)
+        ) {
+          throw new Error("I += expects a V-register");
+        }
+        acc.push(`INC ${node.value.var_name.value}`);
       } else {
         acc.push(
           `${node.var_name.value} ${operator} ${node.value.var_name?.value ?? node.value.value}`,

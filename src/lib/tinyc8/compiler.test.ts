@@ -216,6 +216,17 @@ V1 = 0x02 /* trailing block comment */`;
     test("does not accept the previous assignment operator", () => {
       expect(() => compileTinyC8("V0 := 0x01")).toThrow();
     });
+
+    test("compiles I += Vx to CHIP-8 INC Vx", () => {
+      expect(bufferToAsm(compileTinyC8("I += V0"))).toEqual("0x200 INC V0");
+      expect(bufferToAsm(compileTinyC8("I += VF"))).toEqual("0x200 INC VF");
+    });
+
+    test("rejects non-register operands for I +=", () => {
+      expect(() => compileTinyC8("I += 0x01")).toThrow(
+        "I += expects a V-register",
+      );
+    });
   });
 
   describe("built-in functions", () => {
