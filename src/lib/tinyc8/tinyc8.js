@@ -69,6 +69,7 @@ const lexer = moo.compile({
             else: "else",
             goto: "goto",
             break: "break",
+            continue: "continue",
             SKIP: "SKIP",
             KEY: "KEY",
         })
@@ -173,6 +174,7 @@ var grammar = {
     {"name": "simple_statement", "symbols": ["call_statement"], "postprocess": id},
     {"name": "simple_statement", "symbols": ["goto_statement"], "postprocess": id},
     {"name": "simple_statement", "symbols": ["break_statement"], "postprocess": id},
+    {"name": "simple_statement", "symbols": ["continue_statement"], "postprocess": id},
     {"name": "simple_statement", "symbols": ["key_skip_statement"], "postprocess": id},
     {"name": "return_statement", "symbols": [{"literal":"return"}, "__", "expression"], "postprocess": 
         d => ({
@@ -201,6 +203,13 @@ var grammar = {
     {"name": "break_statement", "symbols": [{"literal":"break"}], "postprocess": 
         d => ({
             type: "break_statement",
+            start: tokenStart(d[0]),
+            end: tokenEnd(d[0])
+        })
+                },
+    {"name": "continue_statement", "symbols": [{"literal":"continue"}], "postprocess":
+        d => ({
+            type: "continue_statement",
             start: tokenStart(d[0]),
             end: tokenEnd(d[0])
         })

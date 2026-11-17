@@ -716,6 +716,31 @@ V1 = 0x01;`,
     });
   });
 
+  describe("continue statement", () => {
+    test("targets the increment and condition phases of loops", () => {
+      const source = `for (V0 = 0x00; V0 != 0x02; V0++) { continue; }
+do { continue; } while (V1 != 0x00);`;
+      const expected = [
+        "0x200 V0 := 0x00",
+        "0x202 JUMP 0x204",
+        "0x204 V0 += 0x01",
+        "0x206 JUMP IF V0 == 0x02",
+        "0x208 JUMP 0x202",
+        "0x20a JUMP 0x20c",
+        "0x20c JUMP IF V1 == 0x00",
+        "0x20e JUMP 0x20a",
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("reports a continue outside a loop", () => {
+      expect(() => compileTinyC8("continue;")).toThrow(
+        "Continue statement outside loop",
+      );
+    });
+  });
+
   describe("goto statement", () => {
     test("rejects the old fun declaration keyword", () => {
       expect(() => compileTinyC8("fun helper() {}")).toThrow();
@@ -734,6 +759,22 @@ V0 = 0x01;`;
           "\n",
         ),
       );
+    });
+
+    test("resolves loop addresses relative to the program in procedures", () => {
+      const source = `void timer() {
+  do {
+    V0 += 0x01;
+  } while (V0 != 0x00);
+}`;
+      const expected = [
+        "0x200 V0 += 0x01",
+        "0x202 JUMP IF V0 == 0x00",
+        "0x204 JUMP 0x200",
+        "0x206 RETURN",
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
     });
 
     test("resolves function calls and labels after one-byte data", () => {

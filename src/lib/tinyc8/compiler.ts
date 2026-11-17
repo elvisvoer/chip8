@@ -5,6 +5,7 @@ import tinyC8Grammar from "./tinyc8";
 
 const labelMarker = "@@tinyc8-label ";
 const breakMarker = "@@tinyc8-break";
+const continueMarker = "@@tinyc8-continue";
 
 function lineByteLength(line: string): number {
   if (line.startsWith(labelMarker)) {
@@ -29,9 +30,22 @@ function addressString(address: number): string {
   return `0x${address.toString(16).padStart(3, "0")}`;
 }
 
-function resolveBreaks(lines: string[], exitAddress: number): string[] {
-  const target = addressString(exitAddress);
-  return lines.map((line) => (line === breakMarker ? `JUMP ${target}` : line));
+function resolveLoopControl(
+  lines: string[],
+  exitAddress: number,
+  continueAddress: number,
+): string[] {
+  const exitTarget = addressString(exitAddress);
+  const continueTarget = addressString(continueAddress);
+  return lines.map((line) => {
+    if (line === breakMarker) {
+      return `JUMP ${exitTarget}`;
+    }
+    if (line === continueMarker) {
+      return `JUMP ${continueTarget}`;
+    }
+    return line;
+  });
 }
 
 function isDrawCall(node: any): boolean {
@@ -329,9 +343,9 @@ function uncontrolledLoopToAsm(
   const endOffset =
     initialOffset + byteLength(body) + conditionCount * 2;
 
-  acc.push(...resolveBreaks(body, endOffset));
+  const conditionStart = initialOffset + byteLength(body);
+  acc.push(...resolveLoopControl(body, endOffset, conditionStart));
   if (branchCondition) {
-    const conditionStart = initialOffset + byteLength(body);
     acc.push(
       ...conditionBranchLines(
         node.condition,
@@ -358,7 +372,7 @@ function whileLoopToAsm(node: any, acc: string[], baseAddress: number) {
 
     acc.push(
       ...conditionBranchLines(node.condition, bodyStart, end, start),
-      ...resolveBreaks(body, end),
+      ...resolveLoopControl(body, end, start),
       `JUMP ${addressString(start)}`,
     );
     return;
@@ -371,7 +385,7 @@ function whileLoopToAsm(node: any, acc: string[], baseAddress: number) {
 
   acc.push(conditionInstruction(node.condition));
   acc.push(`JUMP ${addressString(end)}`);
-  acc.push(...resolveBreaks(body, end));
+  acc.push(...resolveLoopControl(body, end, start));
   acc.push(`JUMP ${addressString(start)}`);
 }
 
@@ -394,7 +408,7 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
     const end =
       conditionStart + conditionInstructionCount(node.condition) * 2;
     acc.push(
-      ...resolveBreaks(body, end),
+      ...resolveLoopControl(body, end, start + byteLength(body)),
       ...increment,
       ...conditionBranchLines(node.condition, start, end, conditionStart),
     );
@@ -407,7 +421,10 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
     byteLength(increment) +
     (node.condition ? 2 : 0) +
     2;
-  acc.push(...resolveBreaks(body, end), ...increment);
+  acc.push(
+    ...resolveLoopControl(body, end, start + byteLength(body)),
+    ...increment,
+  );
 
   if (node.condition) {
     acc.push(conditionInstruction(node.condition, true));
@@ -526,6 +543,9 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
       break;
     case "break_statement":
       acc.push(breakMarker);
+      break;
+    case "continue_statement":
+      acc.push(continueMarker);
       break;
     case "key_skip_statement":
       acc.push(`SKIP IF KEY ${node.operator.value} ${node.key.value}`);
@@ -725,7 +745,7 @@ function astToAsm(astNodes: any[]): string {
       const offset = addressAt(result, 0x200);
       let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
       symbols.set(node.name.value, offsetStr);
-      astNodeToAsm(node.body, result, offset);
+      astNodeToAsm(node.body, result, 0x200);
 
       if (!node.noreturn) {
         result.push("RETURN");
@@ -738,6 +758,9 @@ function astToAsm(astNodes: any[]): string {
 
   if (result.includes(breakMarker)) {
     throw new Error("Break statement outside loop");
+  }
+  if (result.includes(continueMarker)) {
+    throw new Error("Continue statement outside loop");
   }
 
   const labels = new Map<string, string>();

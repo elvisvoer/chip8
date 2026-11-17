@@ -65,6 +65,7 @@ const lexer = moo.compile({
             else: "else",
             goto: "goto",
             break: "break",
+            continue: "continue",
             SKIP: "SKIP",
             KEY: "KEY",
         })
@@ -203,6 +204,7 @@ simple_statement
    |  call_statement       {% id %}
    |  goto_statement       {% id %}
    |  break_statement      {% id %}
+   |  continue_statement   {% id %}
    |  key_skip_statement   {% id %}
 
 return_statement
@@ -243,6 +245,16 @@ break_statement
         {%
             d => ({
                 type: "break_statement",
+                start: tokenStart(d[0]),
+                end: tokenEnd(d[0])
+            })
+        %}
+
+continue_statement
+    -> "continue"
+        {%
+            d => ({
+                type: "continue_statement",
                 start: tokenStart(d[0]),
                 end: tokenEnd(d[0])
             })
