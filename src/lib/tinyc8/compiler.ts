@@ -59,25 +59,29 @@ function drawCallToAsm(node: any): string {
     node.arguments.length !== 3 ||
     x?.type !== "var_reference" ||
     y?.type !== "var_reference" ||
-    height?.type !== "hex_literal"
+    !["hex_literal", "binary_literal"].includes(height?.type)
   ) {
-    throw new Error("draw() expects two registers and a hexadecimal height");
+    throw new Error(
+      "draw() expects two registers and a hexadecimal or binary height",
+    );
   }
 
-  return `DRAW ${x.var_name.value} ${y.var_name.value} ${height.value}`;
+  return `DRAW ${x.var_name.value} ${y.var_name.value} ${literalToAsm(height)}`;
 }
 
 function randCallToAsm(node: any, target = "VF"): string {
   const [mask] = node.arguments;
   if (
     node.arguments.length !== 1 ||
-    mask?.type !== "hex_literal" ||
+    !["hex_literal", "binary_literal"].includes(mask?.type) ||
     !/^V[0-9a-f]$/i.test(target)
   ) {
-    throw new Error("rand() expects a hexadecimal mask and a V-register target");
+    throw new Error(
+      "rand() expects a hexadecimal or binary mask and a V-register target",
+    );
   }
 
-  return `RAND ${target} ${mask.value}`;
+  return `RAND ${target} ${literalToAsm(mask)}`;
 }
 
 function saveLoadCallToAsm(node: any): string {
@@ -92,9 +96,27 @@ function saveLoadCallToAsm(node: any): string {
   return `${node.fun_name.value.toUpperCase()} 0x${match[1].toLowerCase()}`;
 }
 
+function binaryLiteralToAsm(node: any, padToByte = false): string {
+  let hex = Number.parseInt(node.value.slice(2), 2).toString(16);
+  if (padToByte && hex.length % 2 !== 0) {
+    hex = `0${hex}`;
+  }
+
+  return `0x${hex}`;
+}
+
+function literalToAsm(node: any): string {
+  return node.type === "binary_literal"
+    ? binaryLiteralToAsm(node)
+    : node.value;
+}
+
 function expressionValueToAsm(node: any): string {
   if (isDrawCall(node) || isRandCall(node)) {
     return "VF";
+  }
+  if (node.type === "binary_literal") {
+    return binaryLiteralToAsm(node);
   }
   if (node.type === "call_expression") {
     throw new Error(`${node.fun_name.value}() does not return a value`);
@@ -458,6 +480,8 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
             switch (arg.type) {
               case "hex_literal":
                 return arg.value;
+              case "binary_literal":
+                return literalToAsm(arg);
               case "var_reference":
                 return arg.var_name.value;
               case "binary_operation":
@@ -500,7 +524,7 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
         acc.push(`INC ${node.value.var_name.value}`);
       } else {
         acc.push(
-          `${node.var_name.value} ${operator} ${node.value.var_name?.value ?? node.value.value}`,
+          `${node.var_name.value} ${operator} ${expressionValueToAsm(node.value)}`,
         );
       }
       break;
@@ -517,6 +541,9 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
       break;
     case "hex_literal":
       acc.push(`${node.value}`);
+      break;
+    case "binary_literal":
+      acc.push(binaryLiteralToAsm(node, true));
       break;
     case "call_expression":
       if (node.fun_name.value === "clear") {

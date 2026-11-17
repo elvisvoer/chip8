@@ -217,6 +217,24 @@ V1 = 0x02 /* trailing block comment */`;
       expect(() => compileTinyC8("V0 := 0x01")).toThrow();
     });
 
+    test("compiles binary literals in assignments", () => {
+      expect(bufferToAsm(compileTinyC8("V0 = 0b10101010"))).toEqual(
+        "0x200 V0 := 0xaa",
+      );
+    });
+
+    test("compiles binary literals as raw bytes", () => {
+      expect(bufferToAsm(compileTinyC8("0x200 0b10101010"))).toEqual(
+        "0x200 0xaa",
+      );
+    });
+
+    test("compiles binary literals in raw assembler operands", () => {
+      expect(
+        bufferToAsm(compileTinyC8("0x200 RAND V0 0b10101010")),
+      ).toEqual("0x200 RAND V0 0xaa");
+    });
+
     test("compiles I += Vx to CHIP-8 INC Vx", () => {
       expect(bufferToAsm(compileTinyC8("I += V0"))).toEqual("0x200 INC V0");
       expect(bufferToAsm(compileTinyC8("I += VF"))).toEqual("0x200 INC VF");
@@ -322,8 +340,17 @@ clear()`;
 
     test("rejects invalid draw() arguments", () => {
       expect(() => compileTinyC8("draw(V0, V1)")).toThrow(
-        "draw() expects two registers and a hexadecimal height",
+        "draw() expects two registers and a hexadecimal or binary height",
       );
+    });
+
+    test("accepts binary literals as draw heights and rand masks", () => {
+      expect(
+        bufferToAsm(compileTinyC8("draw(V0, V1, 0b0110)")),
+      ).toEqual("0x200 DRAW V0 V1 0x6");
+      expect(
+        bufferToAsm(compileTinyC8("V7 = rand(0b00010111)")),
+      ).toEqual("0x200 RAND V7 0x17");
     });
 
     test("compiles rand() assignment to RAND with the destination register", () => {
@@ -353,7 +380,7 @@ clear()`;
         "I = rand(0x01)",
       ]) {
         expect(() => compileTinyC8(source)).toThrow(
-          "rand() expects a hexadecimal mask and a V-register target",
+          "rand() expects a hexadecimal or binary mask and a V-register target",
         );
       }
     });

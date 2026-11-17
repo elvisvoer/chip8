@@ -44,6 +44,9 @@ const lexer = moo.compile({
         match: /"(?:[^\n\\"]|\\["\\ntbfr])*"/,
         value: s => JSON.parse(s)
     },
+    binary_literal: {
+        match: /0b[01]+/,
+    },
     hex_literal: {
         match: /0x[0-9a-fA-F]+/,
     },
@@ -206,6 +209,7 @@ var grammar = {
                },
     {"name": "asm_code", "symbols": ["identifier"], "postprocess": id},
     {"name": "asm_code", "symbols": ["hex"], "postprocess": id},
+    {"name": "asm_code", "symbols": ["binary"], "postprocess": id},
     {"name": "asm_code", "symbols": ["var_assignment"], "postprocess": id},
     {"name": "asm_code", "symbols": ["call_statement"], "postprocess": id},
     {"name": "asm_code", "symbols": ["asm_cmd"], "postprocess": id},
@@ -392,6 +396,7 @@ var grammar = {
                 },
     {"name": "unary_expression", "symbols": ["number"], "postprocess": id},
     {"name": "unary_expression", "symbols": ["hex"], "postprocess": id},
+    {"name": "unary_expression", "symbols": ["binary"], "postprocess": id},
     {"name": "unary_expression", "symbols": [{"literal":"KEY"}], "postprocess": 
         d => ({
             type: "key_reference",
@@ -414,6 +419,7 @@ var grammar = {
         data => data[1]
                 },
     {"name": "string_literal", "symbols": [(lexer.has("string_literal") ? {type: "string_literal"} : string_literal)], "postprocess": convertTokenId},
+    {"name": "binary", "symbols": [(lexer.has("binary_literal") ? {type: "binary_literal"} : binary_literal)], "postprocess": convertTokenId},
     {"name": "hex", "symbols": [(lexer.has("hex_literal") ? {type: "hex_literal"} : hex_literal)], "postprocess": convertTokenId},
     {"name": "number", "symbols": [(lexer.has("number_literal") ? {type: "number_literal"} : number_literal)], "postprocess": convertTokenId},
     {"name": "identifier", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": convertTokenId},

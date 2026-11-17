@@ -40,6 +40,9 @@ const lexer = moo.compile({
         match: /"(?:[^\n\\"]|\\["\\ntbfr])*"/,
         value: s => JSON.parse(s)
     },
+    binary_literal: {
+        match: /0b[01]+/,
+    },
     hex_literal: {
         match: /0x[0-9a-fA-F]+/,
     },
@@ -246,6 +249,7 @@ asm_line
 asm_code
     -> identifier       {% id %}
     |  hex              {% id %}
+    |  binary           {% id %}
     |  var_assignment   {% id %}
     |  call_statement   {% id %}
     |  asm_cmd          {% id %}
@@ -527,6 +531,7 @@ multiplicative_expression
 unary_expression
     -> number               {% id %}
     |  hex                  {% id %}
+    |  binary               {% id %}
     |  "KEY"
         {%
             d => ({
@@ -614,6 +619,7 @@ unary_expression
 #         %}
 
 string_literal -> %string_literal {% convertTokenId %}
+binary -> %binary_literal {% convertTokenId %}
 hex -> %hex_literal {% convertTokenId %}
 number -> %number_literal {% convertTokenId %}
 
