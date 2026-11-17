@@ -4,9 +4,23 @@ import { compileAsm } from "../asm/assembler";
 import tinyC8Grammar from "./tinyc8";
 
 const labelMarker = "@@tinyc8-label ";
+const breakMarker = "@@tinyc8-break";
 
 function instructionCount(lines: string[]): number {
   return lines.filter((line) => !line.startsWith(labelMarker)).length;
+}
+
+function addressAt(lines: string[], baseAddress: number): number {
+  return baseAddress + instructionCount(lines) * 2;
+}
+
+function addressString(address: number): string {
+  return `0x${address.toString(16).padStart(3, "0")}`;
+}
+
+function resolveBreaks(lines: string[], exitAddress: number): string[] {
+  const target = addressString(exitAddress);
+  return lines.map((line) => (line === breakMarker ? `JUMP ${target}` : line));
 }
 
 const oppositeOperator = {
@@ -27,91 +41,88 @@ function binaryExprToAsm(item: any, useOppositeOperator = false) {
 function uncontrolledLoopToAsm(
   node: any,
   acc: string[],
+  baseAddress: number,
   useOppositeOperator = false,
 ): void {
-  const initialOffset = 0x200 + instructionCount(acc) * 2;
-  const initialOffsetStr = `0x${initialOffset.toString(16).padStart(3, "0")}`;
-  const statements = node.body;
+  const initialOffset = addressAt(acc, baseAddress);
+  const body: string[] = [];
+  astNodeToAsm(node.body, body, initialOffset);
+  const endOffset = initialOffset + (instructionCount(body) + 2) * 2;
 
-  astNodeToAsm(statements, acc);
-
+  acc.push(...resolveBreaks(body, endOffset));
   acc.push(`JUMP IF ${binaryExprToAsm(node.condition, useOppositeOperator)}`);
-  acc.push(`JUMP ${initialOffsetStr}`);
+  acc.push(`JUMP ${addressString(initialOffset)}`);
 }
 
-function whileLoopToAsm(node: any, acc: string[]) {
+function whileLoopToAsm(node: any, acc: string[], baseAddress: number) {
+  const start = addressAt(acc, baseAddress);
   const body: any[] = [];
-  astNodeToAsm(node.body, body);
+  astNodeToAsm(node.body, body, start + 4);
 
-  const start = 0x200 + instructionCount(acc) * 2;
-  const end =
-    0x200 + (instructionCount(acc) + instructionCount(body) + 3) * 2;
-  const startTarget = `0x${start.toString(16).padStart(3, "0")}`;
-  const endTarget = `0x${end.toString(16).padStart(3, "0")}`;
+  const end = start + (instructionCount(body) + 3) * 2;
 
   acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
-  acc.push(`JUMP ${endTarget}`);
-  acc.push(...body);
-  acc.push(`JUMP ${startTarget}`);
+  acc.push(`JUMP ${addressString(end)}`);
+  acc.push(...resolveBreaks(body, end));
+  acc.push(`JUMP ${addressString(start)}`);
 }
 
-function forLoopToAsm(node: any, acc: string[]) {
+function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
   if (node.init) {
-    astNodeToAsm(node.init, acc);
+    astNodeToAsm(node.init, acc, baseAddress);
   }
 
-  const offset = 0x200 + instructionCount(acc) * 2;
-  const offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
-
-  if (node.body) {
-    astNodeToAsm(node.body, acc);
-  }
-
+  const start = addressAt(acc, baseAddress);
+  const body: string[] = [];
+  astNodeToAsm(node.body, body, start);
+  const increment: string[] = [];
   if (node.increment) {
-    astNodeToAsm(node.increment, acc);
+    astNodeToAsm(node.increment, increment, start + instructionCount(body) * 2);
   }
+
+  const end =
+    start +
+    (instructionCount(body) +
+      instructionCount(increment) +
+      (node.condition ? 1 : 0) +
+      1) *
+      2;
+  acc.push(...resolveBreaks(body, end), ...increment);
 
   if (node.condition) {
     acc.push(`JUMP IF ${binaryExprToAsm(node.condition, true)}`);
   }
 
-  acc.push(`JUMP ${offsetStr}`);
+  acc.push(`JUMP ${addressString(start)}`);
 }
 
-function ifStatementToAsm(node: any, acc: string[]) {
+function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
+  const start = addressAt(acc, baseAddress);
   const body: any[] = [];
   const statements = node.body;
-  astNodeToAsm(statements, body);
 
   if (!node.alternate) {
+    astNodeToAsm(statements, body, start + 2);
     acc.push(`JUMP IF ${binaryExprToAsm(node.condition, true)}`);
     acc.push(...body);
     return;
   }
 
+  astNodeToAsm(statements, body, start + 4);
   const alternate: any[] = [];
-  astNodeToAsm(node.alternate, alternate);
+  const elseStart = start + (3 + instructionCount(body)) * 2;
+  astNodeToAsm(node.alternate, alternate, elseStart);
 
-  const elseStart =
-    0x200 + (instructionCount(acc) + 3 + instructionCount(body)) * 2;
-  const elseTarget = `0x${elseStart.toString(16).padStart(3, "0")}`;
-  const endTarget =
-    0x200 +
-    (instructionCount(acc) +
-      3 +
-      instructionCount(body) +
-      instructionCount(alternate)) *
-      2;
-  const endTargetStr = `0x${endTarget.toString(16).padStart(3, "0")}`;
+  const endTarget = elseStart + instructionCount(alternate) * 2;
 
   acc.push(`JUMP IF ${binaryExprToAsm(node.condition)}`);
-  acc.push(`JUMP ${elseTarget}`);
+  acc.push(`JUMP ${addressString(elseStart)}`);
   acc.push(...body);
-  acc.push(`JUMP ${endTargetStr}`);
+  acc.push(`JUMP ${addressString(endTarget)}`);
   acc.push(...alternate);
 }
 
-function astNodeToAsm(node: any, acc: string[]): void {
+function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
   switch (node.type) {
     case "label_statement":
       acc.push(`${labelMarker}${node.name}`);
@@ -119,12 +130,15 @@ function astNodeToAsm(node: any, acc: string[]): void {
     case "goto_statement":
       acc.push(`GOTO ${node.target}`);
       break;
+    case "break_statement":
+      acc.push(breakMarker);
+      break;
     case "asm_line":
       if (node.value.type === "identifier") {
         acc.push(`${node.value.value}`);
       } else {
         // recursive
-        astNodeToAsm(node.value, acc);
+        astNodeToAsm(node.value, acc, baseAddress);
       }
       break;
     case "asm_command":
@@ -168,24 +182,24 @@ function astNodeToAsm(node: any, acc: string[]): void {
         const statements = node.statements;
         if (Array.isArray(statements)) {
           statements.flat().forEach((s: any) => {
-            astNodeToAsm(s, acc);
+            astNodeToAsm(s, acc, baseAddress);
           });
         } else {
-          astNodeToAsm(statements, acc);
+          astNodeToAsm(statements, acc, baseAddress);
         }
       }
       break;
     case "if_statement":
-      ifStatementToAsm(node, acc);
+      ifStatementToAsm(node, acc, baseAddress);
       break;
     case "do_while_loop":
-      uncontrolledLoopToAsm(node, acc, true);
+      uncontrolledLoopToAsm(node, acc, baseAddress, true);
       break;
     case "while_loop":
-      whileLoopToAsm(node, acc);
+      whileLoopToAsm(node, acc, baseAddress);
       break;
     case "for_loop":
-      forLoopToAsm(node, acc);
+      forLoopToAsm(node, acc, baseAddress);
       break;
     case "comment":
       break;
@@ -203,7 +217,7 @@ function astToAsm(astNodes: any[]): string {
       let offset = 0x200 + instructionCount(result) * 2;
       let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
       symbols.set(node.name.value, offsetStr);
-      astNodeToAsm(node.body, result);
+      astNodeToAsm(node.body, result, addressAt(result, 0x200));
 
       result.push("RETURN");
       return;
@@ -211,6 +225,10 @@ function astToAsm(astNodes: any[]): string {
 
     astNodeToAsm(node, result);
   });
+
+  if (result.includes(breakMarker)) {
+    throw new Error("Break statement outside loop");
+  }
 
   const labels = new Map<string, string>();
   let offset = 0x200;

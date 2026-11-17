@@ -58,6 +58,7 @@ const lexer = moo.compile({
             if: "if",
             else: "else",
             goto: "goto",
+            break: "break",
         })
     }
 });
@@ -154,6 +155,7 @@ var grammar = {
     {"name": "executable_statement", "symbols": ["line_comment"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["label_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["goto_statement"], "postprocess": id},
+    {"name": "executable_statement", "symbols": ["break_statement"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["do_while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["while_loop"], "postprocess": id},
     {"name": "executable_statement", "symbols": ["if_statement"], "postprocess": id},
@@ -180,6 +182,13 @@ var grammar = {
             target: d[2].value,
             start: tokenStart(d[0]),
             end: d[2].end
+        })
+                },
+    {"name": "break_statement", "symbols": [{"literal":"break"}], "postprocess":
+        d => ({
+            type: "break_statement",
+            start: tokenStart(d[0]),
+            end: tokenEnd(d[0])
         })
                 },
     {"name": "asm_line", "symbols": ["hex", "__", "asm_code"], "postprocess": 

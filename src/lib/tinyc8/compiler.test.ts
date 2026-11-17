@@ -180,6 +180,73 @@ describe("TinyC8 compiler", () => {
     );
   });
 
+  describe("break statement", () => {
+    test.each([
+      {
+        name: "while loop",
+        source: `while (V0 == 0x00) { break }
+V1 := 0x01`,
+        expected: [
+          `0x200 JUMP IF V0 == 0x00`,
+          `0x202 JUMP 0x208`,
+          `0x204 JUMP 0x208`,
+          `0x206 JUMP 0x200`,
+          `0x208 V1 := 0x01`,
+        ],
+      },
+      {
+        name: "do...while loop",
+        source: `do { break } while (V0 != 0x00)
+V1 := 0x01`,
+        expected: [
+          `0x200 JUMP 0x206`,
+          `0x202 JUMP IF V0 == 0x00`,
+          `0x204 JUMP 0x200`,
+          `0x206 V1 := 0x01`,
+        ],
+      },
+      {
+        name: "for loop",
+        source: `for (;;) { break }
+V1 := 0x01`,
+        expected: [
+          `0x200 JUMP 0x204`,
+          `0x202 JUMP 0x200`,
+          `0x204 V1 := 0x01`,
+        ],
+      },
+    ])("exits a $name", ({ source, expected }) => {
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected.join("\n"));
+    });
+
+    test("breaks only the innermost loop", () => {
+      const source = `while (V0 == 0x00) {
+  while (V1 == 0x00) { break }
+  break
+}
+V2 := 0x01`;
+      const expected = [
+        `0x200 JUMP IF V0 == 0x00`,
+        `0x202 JUMP 0x210`,
+        `0x204 JUMP IF V1 == 0x00`,
+        `0x206 JUMP 0x20c`,
+        `0x208 JUMP 0x20c`,
+        `0x20a JUMP 0x204`,
+        `0x20c JUMP 0x210`,
+        `0x20e JUMP 0x200`,
+        `0x210 V2 := 0x01`,
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
+    test("reports a break outside a loop", () => {
+      expect(() => compileTinyC8("break")).toThrow(
+        "Break statement outside loop",
+      );
+    });
+  });
+
   describe("goto statement", () => {
     test("jumps to forward and backward labels", () => {
       const testCode = `goto after

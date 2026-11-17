@@ -54,6 +54,7 @@ const lexer = moo.compile({
             if: "if",
             else: "else",
             goto: "goto",
+            break: "break",
         })
     }
 });
@@ -176,6 +177,7 @@ executable_statement
    |  line_comment         {% id %}
    |  label_statement      {% id %}
    |  goto_statement       {% id %}
+   |  break_statement      {% id %}
 #    |  indexed_assignment   {% id %}
    |  do_while_loop        {% id %}
    |  while_loop           {% id %}
@@ -212,6 +214,16 @@ goto_statement
                 target: d[2].value,
                 start: tokenStart(d[0]),
                 end: d[2].end
+            })
+        %}
+
+break_statement
+    -> "break"
+        {%
+            d => ({
+                type: "break_statement",
+                start: tokenStart(d[0]),
+                end: tokenEnd(d[0])
             })
         %}
 
