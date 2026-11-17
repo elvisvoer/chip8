@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { readFileSync, writeFileSync } from "node:fs";
+import { compileAsm } from "./asm/assembler";
 import { compileTinyC8 } from "./tinyc8/compiler";
 import { bufferToAsm } from "./disassembler";
 
@@ -17,7 +18,25 @@ function areBuffersEqual(left: Uint8Array, right: Uint8Array): boolean {
   return true;
 }
 
+function assembleDisassembly(asm: string): Uint8Array {
+  return compileAsm(asm.replace(/^0x[\da-f]+\s+/gim, ""));
+}
+
 describe("Disassembler", () => {
+  test("disassembles instructions at odd jump targets", () => {
+    const buffer = Uint8Array.fromHex("120560e050610200ee");
+    const asm = [
+      "0x200 JUMP 0x205",
+      "0x202 V0 := 0xe0",
+      "0x204 0x50",
+      "0x205 V1 := 0x02",
+      "0x207 RETURN",
+    ].join("\n");
+
+    expect(bufferToAsm(buffer)).toEqual(asm);
+    expect(areBuffersEqual(buffer, assembleDisassembly(asm))).toBeTruthy();
+  });
+
   test.each([
     // "br8kout.ch8",
     "chip8-picture.ch8",
@@ -26,7 +45,7 @@ describe("Disassembler", () => {
     "ibm-logo.ch8",
     "pong.ch8",
     // "snake.ch8",
-    // "sqrt-test.ch8",
+    "sqrt-test.ch8",
     "zero-pong.ch8",
   ])("can correctly disassemble/assemble %1", (rom) => {
     const buffer = new Uint8Array(readFileSync(`public/${rom}`));
@@ -36,14 +55,10 @@ describe("Disassembler", () => {
     const newBuffer = compileTinyC8(
       readFileSync(`public/${rom.replace("ch8", "tc8")}`, "utf-8"),
     );
-
-    //  const eBuffer = compileTinyC8(readFileSync(`public/elvis.tc8`, "utf-8"))
-    //  writeFileSync("public/elvis.ch8", eBuffer);
-
-    // writeFileSync(`public/${rom.replace("ch8", "tc8.ch8")}`, newBuffer);
+    const disassembledBuffer = assembleDisassembly(asm);
 
     expect(areBuffersEqual(buffer, newBuffer)).toBeTruthy();
-    // expect(true).toBeTruthy();
+    expect(areBuffersEqual(buffer, disassembledBuffer)).toBeTruthy();
   });
 });
 

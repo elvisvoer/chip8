@@ -6,12 +6,23 @@ import tinyC8Grammar from "./tinyc8";
 const labelMarker = "@@tinyc8-label ";
 const breakMarker = "@@tinyc8-break";
 
-function instructionCount(lines: string[]): number {
-  return lines.filter((line) => !line.startsWith(labelMarker)).length;
+function lineByteLength(line: string): number {
+  if (line.startsWith(labelMarker)) {
+    return 0;
+  }
+  if (/^0x[0-9a-f]+$/i.test(line)) {
+    return (line.length - 2) / 2;
+  }
+
+  return 2;
+}
+
+function byteLength(lines: string[]): number {
+  return lines.reduce((length, line) => length + lineByteLength(line), 0);
 }
 
 function addressAt(lines: string[], baseAddress: number): number {
-  return baseAddress + instructionCount(lines) * 2;
+  return baseAddress + byteLength(lines);
 }
 
 function addressString(address: number): string {
@@ -209,11 +220,11 @@ function uncontrolledLoopToAsm(
     ? conditionInstructionCount(node.condition)
     : 2;
   const endOffset =
-    initialOffset + (instructionCount(body) + conditionCount) * 2;
+    initialOffset + byteLength(body) + conditionCount * 2;
 
   acc.push(...resolveBreaks(body, endOffset));
   if (branchCondition) {
-    const conditionStart = initialOffset + instructionCount(body) * 2;
+    const conditionStart = initialOffset + byteLength(body);
     acc.push(
       ...conditionBranchLines(
         node.condition,
@@ -236,7 +247,7 @@ function whileLoopToAsm(node: any, acc: string[], baseAddress: number) {
     const body: any[] = [];
     astNodeToAsm(node.body, body, bodyStart);
     const end =
-      start + (conditionCount + instructionCount(body) + 1) * 2;
+      start + conditionCount * 2 + byteLength(body) + 2;
 
     acc.push(
       ...conditionBranchLines(node.condition, bodyStart, end, start),
@@ -249,7 +260,7 @@ function whileLoopToAsm(node: any, acc: string[], baseAddress: number) {
   const body: any[] = [];
   astNodeToAsm(node.body, body, start + 4);
 
-  const end = start + (instructionCount(body) + 3) * 2;
+  const end = start + byteLength(body) + 6;
 
   acc.push(conditionInstruction(node.condition));
   acc.push(`JUMP ${addressString(end)}`);
@@ -267,12 +278,12 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
   astNodeToAsm(node.body, body, start);
   const increment: string[] = [];
   if (node.increment) {
-    astNodeToAsm(node.increment, increment, start + instructionCount(body) * 2);
+    astNodeToAsm(node.increment, increment, start + byteLength(body));
   }
 
   if (node.condition && requiresBranchCondition(node.condition)) {
     const conditionStart =
-      start + (instructionCount(body) + instructionCount(increment)) * 2;
+      start + byteLength(body) + byteLength(increment);
     const end =
       conditionStart + conditionInstructionCount(node.condition) * 2;
     acc.push(
@@ -285,11 +296,10 @@ function forLoopToAsm(node: any, acc: string[], baseAddress: number) {
 
   const end =
     start +
-    (instructionCount(body) +
-      instructionCount(increment) +
-      (node.condition ? 1 : 0) +
-      1) *
-      2;
+    byteLength(body) +
+    byteLength(increment) +
+    (node.condition ? 2 : 0) +
+    2;
   acc.push(...resolveBreaks(body, end), ...increment);
 
   if (node.condition) {
@@ -322,7 +332,7 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
     astNodeToAsm(node.body, body, bodyStart);
 
     if (!node.alternate) {
-      const end = bodyStart + instructionCount(body) * 2;
+      const end = bodyStart + byteLength(body);
       acc.push(
         ...conditionBranchLines(node.condition, bodyStart, end, start),
         ...body,
@@ -330,11 +340,10 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
       return;
     }
 
-    const elseStart =
-      bodyStart + (instructionCount(body) + 1) * 2;
+    const elseStart = bodyStart + byteLength(body) + 2;
     const alternate: any[] = [];
     astNodeToAsm(node.alternate, alternate, elseStart);
-    const end = elseStart + instructionCount(alternate) * 2;
+    const end = elseStart + byteLength(alternate);
     acc.push(
       ...conditionBranchLines(node.condition, bodyStart, elseStart, start),
       ...body,
@@ -364,7 +373,7 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
         return;
       }
 
-      const end = start + (instructionCount(body) + 2) * 2;
+      const end = start + byteLength(body) + 4;
       acc.push(conditionInstruction(node.condition));
       acc.push(`JUMP ${addressString(end)}`);
       acc.push(...body);
@@ -378,7 +387,7 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
 
   astNodeToAsm(statements, body, start + 4);
   const alternate: any[] = [];
-  const elseStart = start + (3 + instructionCount(body)) * 2;
+  const elseStart = start + byteLength(body) + 6;
   astNodeToAsm(node.alternate, alternate, elseStart);
 
   if (
@@ -391,7 +400,7 @@ function ifStatementToAsm(node: any, acc: string[], baseAddress: number) {
     return;
   }
 
-  const endTarget = elseStart + instructionCount(alternate) * 2;
+  const endTarget = elseStart + byteLength(alternate);
 
   acc.push(conditionInstruction(node.condition));
   acc.push(`JUMP ${addressString(elseStart)}`);
@@ -526,10 +535,10 @@ function astToAsm(astNodes: any[]): string {
   const symbols = new Map<string, string>();
   astNodes.forEach((node) => {
     if (node.type === "fun_definition") {
-      let offset = 0x200 + instructionCount(result) * 2;
+      const offset = addressAt(result, 0x200);
       let offsetStr = `0x${offset.toString(16).padStart(3, "0")}`;
       symbols.set(node.name.value, offsetStr);
-      astNodeToAsm(node.body, result, addressAt(result, 0x200));
+      astNodeToAsm(node.body, result, offset);
 
       result.push("RETURN");
       return;
@@ -555,7 +564,7 @@ function astToAsm(astNodes: any[]): string {
       return false;
     }
 
-    offset += 2;
+    offset += lineByteLength(line);
     return true;
   });
 

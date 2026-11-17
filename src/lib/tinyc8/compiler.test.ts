@@ -568,6 +568,25 @@ V2 = 0x01`;
   });
 
   describe("goto statement", () => {
+    test("resolves function calls and labels after one-byte data", () => {
+      const source = `goto main
+0x202 0x50
+fun helper() {
+  V0 = 0x01
+}
+main:
+helper()`;
+      const expected = [
+        "0x200 JUMP 0x207",
+        "0x202 0x50",
+        "0x203 V0 := 0x01",
+        "0x205 RETURN",
+        "0x207 CALL 0x203",
+      ].join("\n");
+
+      expect(bufferToAsm(compileTinyC8(source))).toEqual(expected);
+    });
+
     test("jumps to forward and backward labels", () => {
       const testCode = `goto after
 start:
