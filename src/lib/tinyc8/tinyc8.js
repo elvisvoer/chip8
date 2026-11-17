@@ -210,6 +210,7 @@ var grammar = {
     {"name": "asm_code", "symbols": ["identifier"], "postprocess": id},
     {"name": "asm_code", "symbols": ["hex"], "postprocess": id},
     {"name": "asm_code", "symbols": ["var_assignment"], "postprocess": id},
+    {"name": "asm_code", "symbols": ["call_statement"], "postprocess": id},
     {"name": "asm_code", "symbols": ["asm_cmd"], "postprocess": id},
     {"name": "asm_code", "symbols": ["key_skip_statement"], "postprocess": id},
     {"name": "key_skip_statement", "symbols": [{"literal":"SKIP"}, "__", "identifier", "__", {"literal":"KEY"}, "_", "comparison_operator", "_", "identifier"], "postprocess": 

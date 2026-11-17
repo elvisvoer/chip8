@@ -250,6 +250,7 @@ asm_code
     -> identifier       {% id %}
     |  hex              {% id %}
     |  var_assignment   {% id %}
+    |  call_statement   {% id %}
     |  asm_cmd          {% id %}
     |  key_skip_statement {% id %}
 

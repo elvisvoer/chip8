@@ -351,7 +351,14 @@ function astNodeToAsm(node: any, acc: string[], baseAddress = 0x200): void {
       acc.push(`${node.value}`);
       break;
     case "call_expression":
-      acc.push(`CALL ${node.fun_name.value}`);
+      if (node.fun_name.value === "clear") {
+        if (node.arguments.length !== 0) {
+          throw new Error("clear() does not accept arguments");
+        }
+        acc.push("CLEAR");
+      } else {
+        acc.push(`CALL ${node.fun_name.value}`);
+      }
       break;
     case "code_block":
       {

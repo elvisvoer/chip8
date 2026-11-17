@@ -194,6 +194,21 @@ describe("TinyC8 compiler", () => {
     });
   });
 
+  describe("built-in functions", () => {
+    test.each(["clear()", "0x200 clear()"])(
+      "compiles %s to the CLEAR instruction",
+      (source) => {
+        expect(bufferToAsm(compileTinyC8(source))).toEqual("0x200 CLEAR");
+      },
+    );
+
+    test("rejects arguments to clear()", () => {
+      expect(() => compileTinyC8("clear(0x01)")).toThrow(
+        "clear() does not accept arguments",
+      );
+    });
+  });
+
   describe("postfix operators", () => {
     test.each([
       ["++", "0x01"],
