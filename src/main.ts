@@ -181,6 +181,7 @@ async function main() {
     "br8kout.ch8",
     "chip8-picture.ch8",
     "chipcross.ch8",
+    "game-of-life.ch8",
     "dt-test.ch8",
     "pong.ch8",
     "snake.ch8",

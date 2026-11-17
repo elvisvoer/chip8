@@ -28,6 +28,7 @@ const tinyC8Roms = [
   "chip8-picture.ch8",
   "dt-test.ch8",
   "elvis.ch8",
+  "game-of-life.ch8",
   "ibm-logo.ch8",
   "pong.ch8",
   "snake.ch8",
@@ -59,6 +60,11 @@ describe("Disassembler", () => {
 
     expect(bufferToAsm(buffer)).toEqual(asm);
     expect(areBuffersEqual(buffer, assembleDisassembly(asm))).toBeTruthy();
+  });
+
+  test("keeps the Game of Life ROM within CHIP-8 memory", () => {
+    const rom = readFileSync("public/game-of-life.ch8");
+    expect(rom.length).toBeLessThanOrEqual(0xe00);
   });
 
   test.each(tinyC8Roms)(
