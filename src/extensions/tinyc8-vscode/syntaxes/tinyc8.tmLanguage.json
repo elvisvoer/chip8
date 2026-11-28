@@ -1,0 +1,147 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "TinyC8",
+  "scopeName": "source.tinyc8",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#labels"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#builtins"
+    },
+    {
+      "include": "#registers"
+    },
+    {
+      "include": "#assembly"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#punctuation"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.tinyc8",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.tinyc8",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.tinyc8",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.tinyc8",
+          "match": "\\\\[\"\\\\ntbfr]"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hexadecimal.tinyc8",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.binary.tinyc8",
+          "match": "\\b0[bB][01]+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.tinyc8",
+          "match": "\\b[0-9]+(?:\\.[0-9]+)?\\b"
+        }
+      ]
+    },
+    "labels": {
+      "patterns": [
+        {
+          "name": "entity.name.label.tinyc8",
+          "match": "^\\s*[A-Za-z_][A-Za-z_0-9]*(?=\\s*:)"
+        }
+      ]
+    },
+    "keywords": {
+      "name": "keyword.control.tinyc8",
+      "match": "\\b(?:static|const|byte|void|noreturn|do|while|for|if|else|goto|break|continue)\\b"
+    },
+    "builtins": {
+      "name": "support.function.builtin.tinyc8",
+      "match": "\\b(?:clear|draw|rand|font|bcd|read|save|load|saveFlags|loadFlags|hires|noop|skipKey)\\b(?=\\s*\\()"
+    },
+    "registers": {
+      "patterns": [
+        {
+          "name": "variable.language.register.tinyc8",
+          "match": "\\bV[0-9A-Fa-f]\\b"
+        },
+        {
+          "name": "variable.language.special.tinyc8",
+          "match": "\\b(?:I|DT|ST|KEY)\\b"
+        }
+      ]
+    },
+    "assembly": {
+      "name": "support.function.opcode.tinyc8",
+      "match": "\\b(?:NOOP|CLEAR|HIRES|JUMP|DRAW|RAND|FONT|READ|BCDC|CALL|RETURN|SAVE|LOAD|POPF|PUSHF|INC)\\b"
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.tinyc8",
+          "match": "\\b[A-Za-z_][A-Za-z_0-9]*(?=\\s*\\()"
+        },
+        {
+          "name": "entity.name.function.tinyc8",
+          "match": "\\bvoid\\s+([A-Za-z_][A-Za-z_0-9]*)",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.tinyc8"
+            }
+          }
+        }
+      ]
+    },
+    "operators": {
+      "name": "keyword.operator.tinyc8",
+      "match": "<<=|>>=|\\+=|-=|~=|&=|\\|=|\\^=|\\+\\+|--|==|!=|&&|\\|\\||=|[+*/%<>]"
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.section.block.begin.tinyc8",
+          "match": "[{}\\[\\]()]"
+        },
+        {
+          "name": "punctuation.separator.tinyc8",
+          "match": "[,;:]"
+        }
+      ]
+    }
+  }
+}

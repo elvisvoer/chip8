@@ -1,0 +1,36 @@
+{
+  "name": "tinyc8-language",
+  "displayName": "TinyC8 Language Support",
+  "description": "Syntax highlighting for TinyC8 source files.",
+  "version": "0.1.0",
+  "publisher": "elvisvoer",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "tinyc8",
+        "aliases": [
+          "TinyC8",
+          "tinyc8"
+        ],
+        "extensions": [
+          ".tc8"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "tinyc8",
+        "scopeName": "source.tinyc8",
+        "path": "./syntaxes/tinyc8.tmLanguage.json"
+      }
+    ]
+  }
+}
